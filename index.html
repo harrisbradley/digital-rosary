@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital Rosary — Custom Images + Accordion Mysteries</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#f6f4ef; --card:#fff; --ink:#1f2937; --muted:#6b7280; --primary:#274c77; --ring:rgba(39,76,119,.24); --shadow:0 10px 20px rgba(0,0,0,.06); --radius:16px; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{ margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial; }
+    .nav{position:sticky;top:0;background:#fbfaf7cc;border-bottom:1px solid #eae7e1;backdrop-filter:saturate(140%) blur(8px)}
+    .nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:700}
+    .brand svg{width:28px;height:28px}
+    .nav-links{display:flex;gap:20px;align-items:center}
+    a{color:#374151;text-decoration:none;font-weight:600}
+    .button{padding:10px 14px;border-radius:999px;border:1px solid #d9d6cf;background:#fff;font-weight:600}
+    .button.primary{background:var(--primary);color:#fff;border-color:transparent;box-shadow:0 6px 14px rgba(39,76,119,.18)}
+    .wrap{max-width:1200px;margin:28px auto;padding:0 20px}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;gap:20px}}
+    .card{background:var(--card);border:1px solid #ece8e0;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card.pad{padding:22px}
+    .muted{color:var(--muted)}
+    h1,h2,h3{font-family:Merriweather,Georgia,serif;line-height:1.2;margin:0 0 12px}
+    h1{font-size:clamp(24px,2.6vw,40px)} h2{font-size:clamp(18px,2vw,28px)}
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center}
+    @media (max-width:760px){.hero{grid-template-columns:1fr}}
+    .sunrise{aspect-ratio:16/10;border-radius:12px;border:1px solid #e9e4da;background: radial-gradient(ellipse at bottom,#fffbd1 0%,#f9e597 40%,#b6e1f2 60%,#8cc5e7 100%);}
+    .pill{background:#eef3fb;color:#264b76;font-weight:700;display:inline-block;padding:6px 10px;border-radius:999px}
+    .today{color:#b91c1c;font-weight:800}
+    .guide{display:grid;grid-template-columns:420px 1fr;gap:20px}
+    @media (max-width:1000px){.guide{grid-template-columns:1fr}}
+    .image-frame{background:#fcfbf8;border:1px solid #ebe5d8;border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center}
+    .step-img{width:100%;height:auto;border-radius:8px;border:1px solid #e9e4da;background:#fff;object-fit:cover;aspect-ratio:4/3}
+    .prayer-panel{background:#fcfbf8;border:1px dashed #e8e2d6;border-radius:12px;padding:18px}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .step{font-weight:700}
+    .prayer-text{margin-top:8px;white-space:pre-wrap}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .toolbar .button:focus{outline:none;box-shadow:0 0 0 4px var(--ring)}
+    .kpi{display:flex;gap:8px;align-items:center}
+    .progress{height:8px;border-radius:999px;background:#ece8e0;overflow:hidden}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#6aa2d8)}
+    .list{margin:0;padding:0 0 0 18px} .list li{margin:6px 0}
+    footer{color:#7b7f86;text-align:center;padding:40px 0 60px}
+
+    /* Accordion styles */
+    .accordion details{
+      border:1px solid #eee7d9;
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fffcf6;
+    }
+    .accordion details + details{ margin-top:10px; }
+    .accordion summary{
+      list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+      font-weight:700; color:#1f2937;
+    }
+    .accordion summary::-webkit-details-marker{ display:none; }
+    .accordion .chev{
+      transition: transform .2s ease;
+      margin-left:12px;
+    }
+    .accordion details[open] .chev{
+      transform: rotate(90deg);
+    }
+    .accordion .today-tag{ color:#b91c1c; font-weight:800; }
+    .accordion ul{ margin:8px 0 0 18px; padding:0; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#"><svg viewBox="0 0 32 32" fill="none"><circle cx="7" cy="16" r="4" fill="#274c77"/><circle cx="16" cy="10" r="4" fill="#6aa2d8"/><circle cx="25" cy="16" r="4" fill="#274c77"/><rect x="15" y="20" width="2" height="8" rx="1" fill="#274c77"/></svg><span>Digital Rosary</span></a>
+      <div class="nav-links"><a href="#home">Home</a><a href="#log">Prayer Log</a><a href="#about">About</a><a href="#settings">Settings</a><button class="button">Log In</button></div>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <div class="grid">
+      <section>
+        <div class="card pad">
+          <div class="hero">
+            <div>
+              <h1>Welcome. Let Us Pray.</h1>
+              <p class="muted">An interactive guide to help you learn and pray the Holy Rosary.
+                Today we meditate on the <span id="todayMysteryName" class="pill">Loading…</span>.</p>
+              <button id="beginBtn" class="button primary">Begin Praying the Rosary</button>
+            </div>
+            <div class="sunrise"></div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-top:18px">
+          <h2>Interactive Rosary Guide</h2>
+          <div class="guide" style="margin-top:12px">
+            <div class="image-frame">
+              <img id="stepImage" class="step-img" alt="Illustration for current step">
+            </div>
+            <div class="prayer-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="muted">Step <span id="stepIndex">1</span> of <span id="stepTotal">—</span></div>
+                  <div class="step" id="stepTitle">The Sign of the Cross</div>
+                </div>
+                <span id="mysteryBadge" class="pill">Mystery</span>
+              </div>
+              <div class="prayer-text" id="prayerText"></div>
+              <div class="toolbar">
+                <button id="prevBtn" class="button">◀ Previous</button>
+                <button id="nextBtn" class="button primary">Next ▶</button>
+                <button id="jumpBtn" class="button">Jump to Decades</button>
+              </div>
+              <div class="muted" style="font-size:13px;margin-top:6px">Tip: Use ←/→ keys to navigate.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="aside">
+        <div class="card pad">
+          <h3>Your Prayer Journey</h3>
+          <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span class="muted">Days</span></div>
+          <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong id="totalRosaries">0</strong></div>
+          <div class="progress" style="margin:10px 0 14px"><span id="progressBar" style="width:0%"></span></div>
+          <button id="logBtn" class="button">Log Today's Rosary</button>
+        </div>
+
+        <div class="card pad">
+          <h3>Quick Links</h3>
+          <ul class="list">
+            <li><a href="#all-mysteries">View All Mysteries</a></li>
+            <li><a href="#common-prayers">Common Prayers</a></li>
+          </ul>
+        </div>
+
+        <div class="card pad accordion">
+          <h3 id="all-mysteries">The Mysteries</h3>
+          <div id="mysteryAccordion"></div>
+        </div>
+      </aside>
+    </div>
+
+    <section id="common-prayers" class="card pad" style="margin-top:18px">
+      <h2>Common Prayers</h2>
+      <details open style="margin-top:8px"><summary class="step">🕊️ The Sign of the Cross</summary><p class="muted">In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">✝️ The Apostles’ Creed</summary><p class="muted">I believe in God, the Father almighty, Creator of heaven and earth;
+and in Jesus Christ, His only Son, our Lord,
+who was conceived by the Holy Spirit, born of the Virgin Mary,
+suffered under Pontius Pilate, was crucified, died and was buried;
+He descended into hell;
+on the third day He rose again from the dead;
+He ascended into heaven,
+and is seated at the right hand of God the Father almighty;
+from there He will come to judge the living and the dead.
+I believe in the Holy Spirit,
+the holy Catholic Church,
+the communion of saints,
+the forgiveness of sins,
+the resurrection of the body,
+and life everlasting. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">🙏 The Our Father</summary><p class="muted">Our Father, who art in heaven,
+hallowed be Thy name;
+Thy kingdom come;
+Thy will be done on earth as it is in heaven.
+Give us this day our daily bread;
+and forgive us our trespasses,
+as we forgive those who trespass against us;
+and lead us not into temptation,
+but deliver us from evil. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">🌹 The Hail Mary</summary><p class="muted">Hail Mary, full of grace, the Lord is with thee;
+blessed art thou among women,
+and blessed is the fruit of thy womb, Jesus.
+Holy Mary, Mother of God,
+pray for us sinners,
+now and at the hour of our death. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">✨ The Glory Be (Doxology)</summary><p class="muted">Glory be to the Father, and to the Son, and to the Holy Spirit;
+as it was in the beginning, is now, and ever shall be,
+world without end. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">💖 The Fatima Prayer ("Oh my Jesus")</summary><p class="muted">O my Jesus, forgive us our sins,
+save us from the fires of hell;
+lead all souls to Heaven,
+especially those most in need of Thy mercy. Amen.</p></details>
+      <details style="margin-top:8px"><summary class="step">🕯️ The Hail, Holy Queen (Salve Regina)</summary><p class="muted">Hail, holy Queen, Mother of mercy,
+our life, our sweetness, and our hope.
+To thee do we cry, poor banished children of Eve;
+to thee do we send up our sighs, mourning and weeping in this valley of tears.
+Turn then, most gracious advocate,
+thine eyes of mercy toward us;
+and after this our exile,
+show unto us the blessed fruit of thy womb, Jesus.
+O clement, O loving, O sweet Virgin Mary.
+
+Leader: Pray for us, O holy Mother of God.
+Response: That we may be made worthy of the promises of Christ.</p></details>
+      <details style="margin-top:8px"><summary class="step">🌸 The Concluding Prayer</summary><p class="muted">Let us pray:
+
+O God, whose only-begotten Son,
+by His life, death, and resurrection,
+has purchased for us the rewards of eternal life;
+grant, we beseech Thee,
+that meditating upon these mysteries
+of the Most Holy Rosary of the Blessed Virgin Mary,
+we may imitate what they contain
+and obtain what they promise,
+through the same Christ our Lord. Amen.</p></details>
+    </section>
+  </main>
+
+  <footer>Made with ❤️ to help you pray.</footer>
+
+  <script>
+    // ======== IMAGE CONFIG (same as prior custom-image version) ========
+    const ASSET_BASE = "./images/rosary/";
+    const STEP_IMAGES = {
+      "The Sign of the Cross": "sign-of-cross.jpg",
+      "Apostles’ Creed": "rosary.jpg", // example you mentioned
+      "Our Father (Intro)": "our-father.jpg",
+      "3× Hail Mary (Faith, Hope, Charity)": "hail-mary-intentions.jpg",
+      "Glory Be": "glory-be.jpg",
+      "Announce the Mystery": "announce-mystery.jpg",
+      "Our Father": "our-father.jpg",
+      "Hail Mary": "hail-mary.jpg",
+      "Fatima Prayer": "fatima.jpg"
+    };
+    const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
+
+    const todayStr = () => new Date().toISOString().slice(0,10);
+    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1' };
+
+    const MYSTERIES = {
+      Joyful:{days:[1,6],items:['The Annunciation','The Visitation','The Nativity','The Presentation','The Finding in the Temple']},
+      Sorrowful:{days:[2,5],items:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion']},
+      Glorious:{days:[0,3],items:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption','The Coronation of Mary']},
+      Luminous:{days:[4],items:['The Baptism of the Lord','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist']}
+    };
+    const weekday = new Date().getDay();
+    const TODAY_SET = Object.entries(MYSTERIES).find(([_,cfg])=>cfg.days.includes(weekday))?.[0] ?? 'Joyful';
+
+    const PRAYERS = {
+      signOfCross: 'In the name of the Father, and of the Son, and of the Holy Spirit. Amen.',
+      apostlesCreed: 'I believe in God, the Father almighty, Creator of heaven and earth...',
+      ourFather: 'Our Father, Who art in heaven, hallowed be Thy name...',
+      hailMary: 'Hail Mary, full of grace, the Lord is with thee...',
+      gloryBe: 'Glory be to the Father, and to the Son, and to the Holy Spirit...',
+      fatima: 'O my Jesus, forgive us our sins, save us from the fires of hell...'
+    };
+
+    const DECADE_STEPS = [
+      {title:'Announce the Mystery', text:()=>`📿 Announce the <strong>${TODAY_SET}</strong> mystery.`},
+      {title:'Our Father', text:()=>PRAYERS.ourFather},
+      ...Array.from({length:10},(_,i)=>({title:`Hail Mary ${i+1}/10`, text:()=>PRAYERS.hailMary})),
+      {title:'Glory Be', text:()=>PRAYERS.gloryBe},
+      {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
+    ];
+    const GUIDE = [
+      {title:'The Sign of the Cross', text:()=>PRAYERS.signOfCross},
+      {title:'Apostles’ Creed', text:()=>PRAYERS.apostlesCreed},
+      {title:'Our Father (Intro)', text:()=>PRAYERS.ourFather},
+      {title:'3× Hail Mary (Faith, Hope, Charity)', text:()=>PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.'},
+      {title:'Glory Be', text:()=>PRAYERS.gloryBe},
+      ...DECADE_STEPS
+    ];
+
+    function imageForTitle(title){
+      if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
+      if (title.startsWith('Hail Mary')){
+        const m = title.match(/^Hail Mary (\\d+)/);
+        if (m && STEP_IMAGES['Hail Mary ' + m[1]]) return ASSET_BASE + STEP_IMAGES['Hail Mary ' + m[1]] + CACHE_BUST;
+        if (STEP_IMAGES['Hail Mary']) return ASSET_BASE + STEP_IMAGES['Hail Mary'] + CACHE_BUST;
+      }
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#e9f0ff"/><stop offset="1" stop-color="#f7efe3"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, sans-serif" font-size="28" fill="#274c77">${title}</text></svg>`);
+    }
+
+    // DOM refs
+    const todayMysteryEl = document.getElementById('todayMysteryName');
+    const mysteryBadgeEl = document.getElementById('mysteryBadge');
+    const accordionEl = document.getElementById('mysteryAccordion');
+    const totalEl = document.getElementById('totalRosaries');
+    const streakEl = document.getElementById('streakDays');
+    const progressEl = document.getElementById('progressBar');
+    const stepIdxEl = document.getElementById('stepIndex');
+    const stepTotalEl = document.getElementById('stepTotal');
+    const stepTitleEl = document.getElementById('stepTitle');
+    const prayerTextEl = document.getElementById('prayerText');
+    const stepImageEl = document.getElementById('stepImage');
+
+    let stepIndex = 0;
+
+    // Render Mysteries as an accordion (<details> + <summary> for each group)
+    function renderMysteryAccordion(){
+      accordionEl.innerHTML = '';
+      for(const [name, cfg] of Object.entries(MYSTERIES)){
+        const details = document.createElement('details');
+        if(name === TODAY_SET) details.open = true; // only today's expanded
+
+        const summary = document.createElement('summary');
+        const left = document.createElement('span');
+        left.innerHTML = name === TODAY_SET ? `<span class="today-tag">${name}</span>` : name;
+        const chev = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        chev.setAttribute('viewBox','0 0 24 24'); chev.classList.add('chev'); chev.setAttribute('width','18'); chev.setAttribute('height','18');
+        chev.innerHTML = '<path d="M8 5l8 7-8 7" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+        summary.appendChild(left); summary.appendChild(chev);
+        details.appendChild(summary);
+
+        const ul = document.createElement('ul');
+        cfg.items.forEach(item => { const li=document.createElement('li'); li.textContent=item; ul.appendChild(li); });
+        details.appendChild(ul);
+
+        accordionEl.appendChild(details);
+      }
+
+      // Make it behave like a true accordion: only one open at a time.
+      accordionEl.querySelectorAll('details').forEach(d => {
+        d.addEventListener('toggle', () => {
+          if (d.open){
+            accordionEl.querySelectorAll('details').forEach(other => { if (other !== d) other.open = false; });
+          }
+        });
+      });
+    }
+
+    function renderStep(){
+      const step = GUIDE[stepIndex];
+      stepIdxEl.textContent = (stepIndex+1);
+      stepTotalEl.textContent = GUIDE.length.toString();
+      stepTitleEl.textContent = step.title;
+      prayerTextEl.innerHTML = step.text();
+      const src = imageForTitle(step.title);
+      stepImageEl.alt = step.title + ' illustration';
+      stepImageEl.src = src;
+      stepImageEl.onerror = () => { stepImageEl.onerror = null; stepImageEl.src = imageForTitle(''); };
+    }
+
+    function hydrateUI(){
+      todayMysteryEl.textContent = TODAY_SET;
+      mysteryBadgeEl.textContent = TODAY_SET + ' Mysteries';
+      renderMysteryAccordion();
+      renderStep();
+      syncStats();
+    }
+
+    // Nav
+    document.getElementById('nextBtn').addEventListener('click',()=>{ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); });
+    document.getElementById('prevBtn').addEventListener('click',()=>{ stepIndex=Math.max(0,stepIndex-1); renderStep(); });
+    document.getElementById('jumpBtn').addEventListener('click',()=>{ const i=GUIDE.findIndex(s=>s.title.startsWith('Announce the Mystery')); if(i!==-1){ stepIndex=i; renderStep(); } });
+    document.getElementById('beginBtn').addEventListener('click',()=>{ stepIndex=0; renderStep(); window.scrollTo({top:document.querySelector('.guide').offsetTop-80,behavior:'smooth'}); });
+    window.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); } if(e.key==='ArrowLeft'){ stepIndex=Math.max(0,stepIndex-1); renderStep(); } });
+
+    // Stats
+    function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
+    function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+    function syncStats(){ const total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0); totalEl.textContent=total; streakEl.textContent=streak; progressEl.style.width=Math.min(100,(total%50)*2)+'%'; }
+    document.getElementById('logBtn').addEventListener('click',()=>{
+      const last=getLS(LS_KEYS.LAST_DATE,null), total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0), today=todayStr();
+      if(last===today){ alert('You already logged today 🙌'); return; }
+      let newStreak=1;
+      if(last){ const y=new Date(); y.setDate(y.getDate()-1); if(y.toISOString().slice(0,10)===last) newStreak=streak+1; }
+      setLS(LS_KEYS.LAST_DATE,today); setLS(LS_KEYS.TOTAL,total+1); setLS(LS_KEYS.STREAK,newStreak); syncStats();
+    });
+
+    hydrateUI();
+  </script>
+</body>
+</html>
