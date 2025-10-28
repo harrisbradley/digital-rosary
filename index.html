@@ -43,8 +43,10 @@
                 Today we meditate on the <span id="todayMysteryName" class="pill">Loading…</span> mysteries.</p>
               <button id="beginBtn" class="button primary">Begin Praying the Rosary</button>
             </div>
-            <!-- Decorative sunrise gradient background -->
-            <div class="sunrise"></div>
+            <!-- Decorative sunrise image -->
+            <div class="sunrise">
+              <img src="images/sunrise.png" alt="Sunrise" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
           </div>
         </div>
 
@@ -211,10 +213,10 @@ through the same Christ our Lord. Amen.</p></details>
     // - Glorious: Sunday & Wednesday (days 0 & 3)
     // - Luminous: Thursday (day 4)
     const MYSTERIES = {
-      'Joyful (Mon, Sat)':{days:[1,6],items:['The Annunciation','The Visitation','The Nativity','The Presentation','The Finding in the Temple']},
-      'Sorrowful (Tue, Fri)':{days:[2,5],items:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion']},
-      'Glorious (Sun, Wed)':{days:[0,3],items:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption','The Coronation of Mary']},
-      'Luminous (Thu)':{days:[4],items:['The Baptism of the Lord','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist']}
+      Joyful:{days:[1,6],items:['The Annunciation','The Visitation','The Nativity','The Presentation','The Finding in the Temple']},
+      Sorrowful:{days:[2,5],items:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion']},
+      Glorious:{days:[0,3],items:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption','The Coronation of Mary']},
+      Luminous:{days:[4],items:['The Baptism of the Lord','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist']}
     };
     // Calculate which mystery set is for today
     const weekday = new Date().getDay();
@@ -283,6 +285,12 @@ through the same Christ our Lord. Amen.</p></details>
     // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
 
+    // ========== UTILITY FUNCTIONS ==========
+    
+    // Convert day numbers to abbreviated day names
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const getDaysString = (days) => days.map(d => DAY_NAMES[d]).join(', ');
+    
     // ========== RENDERING FUNCTIONS ==========
     
     // Dynamically build the mysteries accordion (the expandable list in the sidebar)
@@ -295,7 +303,10 @@ through the same Christ our Lord. Amen.</p></details>
 
         const summary = document.createElement('summary');
         const left = document.createElement('span');
-        left.innerHTML = name === TODAY_SET ? `<span class="today-tag">${name}</span>` : name;
+        // Show the mystery name with days in parentheses
+        const mysteryName = name === TODAY_SET ? `<span class="today-tag">${name}</span>` : name;
+        const daysString = `(${getDaysString(cfg.days)})`;
+        left.innerHTML = `${mysteryName} ${daysString}`;
         const chev = document.createElementNS('http://www.w3.org/2000/svg','svg');
         chev.setAttribute('viewBox','0 0 24 24'); chev.classList.add('chev'); chev.setAttribute('width','18'); chev.setAttribute('height','18');
         chev.innerHTML = '<path d="M8 5l8 7-8 7" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
