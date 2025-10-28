@@ -1,16 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Document metadata -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Digital Rosary — Custom Images + Accordion Mysteries</title>
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="images/logo/logo_nowords_v0.1.png">
+  
+  <!-- Font preconnections for faster loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Google Fonts: Merriweather for headings, Inter for body text -->
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- External stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- ===== NAVIGATION BAR ===== -->
   <nav class="nav">
     <div class="nav-inner">
       <a class="brand" href="#"><img src="images/logo/logo_nowords_v0.1.png" alt="Digital Rosary" style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
@@ -18,9 +28,13 @@
     </div>
   </nav>
 
+  <!-- ===== MAIN CONTENT AREA ===== -->
   <main class="wrap">
+    <!-- Main grid layout: 2 columns on desktop, 1 column on mobile -->
     <div class="grid">
+      <!-- Left section: Hero and Interactive Guide -->
       <section>
+        <!-- HERO SECTION: Welcome message with today's mystery -->
         <div class="card pad">
           <div class="hero">
             <div>
@@ -29,16 +43,20 @@
                 Today we meditate on the <span id="todayMysteryName" class="pill">Loading…</span>.</p>
               <button id="beginBtn" class="button primary">Begin Praying the Rosary</button>
             </div>
+            <!-- Decorative sunrise gradient background -->
             <div class="sunrise"></div>
           </div>
         </div>
 
+        <!-- INTERACTIVE ROSARY GUIDE: The main prayer interface -->
         <div class="card pad" style="margin-top:18px">
           <h2>Interactive Rosary Guide</h2>
           <div class="guide" style="margin-top:12px">
+            <!-- Left side: Current step illustration -->
             <div class="image-frame">
               <img id="stepImage" class="step-img" alt="Illustration for current step">
             </div>
+            <!-- Right side: Prayer text and controls -->
             <div class="prayer-panel">
               <div class="panel-head">
                 <div>
@@ -47,7 +65,9 @@
                 </div>
                 <span id="mysteryBadge" class="pill">Mystery</span>
               </div>
+              <!-- Dynamically updated prayer text -->
               <div class="prayer-text" id="prayerText"></div>
+              <!-- Navigation buttons -->
               <div class="toolbar">
                 <button id="prevBtn" class="button">◀ Previous</button>
                 <button id="nextBtn" class="button primary">Next ▶</button>
@@ -59,7 +79,9 @@
         </div>
       </section>
 
+      <!-- Right sidebar -->
       <aside class="aside">
+        <!-- STATS CARD: Prayer tracking and streaks -->
         <div class="card pad">
           <h3>Your Prayer Journey</h3>
           <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span class="muted">Days</span></div>
@@ -68,6 +90,7 @@
           <button id="logBtn" class="button">Log Today's Rosary</button>
         </div>
 
+        <!-- QUICK LINKS: Navigation shortcuts -->
         <div class="card pad">
           <h3>Quick Links</h3>
           <ul class="list">
@@ -76,6 +99,7 @@
           </ul>
         </div>
 
+        <!-- MYSTERIES ACCORDION: Expandable list of all mysteries -->
         <div class="card pad accordion">
           <h3 id="all-mysteries">The Mysteries</h3>
           <div id="mysteryAccordion"></div>
@@ -83,6 +107,7 @@
       </aside>
     </div>
 
+    <!-- COMMON PRAYERS SECTION: All prayer texts in expandable details -->
     <section id="common-prayers" class="card pad" style="margin-top:18px">
       <h2>Common Prayers</h2>
       <details open style="margin-top:8px"><summary class="step">🕊️ The Sign of the Cross</summary><p class="muted">In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p></details>
@@ -149,10 +174,15 @@ through the same Christ our Lord. Amen.</p></details>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer>Made with ❤️ to help you pray.</footer>
 
+  <!-- ===== JAVASCRIPT APPLICATION LOGIC ===== -->
   <script>
-    // ======== IMAGE CONFIG (same as prior custom-image version) ========
+    // ========== CONFIGURATION ==========
+    
+    // Base path for rosary step images
+    // Maps each prayer step to its corresponding image filename
     const ASSET_BASE = "./images/rosary/";
     const STEP_IMAGES = {
       "The Sign of the Cross": "sign-of-cross.jpg",
@@ -165,20 +195,33 @@ through the same Christ our Lord. Amen.</p></details>
       "Hail Mary": "hail-mary.jpg",
       "Fatima Prayer": "fatima.jpg"
     };
+    // Add cache-busting query param only in development to prevent caching
     const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
 
+    // Helper: Get today's date in YYYY-MM-DD format
     const todayStr = () => new Date().toISOString().slice(0,10);
+    
+    // LocalStorage keys for persistence
     const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1' };
 
+    // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
+    // Each mystery has specific days of the week it's typically prayed
+    // - Joyful: Monday & Saturday (days 1 & 6)
+    // - Sorrowful: Tuesday & Friday (days 2 & 5) 
+    // - Glorious: Sunday & Wednesday (days 0 & 3)
+    // - Luminous: Thursday (day 4)
     const MYSTERIES = {
       Joyful:{days:[1,6],items:['The Annunciation','The Visitation','The Nativity','The Presentation','The Finding in the Temple']},
       Sorrowful:{days:[2,5],items:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion']},
       Glorious:{days:[0,3],items:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption','The Coronation of Mary']},
       Luminous:{days:[4],items:['The Baptism of the Lord','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist']}
     };
+    // Calculate which mystery set is for today
     const weekday = new Date().getDay();
     const TODAY_SET = Object.entries(MYSTERIES).find(([_,cfg])=>cfg.days.includes(weekday))?.[0] ?? 'Joyful';
 
+    // ========== PRAYER TEXTS ==========
+    // Short versions of prayers (can be expanded later)
     const PRAYERS = {
       signOfCross: 'In the name of the Father, and of the Son, and of the Holy Spirit. Amen.',
       apostlesCreed: 'I believe in God, the Father almighty, Creator of heaven and earth...',
@@ -188,22 +231,31 @@ through the same Christ our Lord. Amen.</p></details>
       fatima: 'O my Jesus, forgive us our sins, save us from the fires of hell...'
     };
 
+    // Build the steps for each decade of the rosary
+    // Each decade consists of: Announce → Our Father → 10 Hail Marys → Glory Be → Fatima Prayer
     const DECADE_STEPS = [
       {title:'Announce the Mystery', text:()=>`📿 Announce the <strong>${TODAY_SET}</strong> mystery.`},
       {title:'Our Father', text:()=>PRAYERS.ourFather},
+      // Generate 10 Hail Mary steps (one for each bead in a decade)
       ...Array.from({length:10},(_,i)=>({title:`Hail Mary ${i+1}/10`, text:()=>PRAYERS.hailMary})),
       {title:'Glory Be', text:()=>PRAYERS.gloryBe},
       {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
     ];
+    
+    // Complete rosary guide (intro + 5 decades)
     const GUIDE = [
       {title:'The Sign of the Cross', text:()=>PRAYERS.signOfCross},
       {title:'Apostles’ Creed', text:()=>PRAYERS.apostlesCreed},
       {title:'Our Father (Intro)', text:()=>PRAYERS.ourFather},
       {title:'3× Hail Mary (Faith, Hope, Charity)', text:()=>PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.'},
       {title:'Glory Be', text:()=>PRAYERS.gloryBe},
-      ...DECADE_STEPS
+      ...DECADE_STEPS  // Spread operator adds all decade steps
     ];
 
+    // ========== UTILITY FUNCTIONS ==========
+    
+    // Find the appropriate image for a prayer step title
+    // Falls back to generating an SVG if no image found
     function imageForTitle(title){
       if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
       if (title.startsWith('Hail Mary')){
@@ -214,7 +266,8 @@ through the same Christ our Lord. Amen.</p></details>
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#e9f0ff"/><stop offset="1" stop-color="#f7efe3"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, sans-serif" font-size="28" fill="#274c77">${title}</text></svg>`);
     }
 
-    // DOM refs
+    // ========== DOM ELEMENT REFERENCES ==========
+    // Get all the HTML elements we need to update dynamically
     const todayMysteryEl = document.getElementById('todayMysteryName');
     const mysteryBadgeEl = document.getElementById('mysteryBadge');
     const accordionEl = document.getElementById('mysteryAccordion');
@@ -227,9 +280,13 @@ through the same Christ our Lord. Amen.</p></details>
     const prayerTextEl = document.getElementById('prayerText');
     const stepImageEl = document.getElementById('stepImage');
 
+    // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
 
-    // Render Mysteries as an accordion (<details> + <summary> for each group)
+    // ========== RENDERING FUNCTIONS ==========
+    
+    // Dynamically build the mysteries accordion (the expandable list in the sidebar)
+    // This shows all four mystery sets with their individual mysteries listed
     function renderMysteryAccordion(){
       accordionEl.innerHTML = '';
       for(const [name, cfg] of Object.entries(MYSTERIES)){
@@ -262,6 +319,8 @@ through the same Christ our Lord. Amen.</p></details>
       });
     }
 
+    // Update the main prayer interface with the current step's content
+    // Shows the image, title, prayer text, and step count
     function renderStep(){
       const step = GUIDE[stepIndex];
       stepIdxEl.textContent = (stepIndex+1);
@@ -271,9 +330,11 @@ through the same Christ our Lord. Amen.</p></details>
       const src = imageForTitle(step.title);
       stepImageEl.alt = step.title + ' illustration';
       stepImageEl.src = src;
+      // If image fails to load, show a fallback SVG placeholder
       stepImageEl.onerror = () => { stepImageEl.onerror = null; stepImageEl.src = imageForTitle(''); };
     }
 
+    // Initialize the UI on page load
     function hydrateUI(){
       todayMysteryEl.textContent = TODAY_SET;
       mysteryBadgeEl.textContent = TODAY_SET + ' Mysteries';
@@ -282,17 +343,35 @@ through the same Christ our Lord. Amen.</p></details>
       syncStats();
     }
 
-    // Nav
+    // ========== EVENT HANDLERS ==========
+    
+    // Navigation: Move forward through the rosary steps
+    // Next button: Go to next step
     document.getElementById('nextBtn').addEventListener('click',()=>{ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); });
+    
+    // Previous button: Go back to previous step
     document.getElementById('prevBtn').addEventListener('click',()=>{ stepIndex=Math.max(0,stepIndex-1); renderStep(); });
+    
+    // Jump button: Skip directly to the first decade
     document.getElementById('jumpBtn').addEventListener('click',()=>{ const i=GUIDE.findIndex(s=>s.title.startsWith('Announce the Mystery')); if(i!==-1){ stepIndex=i; renderStep(); } });
+    
+    // Begin button: Start from the beginning and scroll to the guide
     document.getElementById('beginBtn').addEventListener('click',()=>{ stepIndex=0; renderStep(); window.scrollTo({top:document.querySelector('.guide').offsetTop-80,behavior:'smooth'}); });
+    
+    // Keyboard navigation: Left/Right arrows to move through steps
     window.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); } if(e.key==='ArrowLeft'){ stepIndex=Math.max(0,stepIndex-1); renderStep(); } });
 
-    // Stats
+    // ========== LOCALSTORAGE & STATS ==========
+    
+    // Helper functions to read/write localStorage (persistent storage in browser)
     function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
     function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+    
+    // Update the displayed stats (streak, total count, progress bar)
     function syncStats(){ const total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0); totalEl.textContent=total; streakEl.textContent=streak; progressEl.style.width=Math.min(100,(total%50)*2)+'%'; }
+    
+    // Log button: Record that you prayed the rosary today
+    // Tracks streaks (consecutive days) and total count
     document.getElementById('logBtn').addEventListener('click',()=>{
       const last=getLS(LS_KEYS.LAST_DATE,null), total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0), today=todayStr();
       if(last===today){ alert('You already logged today 🙌'); return; }
@@ -301,6 +380,8 @@ through the same Christ our Lord. Amen.</p></details>
       setLS(LS_KEYS.LAST_DATE,today); setLS(LS_KEYS.TOTAL,total+1); setLS(LS_KEYS.STREAK,newStreak); syncStats();
     });
 
+    // ========== INITIALIZE APP ==========
+    // Start the application when page loads
     hydrateUI();
   </script>
 </body>
