@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prayer Log — Digital Rosary</title>
+  <link rel="icon" type="image/png" href="images/logo/logo_nowords_v0.1.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html"><img src="images/logo/logo_nowords_v0.1.png" alt="Digital Rosary" style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
+      <div class="nav-links"><a href="index.html#home">Home</a><a href="prayer-log.html" class="button primary" style="padding:6px 12px">Prayer Log</a><a href="index.html#about">About</a><a href="index.html#settings">Settings</a><button class="button">Log In</button></div>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <section class="card pad">
+      <h1>Prayer Log</h1>
+      <p class="muted">Track your rosary prayers over time. Entries are stored locally on your device.</p>
+
+      <div style="margin-top:12px" class="toolbar">
+        <button id="addEntryBtn" class="button primary">Add Today's Entry</button>
+        <button id="clearLogBtn" class="button">Clear Log</button>
+      </div>
+
+      <div style="margin-top:16px">
+        <h2 style="margin:0 0 8px">Entries</h2>
+        <div id="emptyState" class="muted">No entries yet. Click "Add Today's Entry" to create one.</div>
+        <ul id="logList" class="list" style="margin-top:8px"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>Made with ❤️ to help you pray.</footer>
+
+  <script>
+    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LOG:'rosary_log_v1' };
+    function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
+    function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+    const todayStr = () => new Date().toISOString().slice(0,10);
+
+    const listEl = document.getElementById('logList');
+    const emptyEl = document.getElementById('emptyState');
+
+    function renderLog(){
+      const log = getLS(LS_KEYS.LOG, []);
+      listEl.innerHTML = '';
+      if (log.length === 0){ emptyEl.style.display='block'; return; }
+      emptyEl.style.display='none';
+      log.sort((a,b)=> b.date.localeCompare(a.date));
+      for(const entry of log){
+        const li = document.createElement('li');
+        li.style.margin = '8px 0';
+        li.innerHTML = `<strong>${entry.date}</strong> — ${entry.notes || 'Rosary prayed'}`;
+        listEl.appendChild(li);
+      }
+    }
+
+    document.getElementById('addEntryBtn').addEventListener('click', ()=>{
+      const log = getLS(LS_KEYS.LOG, []);
+      const date = todayStr();
+      if (log.some(e => e.date === date)) { alert("You've already added today's entry."); return; }
+      const notes = prompt('Optional: add a note for today', '');
+      log.push({ date, notes: (notes||'').trim() });
+      setLS(LS_KEYS.LOG, log);
+      // Also update totals used by the main page
+      const total = getLS(LS_KEYS.TOTAL, 0);
+      setLS(LS_KEYS.TOTAL, total + 1);
+      setLS(LS_KEYS.LAST_DATE, date);
+      // streak update (simple)
+      const last = getLS(LS_KEYS.LAST_DATE, null);
+      let streak = getLS(LS_KEYS.STREAK, 0);
+      if (last){ const y=new Date(); y.setDate(y.getDate()-1); if(y.toISOString().slice(0,10)===last) streak = streak + 1; else streak = 1; }
+      else { streak = 1; }
+      setLS(LS_KEYS.STREAK, streak);
+      renderLog();
+    });
+
+    document.getElementById('clearLogBtn').addEventListener('click', ()=>{
+      if (!confirm('Clear the prayer log?')) return;
+      setLS(LS_KEYS.LOG, []);
+      renderLog();
+    });
+
+    renderLog();
+  </script>
+</body>
+</html>
