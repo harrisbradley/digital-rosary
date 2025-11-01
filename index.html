@@ -18,6 +18,9 @@
   
   <!-- External stylesheet -->
   <link rel="stylesheet" href="styles.css">
+  
+  <!-- Rosary Visualizer -->
+  <script src="rosary-visualizer.js"></script>
 </head>
 
 
@@ -95,6 +98,12 @@
           <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong id="totalRosaries">0</strong></div>
           <div class="progress" style="margin:10px 0 14px"><span id="progressBar" style="width:0%"></span></div>
           <button id="logBtn" class="button">Log Today's Rosary</button>
+        </div>
+
+        <!-- ROSARY PROGRESS VISUALIZER: Visual rosary that shows progress -->
+        <div id="rosaryProgressCard" class="card pad" style="display:none;">
+          <h3>Rosary Progress</h3>
+          <div id="rosaryVisualizer" style="margin-top:12px"></div>
         </div>
 
         <!-- QUICK LINKS: Navigation shortcuts -->
@@ -187,6 +196,11 @@ through the same Christ our Lord. Amen.</p></details>
   <!-- ===== JAVASCRIPT APPLICATION LOGIC ===== -->
   <script>
     // ========== CONFIGURATION ==========
+    
+    // Feature flags
+    const FEATURES = {
+      SHOW_ROSARY_PROGRESS: false // Set to false to hide the Rosary Progress section
+    };
     
     // Base path for rosary step images
     // Maps each prayer step to its corresponding image filename
@@ -286,6 +300,8 @@ through the same Christ our Lord. Amen.</p></details>
     const stepTitleEl = document.getElementById('stepTitle');
     const prayerTextEl = document.getElementById('prayerText');
     const stepImageEl = document.getElementById('stepImage');
+    const rosaryProgressCardEl = document.getElementById('rosaryProgressCard');
+    const rosaryVisualizerEl = document.getElementById('rosaryVisualizer');
 
     // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
@@ -335,6 +351,7 @@ through the same Christ our Lord. Amen.</p></details>
       });
     }
 
+
     // Update the main prayer interface with the current step's content
     // Shows the image, title, prayer text, and step count
     function renderStep(){
@@ -348,6 +365,10 @@ through the same Christ our Lord. Amen.</p></details>
       stepImageEl.src = src;
       // If image fails to load, show a fallback SVG placeholder
       stepImageEl.onerror = () => { stepImageEl.onerror = null; stepImageEl.src = imageForTitle(''); };
+      // Update rosary visualization (if feature is enabled)
+      if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
+        window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
+      }
     }
 
     // Initialize the UI on page load
@@ -357,6 +378,16 @@ through the same Christ our Lord. Amen.</p></details>
       renderMysteryAccordion();
       renderStep();
       syncStats();
+      
+      // Show/hide Rosary Progress section based on feature flag
+      if (rosaryProgressCardEl) {
+        rosaryProgressCardEl.style.display = FEATURES.SHOW_ROSARY_PROGRESS ? 'block' : 'none';
+      }
+      
+      // Initialize rosary visualization (if feature is enabled)
+      if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
+        window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
+      }
     }
 
     // ========== EVENT HANDLERS ==========
