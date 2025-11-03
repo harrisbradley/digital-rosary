@@ -199,7 +199,7 @@ through the same Christ our Lord. Amen.</p></details>
     
     // Feature flags
     const FEATURES = {
-      SHOW_ROSARY_PROGRESS: false // Set to false to hide the Rosary Progress section
+      SHOW_ROSARY_PROGRESS: true // Set to false to hide the Rosary Progress section
     };
     
     // Base path for rosary step images
@@ -214,7 +214,9 @@ through the same Christ our Lord. Amen.</p></details>
       "Announce the Mystery": "announce-mystery.jpg",
       "Our Father": "our-father.jpg",
       "Hail Mary": "hail-mary.jpg",
-      "Fatima Prayer": "fatima.jpg"
+      "Fatima Prayer": "fatima.jpg",
+      "Hail Holy Queen": "hail-holy-queen.jpg",
+      "Concluding Prayer": "concluding-prayer.jpg"
     };
     // Add cache-busting query param only in development to prevent caching
     const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';

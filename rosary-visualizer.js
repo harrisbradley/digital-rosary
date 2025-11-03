@@ -175,8 +175,9 @@
     
     let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;">`;
     
-    // Draw oval loop path (the main rosary loop)
-    const ovalPath = `M ${centerX} ${ovalCenterY - ovalRadiusY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 1 ${centerX + ovalRadiusX} ${ovalCenterY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 1 ${centerX} ${ovalCenterY + ovalRadiusY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 1 ${centerX - ovalRadiusX} ${ovalCenterY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 1 ${centerX} ${ovalCenterY - ovalRadiusY} Z`;
+    // Draw oval loop path (the main rosary loop) - flipped horizontally
+    // Path direction reversed to match horizontal flip
+    const ovalPath = `M ${centerX} ${ovalCenterY - ovalRadiusY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 0 ${centerX - ovalRadiusX} ${ovalCenterY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 0 ${centerX} ${ovalCenterY + ovalRadiusY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 0 ${centerX + ovalRadiusX} ${ovalCenterY} A ${ovalRadiusX} ${ovalRadiusY} 0 0 0 ${centerX} ${ovalCenterY - ovalRadiusY} Z`;
     svg += `<path d="${ovalPath}" fill="none" stroke="${chainColor}" stroke-width="1.5" opacity="0.4"/>`;
     
     // Draw 5 decades around the oval loop (55 beads total: 5 large + 50 small)
@@ -185,10 +186,19 @@
     const beadsPerDecade = 11; // 1 Our Father + 10 Hail Marys
     const totalBeads = 55;
     
+    // Rotation angle: Align the break between last Hail Mary and next Our Father with bottom (where star connects)
+    // Each decade spans 72 degrees (2π/5). The breaks between decades are at multiples of 72 degrees.
+    // Rotate so a break point (between last Hail Mary of one decade and Our Father of next) is at the bottom.
+    // Bottom is at Math.PI/2 in standard coordinates. We want a break point there.
+    // The breaks occur at the boundaries between decades. Rotate by Math.PI/2 to position break at bottom.
+    const rotationOffset = Math.PI / 2; // Rotate so break aligns with bottom (Math.PI/2)
+    
     for (let d = 0; d < numDecades; d++) {
       // Calculate angle around the oval for this decade
-      const decadeAngle = (d / numDecades) * Math.PI * 2 - Math.PI / 2; // Start from top
-      const decadeCenterX = centerX + Math.cos(decadeAngle) * ovalRadiusX;
+      // Flip horizontally by negating cosine, rotate so break aligns with bottom
+      let decadeAngle = (d / numDecades) * Math.PI * 2 + rotationOffset;
+      // Flip horizontally: negate the angle's cosine component
+      const decadeCenterX = centerX - Math.cos(decadeAngle) * ovalRadiusX; // Negate for horizontal flip
       const decadeCenterY = ovalCenterY + Math.sin(decadeAngle) * ovalRadiusY;
       
       // Our Father bead (larger) at the start of each decade
@@ -205,7 +215,7 @@
         // Spread beads along the oval curve
         const beadOffsetAngle = (h / 9) * (Math.PI * 2 / numDecades) * 0.8;
         const beadAngle = decadeAngle + beadOffsetAngle;
-        const beadX = centerX + Math.cos(beadAngle) * ovalRadiusX;
+        const beadX = centerX - Math.cos(beadAngle) * ovalRadiusX; // Negate for horizontal flip
         const beadY = ovalCenterY + Math.sin(beadAngle) * ovalRadiusY;
         
         const hmBead = {type: 'decade', decade: d, bead: 'hailMary', index: h};
