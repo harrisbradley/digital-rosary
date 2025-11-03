@@ -191,7 +191,8 @@
     // Rotate so a break point (between last Hail Mary of one decade and Our Father of next) is at the bottom.
     // Bottom is at Math.PI/2 in standard coordinates. We want a break point there.
     // The breaks occur at the boundaries between decades. Rotate by Math.PI/2 to position break at bottom.
-    const rotationOffset = Math.PI / 2; // Rotate so break aligns with bottom (Math.PI/2)
+    // Adjusted: Rotated counter-clockwise 4 degrees from base position
+    const rotationOffset = Math.PI / 2 + (6 * Math.PI / 180); // 4 degrees counter-clockwise from base
     
     for (let d = 0; d < numDecades; d++) {
       // Calculate angle around the oval for this decade
