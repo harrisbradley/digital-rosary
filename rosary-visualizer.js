@@ -14,8 +14,11 @@
     if (stepIdx === 3) return {type: 'intro', bead: 'hailMary', count: 3}; // 3× Hail Mary - three small beads
     if (stepIdx === 4) return {type: 'intro', bead: 'gloryBe'}; // Glory Be - second large bead above the 3 small beads
     
-    // Step 5: Announce the Mystery - maps to centerpiece
+    // Step 5: Announce the Mystery (first decade) - maps to centerpiece
     if (stepIdx === 5) return {type: 'centerpiece'};
+    
+    // Step 6: Our Father (first decade) - also maps to centerpiece
+    if (stepIdx === 6) return {type: 'centerpiece'};
     
     // Decades start at step 5 (but step 5 is the centerpiece, so first decade Our Father is step 6)
     const decadeStartIdx = 5;
@@ -26,8 +29,16 @@
     
     const stepInDecade = (stepIdx - decadeStartIdx) % stepsPerDecade;
     
-    if (stepInDecade === 0) return {type: 'centerpiece'}; // Announce Mystery maps to centerpiece
-    if (stepInDecade === 1) return {type: 'decade', decade: decadeIdx, bead: 'ourFather'};
+    // Announce Mystery: only first decade maps to centerpiece, others map to their Our Father bead
+    if (stepInDecade === 0) {
+      if (decadeIdx === 0) return {type: 'centerpiece'}; // First decade Announce → centerpiece
+      return {type: 'decade', decade: decadeIdx, bead: 'ourFather'}; // Other decades Announce → their OF bead
+    }
+    if (stepInDecade === 1) {
+      // First decade Our Father (step 6) maps to centerpiece, others map to decade bead
+      if (decadeIdx === 0) return {type: 'centerpiece'};
+      return {type: 'decade', decade: decadeIdx, bead: 'ourFather'};
+    }
     if (stepInDecade >= 2 && stepInDecade <= 11) return {type: 'decade', decade: decadeIdx, bead: 'hailMary', index: stepInDecade - 2};
     if (stepInDecade === 12) return {type: 'decade', decade: decadeIdx, bead: 'gloryBe'};
     if (stepInDecade === 13) return {type: 'decade', decade: decadeIdx, bead: 'fatima'};
