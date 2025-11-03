@@ -206,17 +206,18 @@ through the same Christ our Lord. Amen.</p></details>
     // Maps each prayer step to its corresponding image filename
     const ASSET_BASE = "./images/rosary/";
     const STEP_IMAGES = {
-      "The Sign of the Cross": "sign-of-cross.jpg",
-      "Apostles’ Creed": "rosary.jpg", // example you mentioned
-      "Our Father (Intro)": "our-father.jpg",
-      "3× Hail Mary (Faith, Hope, Charity)": "hail-mary-intentions.jpg",
-      "Glory Be": "glory-be.jpg",
+      "The Sign of the Cross": "sign_of_the_cross.png",
+      "Apostles\' Creed": "Creed2.png", // example you mentioned
+      "Our Father (Intro)": "our_father.png",
+      "3× Hail Mary (Faith, Hope, Charity)": "Hail_Mary.png",
+      "Glory Be": "glory_be.png",
       "Announce the Mystery": "announce-mystery.jpg",
-      "Our Father": "our-father.jpg",
-      "Hail Mary": "hail-mary.jpg",
-      "Fatima Prayer": "fatima.jpg",
-      "Hail Holy Queen": "hail-holy-queen.jpg",
-      "Concluding Prayer": "concluding-prayer.jpg"
+      "Our Father": "our_father.png",
+      "Hail Mary": "Hail_Mary.png",
+      "Fatima Prayer": "Fatima.png",
+      "Hail Holy Queen": "hail_holy_queen.png",
+      "Concluding Prayer": "concluding_prayer.png",
+      "The Sign of the Cross (Final)": "sign_of_the_cross.png"
     };
     // Add cache-busting query param only in development to prevent caching
     const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
