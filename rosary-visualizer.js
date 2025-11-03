@@ -203,12 +203,15 @@
       const decadeCenterY = ovalCenterY + Math.sin(decadeAngle) * ovalRadiusY;
       
       // Our Father bead (larger) at the start of each decade
-      const ofBead = {type: 'decade', decade: d, bead: 'ourFather'};
-      const isOFCurrent = isCurrentStepBead(ofBead, stepIndex);
-      const isOFColored = shouldColorBead(ofBead, stepIndex);
-      const ofColor = isOFCurrent ? currentColor : (isOFColored ? coloredColor : uncoloredColor);
-      const ofOutline = isOFCurrent ? currentColor : (isOFColored ? coloredColor : uncoloredOutline);
-      svg += `<circle cx="${decadeCenterX}" cy="${decadeCenterY}" r="${largeBeadRadius}" fill="${ofColor}" stroke="${ofOutline}" stroke-width="1.5"/>`;
+      // Skip OF-1 (Our Father bead from Decade 1)
+      if (d !== 0) {
+        const ofBead = {type: 'decade', decade: d, bead: 'ourFather'};
+        const isOFCurrent = isCurrentStepBead(ofBead, stepIndex);
+        const isOFColored = shouldColorBead(ofBead, stepIndex);
+        const ofColor = isOFCurrent ? currentColor : (isOFColored ? coloredColor : uncoloredColor);
+        const ofOutline = isOFCurrent ? currentColor : (isOFColored ? coloredColor : uncoloredOutline);
+        svg += `<circle cx="${decadeCenterX}" cy="${decadeCenterY}" r="${largeBeadRadius}" fill="${ofColor}" stroke="${ofOutline}" stroke-width="1.5"/>`;
+      }
       
       // 10 Hail Mary beads (smaller) following the Our Father bead
       // Position them in an arc following the oval curve
