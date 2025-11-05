@@ -35,7 +35,12 @@ body {
 /* Make text and buttons larger on mobile devices */
 @media (max-width: 768px) {
   body {
-    font-size: 18px;
+    font-size: 20px;
+  }
+  
+  p {
+    font-size: 20px;
+    line-height: 1.6;
   }
 }
 
@@ -98,8 +103,9 @@ a {
 /* Larger buttons on mobile for easier tapping */
 @media (max-width: 768px) {
   .button {
-    padding: 14px 20px;
-    font-size: 18px;
+    padding: 14px 24px;
+    font-size: 20px;
+    min-height: 56px; /* Minimum touch target size */
   }
 }
 
@@ -149,11 +155,16 @@ a {
 /* Larger padding on mobile for better touch targets */
 @media (max-width: 768px) {
   .card.pad {
-    padding: 24px 20px;
+    padding: 28px 24px;
+  }
+  
+  /* Make welcome card more prominent */
+  .hero {
+    padding: 0;
   }
   
   .prayer-panel {
-    padding: 20px;
+    padding: 24px;
   }
 }
 
@@ -172,12 +183,34 @@ h1 {
   font-size: clamp(28px, 2.6vw, 40px);
 }
 
+/* Larger h1 on mobile for hero section */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 36px;
+    line-height: 1.3;
+    margin-bottom: 16px;
+  }
+}
+
 h2 {
   font-size: clamp(22px, 2vw, 28px);
 }
 
 h3 {
   font-size: clamp(18px, 1.5vw, 24px);
+}
+
+/* Larger headings on mobile */
+@media (max-width: 768px) {
+  h2 {
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+  
+  h3 {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
 }
 
 .muted {
@@ -197,6 +230,26 @@ h3 {
 @media (max-width: 760px) {
   .hero {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  /* Make hero section more prominent on mobile */
+  .hero > div:first-child {
+    padding: 8px 0;
+  }
+  
+  .hero p {
+    font-size: 22px;
+    line-height: 1.7;
+    margin: 16px 0 24px;
+  }
+  
+  .hero .button.primary {
+    padding: 20px 28px;
+    font-size: 22px;
+    min-height: 64px;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -212,6 +265,14 @@ h3 {
   display: inline-block;
   padding: 6px 10px;
   border-radius: 999px;
+}
+
+/* Larger pills on mobile */
+@media (max-width: 768px) {
+  .pill {
+    padding: 8px 14px;
+    font-size: 18px;
+  }
 }
 
 .today {
@@ -281,15 +342,21 @@ h3 {
 /* Larger prayer text on mobile for better readability */
 @media (max-width: 768px) {
   .prayer-text {
-    font-size: 18px;
-    line-height: 1.6;
+    font-size: 20px;
+    line-height: 1.7;
+    margin-top: 16px;
   }
   
   .step {
-    font-size: 20px;
+    font-size: 22px;
+    margin-top: 8px;
   }
   
   .panel-head {
+    font-size: 20px;
+  }
+  
+  .panel-head .muted {
     font-size: 18px;
   }
 }
@@ -304,6 +371,24 @@ h3 {
   margin-top: 12px;
 }
 
+/* Larger toolbar buttons on mobile */
+@media (max-width: 768px) {
+  .toolbar {
+    gap: 12px;
+    margin-top: 20px;
+  }
+  
+  .toolbar .button {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+  
+  .toolbar .button:last-child {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
 .toolbar .button:focus {
   outline: none;
   box-shadow: 0 0 0 4px var(--ring);
@@ -316,6 +401,23 @@ h3 {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* Larger KPI stats on mobile */
+@media (max-width: 768px) {
+  .kpi {
+    font-size: 20px;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  
+  .kpi strong {
+    font-size: 28px;
+  }
+  
+  .kpi .muted {
+    font-size: 18px;
+  }
 }
 
 .progress {
@@ -341,6 +443,23 @@ h3 {
 
 .list li {
   margin: 6px 0;
+}
+
+/* Larger list items on mobile */
+@media (max-width: 768px) {
+  .list {
+    font-size: 20px;
+    padding-left: 24px;
+  }
+  
+  .list li {
+    margin: 10px 0;
+    line-height: 1.6;
+  }
+  
+  .list a {
+    font-size: 20px;
+  }
 }
 
 /* ==========================================
@@ -374,6 +493,54 @@ footer {
   justify-content: space-between;
   font-weight: 700;
   color: #1f2937;
+}
+
+/* Larger accordion on mobile */
+@media (max-width: 768px) {
+  .accordion details {
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  
+  .accordion summary {
+    font-size: 20px;
+    padding: 8px 0;
+  }
+  
+  .accordion ul {
+    font-size: 18px;
+    margin-top: 12px;
+    padding-left: 24px;
+  }
+  
+  .accordion li {
+    margin: 10px 0;
+    line-height: 1.6;
+  }
+}
+
+/* Common Prayers section details on mobile */
+@media (max-width: 768px) {
+  details {
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-size: 18px;
+  }
+  
+  details summary.step {
+    font-size: 20px;
+    padding: 8px 0;
+    cursor: pointer;
+    min-height: 44px; /* Touch target */
+    display: flex;
+    align-items: center;
+  }
+  
+  details p.muted {
+    font-size: 18px;
+    line-height: 1.7;
+    margin-top: 12px;
+  }
 }
 
 .accordion summary::-webkit-details-marker {
