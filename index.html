@@ -73,6 +73,7 @@
                 <button id="prevBtn" class="button">◀ Previous</button>
                 <button id="nextBtn" class="button primary">Next ▶</button>
                 <button id="jumpBtn" class="button">Jump to Decades</button>
+                <button id="restartBtn" class="button" aria-label="Restart Guide" title="Restart Guide">↻</button>
               </div>
               <div class="panel-head">
                 <div>
@@ -333,6 +334,7 @@ through the same Christ our Lord. Amen.</p></details>
     const rosaryProgressCardEl = document.getElementById('rosaryProgressCard');
     const rosaryVisualizerEl = document.getElementById('rosaryVisualizer');
     const jumpBtnEl = document.getElementById('jumpBtn');
+    const restartBtnEl = document.getElementById('restartBtn');
 
     // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
@@ -447,6 +449,12 @@ through the same Christ our Lord. Amen.</p></details>
         stepIndex = targetIdx;
         renderStep();
       }
+    });
+    
+    // Restart button: Return to the first step of the guide
+    restartBtnEl.addEventListener('click',()=>{
+      stepIndex = 0;
+      renderStep();
     });
     
     // Begin button: Start from the beginning and scroll to the guide
