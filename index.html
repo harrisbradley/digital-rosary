@@ -68,6 +68,12 @@
             </div>
             <!-- Right side: Prayer text and controls -->
             <div class="prayer-panel">
+              <!-- Navigation buttons -->
+              <div class="toolbar">
+                <button id="prevBtn" class="button">◀ Previous</button>
+                <button id="nextBtn" class="button primary">Next ▶</button>
+                <button id="jumpBtn" class="button">Jump to Decades</button>
+              </div>
               <div class="panel-head">
                 <div>
                   <div class="muted">Step <span id="stepIndex">1</span> of <span id="stepTotal">—</span></div>
@@ -77,12 +83,6 @@
               </div>
               <!-- Dynamically updated prayer text -->
               <div class="prayer-text" id="prayerText"></div>
-              <!-- Navigation buttons -->
-              <div class="toolbar">
-                <button id="prevBtn" class="button">◀ Previous</button>
-                <button id="nextBtn" class="button primary">Next ▶</button>
-                <button id="jumpBtn" class="button">Jump to Decades</button>
-              </div>  
               <div class="muted" style="font-size:13px;margin-top:6px">Tip: Use ←/→ keys to navigate.</div>
             </div>
           </div>

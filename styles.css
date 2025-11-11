@@ -368,14 +368,14 @@ h3 {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin: 0 0 12px;
 }
 
 /* Larger toolbar buttons on mobile */
 @media (max-width: 768px) {
   .toolbar {
     gap: 12px;
-    margin-top: 20px;
+    margin-bottom: 20px;
   }
   
   .toolbar .button {
