@@ -258,14 +258,23 @@ through the same Christ our Lord. Amen.</p></details>
 
     // Build the steps for each decade of the rosary
     // Each decade consists of: Announce → Our Father → 10 Hail Marys → Glory Be → Fatima Prayer
-    const DECADE_STEPS = [
-      {title:'Announce the Mystery', text:()=>`📿 Announce the <strong>${TODAY_SET}</strong> mystery.`},
-      {title:'Our Father', text:()=>PRAYERS.ourFather},
-      // Generate 10 Hail Mary steps (one for each bead in a decade)
-      ...Array.from({length:10},(_,i)=>({title:`Hail Mary ${i+1}/10`, text:()=>PRAYERS.hailMary})),
-      {title:'Glory Be', text:()=>PRAYERS.gloryBe},
-      {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
-    ];
+    const ORDINALS = ['first','second','third','fourth','fifth'];
+    const TODAY_MYSTERIES = MYSTERIES[TODAY_SET]?.items ?? [];
+
+    function createDecadeSteps(decadeIndex){
+      const ordinal = ORDINALS[decadeIndex] ?? `${decadeIndex+1}th`;
+      const mysteryName = TODAY_MYSTERIES[decadeIndex];
+      const announceTitle = `Announce the ${ordinal} mystery`;
+      const announceText = `📿 Announce the <strong>${ordinal} ${TODAY_SET}</strong> mystery${mysteryName ? `: <strong>${mysteryName}</strong>` : ''}.`;
+      return [
+        {title:announceTitle, text:()=>announceText},
+        {title:'Our Father', text:()=>PRAYERS.ourFather},
+        // Generate 10 Hail Mary steps (one for each bead in a decade)
+        ...Array.from({length:10},(_,i)=>({title:`Hail Mary ${i+1}/10`, text:()=>PRAYERS.hailMary})),
+        {title:'Glory Be', text:()=>PRAYERS.gloryBe},
+        {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
+      ];
+    }
     
     // Complete rosary guide (intro + 5 decades + final prayers)
     const GUIDE = [
@@ -275,15 +284,15 @@ through the same Christ our Lord. Amen.</p></details>
       {title:'3× Hail Mary (Faith, Hope, Charity)', text:()=>PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.'},
       {title:'Glory Be', text:()=>PRAYERS.gloryBe},
       // First Decade
-      ...DECADE_STEPS,
+      ...createDecadeSteps(0),
       // Second Decade
-      ...DECADE_STEPS,
+      ...createDecadeSteps(1),
       // Third Decade
-      ...DECADE_STEPS,
+      ...createDecadeSteps(2),
       // Fourth Decade
-      ...DECADE_STEPS,
+      ...createDecadeSteps(3),
       // Fifth Decade
-      ...DECADE_STEPS,
+      ...createDecadeSteps(4),
       // Final Prayers
       {title:'Hail, Holy Queen', text:()=>PRAYERS.hailHolyQueen},
       {title:'Concluding Prayer', text:()=>PRAYERS.concludingPrayer},
@@ -296,6 +305,10 @@ through the same Christ our Lord. Amen.</p></details>
     // Falls back to generating an SVG if no image found
     function imageForTitle(title){
       if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
+      if (title && title.startsWith('Announce the')){
+        const baseKey = 'Announce the Mystery';
+        if (STEP_IMAGES[baseKey]) return ASSET_BASE + STEP_IMAGES[baseKey] + CACHE_BUST;
+      }
       if (title.startsWith('Hail Mary')){
         const m = title.match(/^Hail Mary (\\d+)/);
         if (m && STEP_IMAGES['Hail Mary ' + m[1]]) return ASSET_BASE + STEP_IMAGES['Hail Mary ' + m[1]] + CACHE_BUST;
@@ -319,6 +332,7 @@ through the same Christ our Lord. Amen.</p></details>
     const stepImageEl = document.getElementById('stepImage');
     const rosaryProgressCardEl = document.getElementById('rosaryProgressCard');
     const rosaryVisualizerEl = document.getElementById('rosaryVisualizer');
+    const jumpBtnEl = document.getElementById('jumpBtn');
 
     // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
@@ -382,6 +396,14 @@ through the same Christ our Lord. Amen.</p></details>
       stepImageEl.src = src;
       // If image fails to load, show a fallback SVG placeholder
       stepImageEl.onerror = () => { stepImageEl.onerror = null; stepImageEl.src = imageForTitle(''); };
+      const nextDecadeIdx = GUIDE.findIndex((s, idx) => idx > stepIndex && s.title.startsWith('Announce the'));
+      if (stepIndex >= 5) {
+        jumpBtnEl.textContent = 'Jump to Next Decade';
+        jumpBtnEl.disabled = nextDecadeIdx === -1;
+      } else {
+        jumpBtnEl.textContent = 'Jump to Decades';
+        jumpBtnEl.disabled = false;
+      }
       // Update rosary visualization (if feature is enabled)
       if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
         window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
@@ -417,7 +439,15 @@ through the same Christ our Lord. Amen.</p></details>
     document.getElementById('prevBtn').addEventListener('click',()=>{ stepIndex=Math.max(0,stepIndex-1); renderStep(); });
     
     // Jump button: Skip directly to the first decade
-    document.getElementById('jumpBtn').addEventListener('click',()=>{ const i=GUIDE.findIndex(s=>s.title.startsWith('Announce the Mystery')); if(i!==-1){ stepIndex=i; renderStep(); } });
+    jumpBtnEl.addEventListener('click',()=>{
+      const targetIdx = stepIndex >= 5
+        ? GUIDE.findIndex((s, idx) => idx > stepIndex && s.title.startsWith('Announce the'))
+        : GUIDE.findIndex(s => s.title.startsWith('Announce the'));
+      if(targetIdx !== -1){
+        stepIndex = targetIdx;
+        renderStep();
+      }
+    });
     
     // Begin button: Start from the beginning and scroll to the guide
     document.getElementById('beginBtn').addEventListener('click',()=>{ stepIndex=0; renderStep(); window.scrollTo({top:document.querySelector('.guide').offsetTop-80,behavior:'smooth'}); });
