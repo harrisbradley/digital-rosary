@@ -76,10 +76,7 @@
                 <button id="restartBtn" class="button" aria-label="Restart Guide" title="Restart Guide">↻</button>
               </div>
               <div class="panel-head">
-                <div>
-                  <div class="muted">Step <span id="stepIndex">1</span> of <span id="stepTotal">—</span></div>
-                  <div class="step" id="stepTitle">The Sign of the Cross</div>
-                </div>
+                <div class="step" id="stepTitle">The Sign of the Cross</div>
                 <span id="mysteryBadge" class="pill">Mystery</span>
               </div>
               <!-- Dynamically updated prayer text -->
@@ -326,8 +323,6 @@ through the same Christ our Lord. Amen.</p></details>
     const totalEl = document.getElementById('totalRosaries');
     const streakEl = document.getElementById('streakDays');
     const progressEl = document.getElementById('progressBar');
-    const stepIdxEl = document.getElementById('stepIndex');
-    const stepTotalEl = document.getElementById('stepTotal');
     const stepTitleEl = document.getElementById('stepTitle');
     const prayerTextEl = document.getElementById('prayerText');
     const stepImageEl = document.getElementById('stepImage');
@@ -389,8 +384,6 @@ through the same Christ our Lord. Amen.</p></details>
     // Shows the image, title, prayer text, and step count
     function renderStep(){
       const step = GUIDE[stepIndex];
-      stepIdxEl.textContent = (stepIndex+1);
-      stepTotalEl.textContent = GUIDE.length.toString();
       stepTitleEl.textContent = step.title;
       prayerTextEl.innerHTML = step.text();
       const src = imageForTitle(step.title);
