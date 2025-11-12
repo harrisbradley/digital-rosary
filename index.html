@@ -330,6 +330,7 @@ through the same Christ our Lord. Amen.</p></details>
     const rosaryVisualizerEl = document.getElementById('rosaryVisualizer');
     const jumpBtnEl = document.getElementById('jumpBtn');
     const restartBtnEl = document.getElementById('restartBtn');
+    const nextBtnEl = document.getElementById('nextBtn');
 
     // Current position in the prayer guide (which step are we on?)
     let stepIndex = 0;
@@ -399,6 +400,15 @@ through the same Christ our Lord. Amen.</p></details>
         jumpBtnEl.textContent = 'Jump to Decades';
         jumpBtnEl.disabled = false;
       }
+      // On the final step, change Next button to "Log Today's Rosary"
+      const isFinalStep = stepIndex === GUIDE.length - 1;
+      if (isFinalStep) {
+        nextBtnEl.textContent = 'Log Today\'s Rosary';
+        nextBtnEl.classList.add('primary');
+      } else {
+        nextBtnEl.textContent = 'Next ▶';
+        nextBtnEl.classList.remove('primary');
+      }
       // Update rosary visualization (if feature is enabled)
       if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
         window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
@@ -427,8 +437,18 @@ through the same Christ our Lord. Amen.</p></details>
     // ========== EVENT HANDLERS ==========
     
     // Navigation: Move forward through the rosary steps
-    // Next button: Go to next step
-    document.getElementById('nextBtn').addEventListener('click',()=>{ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); });
+    // Next button: Go to next step, or log rosary if on final step
+    nextBtnEl.addEventListener('click',()=>{ 
+      const isFinalStep = stepIndex === GUIDE.length - 1;
+      if (isFinalStep) {
+        // Log the rosary with celebration
+        logRosary(true);
+      } else {
+        // Move to next step
+        stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+        renderStep();
+      }
+    });
     
     // Previous button: Go back to previous step
     document.getElementById('prevBtn').addEventListener('click',()=>{ stepIndex=Math.max(0,stepIndex-1); renderStep(); });
@@ -465,14 +485,73 @@ through the same Christ our Lord. Amen.</p></details>
     // Update the displayed stats (streak, total count, progress bar)
     function syncStats(){ const total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0); totalEl.textContent=total; streakEl.textContent=streak; progressEl.style.width=Math.min(100,(total%50)*2)+'%'; }
     
-    // Log button: Record that you prayed the rosary today
+    // Celebration animation and message
+    function celebrate(){
+      // Create celebration overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease;';
+      
+      const message = document.createElement('div');
+      message.style.cssText = 'background:white;padding:40px 60px;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;animation:scaleIn 0.4s ease;';
+      message.innerHTML = '<div style="font-size:64px;margin-bottom:20px;">🙏✨</div><h2 style="font-size:32px;margin:0 0 16px;color:#1862A8;">Rosary Complete!</h2><p style="font-size:18px;color:#6b7280;margin:0;">Thank you for your devotion. May God bless you.</p>';
+      
+      overlay.appendChild(message);
+      document.body.appendChild(overlay);
+      
+      // Add CSS animations
+      if (!document.getElementById('celebration-styles')) {
+        const style = document.createElement('style');
+        style.id = 'celebration-styles';
+        style.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}';
+        document.head.appendChild(style);
+      }
+      
+      // Remove overlay after 3 seconds
+      setTimeout(() => {
+        overlay.style.animation = 'fadeIn 0.3s ease reverse';
+        setTimeout(() => overlay.remove(), 300);
+      }, 3000);
+      
+      // Confetti effect (simple version)
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.style.cssText = `position:fixed;width:10px;height:10px;background:${['#1862A8','#FDDB6F','#ff6b6b','#4ecdc4'][Math.floor(Math.random()*4)]};left:${Math.random()*100}%;top:-10px;z-index:10001;border-radius:50%;pointer-events:none;`;
+          document.body.appendChild(confetti);
+          const duration = 2000 + Math.random() * 1000;
+          const endX = Math.random() * window.innerWidth;
+          const endY = window.innerHeight + 100;
+          confetti.animate([
+            { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+            { transform: `translate(${endX - parseFloat(confetti.style.left) * window.innerWidth / 100}px, ${endY}px) rotate(720deg)`, opacity: 0 }
+          ], { duration, easing: 'ease-out' }).onfinish = () => confetti.remove();
+        }, i * 30);
+      }
+    }
+    
+    // Log rosary: Record that you prayed the rosary today
     // Tracks streaks (consecutive days) and total count
-    document.getElementById('logBtn').addEventListener('click',()=>{
+    function logRosary(showCelebration = false){
       const last=getLS(LS_KEYS.LAST_DATE,null), total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0), today=todayStr();
-      if(last===today){ alert('You already logged today 🙌'); return; }
+      if(last===today){ 
+        if(showCelebration) {
+          alert('You already logged today 🙌'); 
+        }
+        return false; 
+      }
       let newStreak=1;
       if(last){ const y=new Date(); y.setDate(y.getDate()-1); if(y.toISOString().slice(0,10)===last) newStreak=streak+1; }
-      setLS(LS_KEYS.LAST_DATE,today); setLS(LS_KEYS.TOTAL,total+1); setLS(LS_KEYS.STREAK,newStreak); syncStats();
+      setLS(LS_KEYS.LAST_DATE,today); setLS(LS_KEYS.TOTAL,total+1); setLS(LS_KEYS.STREAK,newStreak); 
+      syncStats();
+      if(showCelebration) {
+        celebrate();
+      }
+      return true;
+    }
+    
+    // Log button: Record that you prayed the rosary today
+    document.getElementById('logBtn').addEventListener('click',()=>{
+      logRosary(false);
     });
 
     // ========== INITIALIZE APP ==========
