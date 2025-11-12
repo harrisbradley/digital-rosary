@@ -401,14 +401,15 @@ through the same Christ our Lord. Amen.</p></details>
         jumpBtnEl.disabled = false;
       }
       // On the final step, change Next button to "Log Today's Rosary"
+      // Next button always keeps primary class (blue background, gold text)
       const isFinalStep = stepIndex === GUIDE.length - 1;
       if (isFinalStep) {
         nextBtnEl.textContent = 'Log Today\'s Rosary';
-        nextBtnEl.classList.add('primary');
       } else {
         nextBtnEl.textContent = 'Next ▶';
-        nextBtnEl.classList.remove('primary');
       }
+      // Ensure primary class is always present
+      nextBtnEl.classList.add('primary');
       // Update rosary visualization (if feature is enabled)
       if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
         window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
