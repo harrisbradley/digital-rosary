@@ -98,6 +98,12 @@ a {
   background: #fff;
   font-weight: 600;
   font-size: 16px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+}
+
+.button:active {
+  transform: scale(0.95);
 }
 
 /* Larger buttons on mobile for easier tapping */
@@ -114,6 +120,24 @@ a {
   color: #FDDB6F;
   border-color: transparent;
   box-shadow: 0 6px 14px rgba(24, 98, 168, 0.18);
+}
+
+.button.clicked {
+  animation: buttonClick 0.3s ease;
+}
+
+@keyframes buttonClick {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.93);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ==========================================

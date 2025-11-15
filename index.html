@@ -440,6 +440,12 @@ through the same Christ our Lord. Amen.</p></details>
     // Navigation: Move forward through the rosary steps
     // Next button: Go to next step, or log rosary if on final step
     nextBtnEl.addEventListener('click',()=>{ 
+      // Add visual feedback animation
+      nextBtnEl.classList.add('clicked');
+      setTimeout(() => {
+        nextBtnEl.classList.remove('clicked');
+      }, 300);
+      
       const isFinalStep = stepIndex === GUIDE.length - 1;
       if (isFinalStep) {
         // Log the rosary with celebration
