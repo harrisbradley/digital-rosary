@@ -268,7 +268,13 @@ through the same Christ our Lord. Amen.</p></details>
         {title:announceTitle, text:()=>announceText},
         {title:'Our Father', text:()=>PRAYERS.ourFather},
         // Generate 10 Hail Mary steps (one for each bead in a decade)
-        ...Array.from({length:10},(_,i)=>({title:`Hail Mary ${i+1}/10`, text:()=>PRAYERS.hailMary})),
+        ...Array.from({length:10},(_,i)=>({
+          title:`Hail Mary ${i+1}/10`, 
+          text:()=>PRAYERS.hailMary,
+          isHailMary: true,
+          hailMaryNumber: i + 1,
+          decadeIndex: decadeIndex
+        })),
         {title:'Glory Be', text:()=>PRAYERS.gloryBe},
         {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
       ];
@@ -298,6 +304,25 @@ through the same Christ our Lord. Amen.</p></details>
     ];
 
     // ========== UTILITY FUNCTIONS ==========
+    
+    // Generate bead visualization for Hail Mary steps
+    // Shows 10 beads: previous beads are blue (filled), current bead is red, future beads are empty
+    function generateBeads(currentNumber) {
+      const beads = [];
+      for (let i = 1; i <= 10; i++) {
+        let classes = 'bead';
+        if (i < currentNumber) {
+          // Previous beads: filled blue
+          classes += ' bead-filled';
+        } else if (i === currentNumber) {
+          // Current bead: red
+          classes += ' bead-current';
+        }
+        // Future beads (i > currentNumber): remain empty (just 'bead' class)
+        beads.push(`<span class="${classes}"></span>`);
+      }
+      return `<span class="beads-container">${beads.join('')}</span>`;
+    }
     
     // Find the appropriate image for a prayer step title
     // Falls back to generating an SVG if no image found
@@ -385,7 +410,12 @@ through the same Christ our Lord. Amen.</p></details>
     // Shows the image, title, prayer text, and step count
     function renderStep(){
       const step = GUIDE[stepIndex];
-      stepTitleEl.textContent = step.title;
+      // For Hail Mary steps, show beads instead of "#/10"
+      if (step.isHailMary && step.hailMaryNumber) {
+        stepTitleEl.innerHTML = `Hail Mary ${generateBeads(step.hailMaryNumber)}`;
+      } else {
+        stepTitleEl.textContent = step.title;
+      }
       prayerTextEl.innerHTML = step.text();
       const src = imageForTitle(step.title);
       stepImageEl.alt = step.title + ' illustration';

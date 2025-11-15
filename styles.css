@@ -357,6 +357,51 @@ h3 {
   font-weight: 700;
 }
 
+/* Beads visualization for Hail Mary steps */
+.beads-container {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.bead {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--primary);
+  background: transparent;
+  display: inline-block;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.bead-filled {
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.bead-current {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+/* Larger beads on mobile for better visibility */
+@media (max-width: 768px) {
+  .beads-container {
+    gap: 8px;
+    margin-left: 10px;
+  }
+  
+  .bead {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+  }
+}
+
 .prayer-text {
   margin-top: 8px;
   white-space: pre-wrap;
