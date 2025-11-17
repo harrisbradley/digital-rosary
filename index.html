@@ -422,13 +422,23 @@ through the same Christ our Lord. Amen.</p></details>
       stepImageEl.src = src;
       // If image fails to load, show a fallback SVG placeholder
       stepImageEl.onerror = () => { stepImageEl.onerror = null; stepImageEl.src = imageForTitle(''); };
+      // Count how many "Announce the" steps we've passed (each decade starts with one)
+      const announceSteps = GUIDE.filter((s, idx) => idx <= stepIndex && s.title.startsWith('Announce the'));
+      const currentDecade = announceSteps.length;
       const nextDecadeIdx = GUIDE.findIndex((s, idx) => idx > stepIndex && s.title.startsWith('Announce the'));
-      if (stepIndex >= 5) {
-        jumpBtnEl.textContent = 'Jump to Next Decade';
-        jumpBtnEl.disabled = nextDecadeIdx === -1;
+      
+      // Hide jump button if we're in the 5th decade or later
+      if (currentDecade >= 5) {
+        jumpBtnEl.style.display = 'none';
       } else {
-        jumpBtnEl.textContent = 'Jump to Decades';
-        jumpBtnEl.disabled = false;
+        jumpBtnEl.style.display = '';
+        if (stepIndex >= 5) {
+          jumpBtnEl.textContent = 'Jump to Next Decade';
+          jumpBtnEl.disabled = nextDecadeIdx === -1;
+        } else {
+          jumpBtnEl.textContent = 'Jump to Decades';
+          jumpBtnEl.disabled = false;
+        }
       }
       // On the final step, change Next button to "Log Today's Rosary"
       // Next button always keeps primary class (blue background, gold text)
