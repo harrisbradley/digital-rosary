@@ -95,7 +95,7 @@
           <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span class="muted">Days</span></div>
           <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong id="totalRosaries">0</strong></div>
           <div class="progress" style="margin:10px 0 14px"><span id="progressBar" style="width:0%"></span></div>
-          <button id="logBtn" class="button">Log Today's Rosary</button>
+          <button id="logBtn" class="button primary">Log Today's Rosary</button>
         </div>
 
         <!-- ROSARY PROGRESS VISUALIZER: Visual rosary that shows progress -->
@@ -598,7 +598,7 @@ through the same Christ our Lord. Amen.</p></details>
     
     // Log button: Record that you prayed the rosary today
     document.getElementById('logBtn').addEventListener('click',()=>{
-      logRosary(false);
+      logRosary(true);
     });
 
     // ========== INITIALIZE APP ==========
