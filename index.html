@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <!-- Document metadata -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Digital Rosary — Custom Images + Accordion Mysteries</title>
-  
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="images/logo/plain_logo_v0.1.png">
-  
+
   <!-- Font preconnections for faster loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
+
   <!-- Google Fonts: Merriweather for headings, Inter for body text -->
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <!-- External stylesheet -->
   <link rel="stylesheet" href="styles.css">
-  
+
   <!-- Rosary Visualizer -->
   <script src="rosary-visualizer.js"></script>
 </head>
@@ -31,8 +34,10 @@
   <!-- ===== NAVIGATION BAR ===== -->
   <nav class="nav">
     <div class="nav-inner">
-      <a class="brand" href="#"><img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary" style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
-      <div class="nav-links"><a href="#home">Home</a><a href="prayer-log.html">Prayer Log</a><a href="#about">About</a><a href="#settings">Settings</a><button class="button">Log In</button></div>
+      <a class="brand" href="#"><img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary"
+          style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
+      <div class="nav-links"><a href="#home">Home</a><a href="prayer-log.html">Prayer Log</a><a
+          href="#about">About</a><a href="#settings">Settings</a><button class="button">Log In</button></div>
     </div>
   </nav>
 
@@ -53,7 +58,8 @@
             </div>
             <!-- Decorative sunrise image -->
             <div class="sunrise">
-              <img src="images/sunrise.png" alt="Sunrise" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+              <img src="images/sunrise.png" alt="Sunrise"
+                style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
             </div>
           </div>
         </div>
@@ -92,8 +98,10 @@
         <!-- STATS CARD: Prayer tracking and streaks -->
         <div class="card pad">
           <h3>Your Prayer Journey</h3>
-          <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span class="muted">Days</span></div>
-          <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong id="totalRosaries">0</strong></div>
+          <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span
+              class="muted">Days</span></div>
+          <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong
+              id="totalRosaries">0</strong></div>
           <div class="progress" style="margin:10px 0 14px"><span id="progressBar" style="width:0%"></span></div>
           <button id="logBtn" class="button primary">Log Today's Rosary</button>
         </div>
@@ -124,67 +132,91 @@
     <!-- COMMON PRAYERS SECTION: All prayer texts in expandable details -->
     <section id="common-prayers" class="card pad" style="margin-top:18px">
       <h2>Common Prayers</h2>
-      <details open style="margin-top:8px"><summary class="step">🕊️ The Sign of the Cross</summary><p class="muted">In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">✝️ The Apostles’ Creed</summary><p class="muted">I believe in God, the Father almighty, Creator of heaven and earth;
-and in Jesus Christ, His only Son, our Lord,
-who was conceived by the Holy Spirit, born of the Virgin Mary,
-suffered under Pontius Pilate, was crucified, died and was buried;
-He descended into hell;
-on the third day He rose again from the dead;
-He ascended into heaven,
-and is seated at the right hand of God the Father almighty;
-from there He will come to judge the living and the dead.
-I believe in the Holy Spirit,
-the holy Catholic Church,
-the communion of saints,
-the forgiveness of sins,
-the resurrection of the body,
-and life everlasting. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">🙏 The Our Father</summary><p class="muted">Our Father, who art in heaven,
-hallowed be Thy name;
-Thy kingdom come;
-Thy will be done on earth as it is in heaven.
-Give us this day our daily bread;
-and forgive us our trespasses,
-as we forgive those who trespass against us;
-and lead us not into temptation,
-but deliver us from evil. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">🌹 The Hail Mary</summary><p class="muted">Hail Mary, full of grace, the Lord is with thee;
-blessed art thou among women,
-and blessed is the fruit of thy womb, Jesus.
-Holy Mary, Mother of God,
-pray for us sinners,
-now and at the hour of our death. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">✨ The Glory Be (Doxology)</summary><p class="muted">Glory be to the Father, and to the Son, and to the Holy Spirit;
-as it was in the beginning, is now, and ever shall be,
-world without end. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">💖 The Fatima Prayer ("Oh my Jesus")</summary><p class="muted">O my Jesus, forgive us our sins,
-save us from the fires of hell;
-lead all souls to Heaven,
-especially those most in need of Thy mercy. Amen.</p></details>
-      <details style="margin-top:8px"><summary class="step">🕯️ The Hail, Holy Queen (Salve Regina)</summary><p class="muted">Hail, holy Queen, Mother of mercy,
-our life, our sweetness, and our hope.
-To thee do we cry, poor banished children of Eve;
-to thee do we send up our sighs, mourning and weeping in this valley of tears.
-Turn then, most gracious advocate,
-thine eyes of mercy toward us;
-and after this our exile,
-show unto us the blessed fruit of thy womb, Jesus.
-O clement, O loving, O sweet Virgin Mary.
+      <details open style="margin-top:8px">
+        <summary class="step">🕊️ The Sign of the Cross</summary>
+        <p class="muted">In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">✝️ The Apostles’ Creed</summary>
+        <p class="muted">I believe in God, the Father almighty, Creator of heaven and earth;
+          and in Jesus Christ, His only Son, our Lord,
+          who was conceived by the Holy Spirit, born of the Virgin Mary,
+          suffered under Pontius Pilate, was crucified, died and was buried;
+          He descended into hell;
+          on the third day He rose again from the dead;
+          He ascended into heaven,
+          and is seated at the right hand of God the Father almighty;
+          from there He will come to judge the living and the dead.
+          I believe in the Holy Spirit,
+          the holy Catholic Church,
+          the communion of saints,
+          the forgiveness of sins,
+          the resurrection of the body,
+          and life everlasting. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">🙏 The Our Father</summary>
+        <p class="muted">Our Father, who art in heaven,
+          hallowed be Thy name;
+          Thy kingdom come;
+          Thy will be done on earth as it is in heaven.
+          Give us this day our daily bread;
+          and forgive us our trespasses,
+          as we forgive those who trespass against us;
+          and lead us not into temptation,
+          but deliver us from evil. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">🌹 The Hail Mary</summary>
+        <p class="muted">Hail Mary, full of grace, the Lord is with thee;
+          blessed art thou among women,
+          and blessed is the fruit of thy womb, Jesus.
+          Holy Mary, Mother of God,
+          pray for us sinners,
+          now and at the hour of our death. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">✨ The Glory Be (Doxology)</summary>
+        <p class="muted">Glory be to the Father, and to the Son, and to the Holy Spirit;
+          as it was in the beginning, is now, and ever shall be,
+          world without end. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">💖 The Fatima Prayer ("Oh my Jesus")</summary>
+        <p class="muted">O my Jesus, forgive us our sins,
+          save us from the fires of hell;
+          lead all souls to Heaven,
+          especially those most in need of Thy mercy. Amen.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">🕯️ The Hail, Holy Queen (Salve Regina)</summary>
+        <p class="muted">Hail, holy Queen, Mother of mercy,
+          our life, our sweetness, and our hope.
+          To thee do we cry, poor banished children of Eve;
+          to thee do we send up our sighs, mourning and weeping in this valley of tears.
+          Turn then, most gracious advocate,
+          thine eyes of mercy toward us;
+          and after this our exile,
+          show unto us the blessed fruit of thy womb, Jesus.
+          O clement, O loving, O sweet Virgin Mary.
 
-Leader: Pray for us, O holy Mother of God.
-Response: That we may be made worthy of the promises of Christ.</p></details>
-      <details style="margin-top:8px"><summary class="step">🌸 The Concluding Prayer</summary><p class="muted">Let us pray:
+          Leader: Pray for us, O holy Mother of God.
+          Response: That we may be made worthy of the promises of Christ.</p>
+      </details>
+      <details style="margin-top:8px">
+        <summary class="step">🌸 The Concluding Prayer</summary>
+        <p class="muted">Let us pray:
 
-O God, whose only-begotten Son,
-by His life, death, and resurrection,
-has purchased for us the rewards of eternal life;
-grant, we beseech Thee,
-that meditating upon these mysteries
-of the Most Holy Rosary of the Blessed Virgin Mary,
-we may imitate what they contain
-and obtain what they promise,
-through the same Christ our Lord. Amen.</p></details>
+          O God, whose only-begotten Son,
+          by His life, death, and resurrection,
+          has purchased for us the rewards of eternal life;
+          grant, we beseech Thee,
+          that meditating upon these mysteries
+          of the Most Holy Rosary of the Blessed Virgin Mary,
+          we may imitate what they contain
+          and obtain what they promise,
+          through the same Christ our Lord. Amen.</p>
+      </details>
     </section>
   </main>
 
@@ -194,12 +226,12 @@ through the same Christ our Lord. Amen.</p></details>
   <!-- ===== JAVASCRIPT APPLICATION LOGIC ===== -->
   <script>
     // ========== CONFIGURATION ==========
-    
+
     // Feature flags
     const FEATURES = {
       SHOW_ROSARY_PROGRESS: false // Set to false to hide the Rosary Progress section
     };
-    
+
     // Base path for rosary step images
     // Maps each prayer step to its corresponding image filename
     const ASSET_BASE = "./images/rosary/";
@@ -214,17 +246,17 @@ through the same Christ our Lord. Amen.</p></details>
       "Hail Mary": "Hail_Mary.png",
       "Fatima Prayer": "Fatima.png",
       "Hail Holy Queen": "hail_holy_queen.png",
-      "Concluding Prayer": "concluding_prayer.png",
+      "Concluding Prayer": "conclusion.png",
       "The Sign of the Cross (Final)": "sign_of_the_cross.png"
     };
     // Add cache-busting query param only in development to prevent caching
     const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
 
     // Helper: Get today's date in YYYY-MM-DD format
-    const todayStr = () => new Date().toISOString().slice(0,10);
-    
+    const todayStr = () => new Date().toISOString().slice(0, 10);
+
     // LocalStorage keys for persistence
-    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1' };
+    const LS_KEYS = { TOTAL: 'rosary_total_v1', LAST_DATE: 'rosary_last_date_v1', STREAK: 'rosary_streak_v1' };
 
     // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
     // Each mystery has specific days of the week it's typically prayed
@@ -233,14 +265,14 @@ through the same Christ our Lord. Amen.</p></details>
     // - Glorious: Sunday & Wednesday (days 0 & 3)
     // - Luminous: Thursday (day 4)
     const MYSTERIES = {
-      Joyful:{days:[1,6],items:['The Annunciation','The Visitation','The Nativity','The Presentation','The Finding in the Temple']},
-      Sorrowful:{days:[2,5],items:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion']},
-      Glorious:{days:[0,3],items:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption','The Coronation of Mary']},
-      Luminous:{days:[4],items:['The Baptism of the Lord','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist']}
+      Joyful: { days: [1, 6], items: ['The Annunciation', 'The Visitation', 'The Nativity', 'The Presentation', 'The Finding in the Temple'] },
+      Sorrowful: { days: [2, 5], items: ['The Agony in the Garden', 'The Scourging at the Pillar', 'The Crowning with Thorns', 'The Carrying of the Cross', 'The Crucifixion'] },
+      Glorious: { days: [0, 3], items: ['The Resurrection', 'The Ascension', 'The Descent of the Holy Spirit', 'The Assumption', 'The Coronation of Mary'] },
+      Luminous: { days: [4], items: ['The Baptism of the Lord', 'The Wedding at Cana', 'The Proclamation of the Kingdom', 'The Transfiguration', 'The Institution of the Eucharist'] }
     };
     // Calculate which mystery set is for today
     const weekday = new Date().getDay();
-    const TODAY_SET = Object.entries(MYSTERIES).find(([_,cfg])=>cfg.days.includes(weekday))?.[0] ?? 'Joyful';
+    const TODAY_SET = Object.entries(MYSTERIES).find(([_, cfg]) => cfg.days.includes(weekday))?.[0] ?? 'Joyful';
 
     // ========== PRAYER TEXTS ==========
     const PRAYERS = {
@@ -256,37 +288,37 @@ through the same Christ our Lord. Amen.</p></details>
 
     // Build the steps for each decade of the rosary
     // Each decade consists of: Announce → Our Father → 10 Hail Marys → Glory Be → Fatima Prayer
-    const ORDINALS = ['first','second','third','fourth','fifth'];
+    const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth'];
     const TODAY_MYSTERIES = MYSTERIES[TODAY_SET]?.items ?? [];
 
-    function createDecadeSteps(decadeIndex){
-      const ordinal = ORDINALS[decadeIndex] ?? `${decadeIndex+1}th`;
+    function createDecadeSteps(decadeIndex) {
+      const ordinal = ORDINALS[decadeIndex] ?? `${decadeIndex + 1}th`;
       const mysteryName = TODAY_MYSTERIES[decadeIndex];
       const announceTitle = `Announce the ${ordinal} mystery`;
       const announceText = `📿 Announce the <strong>${ordinal} ${TODAY_SET}</strong> mystery${mysteryName ? `: <strong>${mysteryName}</strong>` : ''}.`;
       return [
-        {title:announceTitle, text:()=>announceText},
-        {title:'Our Father', text:()=>PRAYERS.ourFather},
+        { title: announceTitle, text: () => announceText },
+        { title: 'Our Father', text: () => PRAYERS.ourFather },
         // Generate 10 Hail Mary steps (one for each bead in a decade)
-        ...Array.from({length:10},(_,i)=>({
-          title:`Hail Mary ${i+1}/10`, 
-          text:()=>PRAYERS.hailMary,
+        ...Array.from({ length: 10 }, (_, i) => ({
+          title: `Hail Mary ${i + 1}/10`,
+          text: () => PRAYERS.hailMary,
           isHailMary: true,
           hailMaryNumber: i + 1,
           decadeIndex: decadeIndex
         })),
-        {title:'Glory Be', text:()=>PRAYERS.gloryBe},
-        {title:'Fatima Prayer', text:()=>PRAYERS.fatima}
+        { title: 'Glory Be', text: () => PRAYERS.gloryBe },
+        { title: 'Fatima Prayer', text: () => PRAYERS.fatima }
       ];
     }
-    
+
     // Complete rosary guide (intro + 5 decades + final prayers)
     const GUIDE = [
-      {title:'The Sign of the Cross', text:()=>PRAYERS.signOfCross},
-      {title:'Apostles\' Creed', text:()=>PRAYERS.apostlesCreed},
-      {title:'Our Father (Intro)', text:()=>PRAYERS.ourFather},
-      {title:'3× Hail Mary (Faith, Hope, Charity)', text:()=>PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.'},
-      {title:'Glory Be', text:()=>PRAYERS.gloryBe},
+      { title: 'The Sign of the Cross', text: () => PRAYERS.signOfCross },
+      { title: 'Apostles\' Creed', text: () => PRAYERS.apostlesCreed },
+      { title: 'Our Father (Intro)', text: () => PRAYERS.ourFather },
+      { title: '3× Hail Mary (Faith, Hope, Charity)', text: () => PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.' },
+      { title: 'Glory Be', text: () => PRAYERS.gloryBe },
       // First Decade
       ...createDecadeSteps(0),
       // Second Decade
@@ -298,13 +330,13 @@ through the same Christ our Lord. Amen.</p></details>
       // Fifth Decade
       ...createDecadeSteps(4),
       // Final Prayers
-      {title:'Hail, Holy Queen', text:()=>PRAYERS.hailHolyQueen},
-      {title:'Concluding Prayer', text:()=>PRAYERS.concludingPrayer},
-      {title:'The Sign of the Cross (Final)', text:()=>PRAYERS.signOfCross}
+      { title: 'Hail Holy Queen', text: () => PRAYERS.hailHolyQueen },
+      { title: 'Concluding Prayer', text: () => PRAYERS.concludingPrayer },
+      { title: 'The Sign of the Cross (Final)', text: () => PRAYERS.signOfCross }
     ];
 
     // ========== UTILITY FUNCTIONS ==========
-    
+
     // Generate bead visualization for Hail Mary steps
     // Shows 10 beads: previous beads are blue (filled), current bead is red, future beads are empty
     function generateBeads(currentNumber) {
@@ -323,16 +355,16 @@ through the same Christ our Lord. Amen.</p></details>
       }
       return `<span class="beads-container">${beads.join('')}</span>`;
     }
-    
+
     // Find the appropriate image for a prayer step title
     // Falls back to generating an SVG if no image found
-    function imageForTitle(title){
+    function imageForTitle(title) {
       if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
-      if (title && title.startsWith('Announce the')){
+      if (title && title.startsWith('Announce the')) {
         const baseKey = 'Announce the Mystery';
         if (STEP_IMAGES[baseKey]) return ASSET_BASE + STEP_IMAGES[baseKey] + CACHE_BUST;
       }
-      if (title.startsWith('Hail Mary')){
+      if (title.startsWith('Hail Mary')) {
         const m = title.match(/^Hail Mary (\\d+)/);
         if (m && STEP_IMAGES['Hail Mary ' + m[1]]) return ASSET_BASE + STEP_IMAGES['Hail Mary ' + m[1]] + CACHE_BUST;
         if (STEP_IMAGES['Hail Mary']) return ASSET_BASE + STEP_IMAGES['Hail Mary'] + CACHE_BUST;
@@ -361,20 +393,20 @@ through the same Christ our Lord. Amen.</p></details>
     let stepIndex = 0;
 
     // ========== UTILITY FUNCTIONS ==========
-    
+
     // Convert day numbers to abbreviated day names
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const getDaysString = (days) => days.map(d => DAY_NAMES[d]).join(', ');
-    
+
     // ========== RENDERING FUNCTIONS ==========
-    
+
     // Dynamically build the mysteries accordion (the expandable list in the sidebar)
     // This shows all four mystery sets with their individual mysteries listed
-    function renderMysteryAccordion(){
+    function renderMysteryAccordion() {
       accordionEl.innerHTML = '';
-      for(const [name, cfg] of Object.entries(MYSTERIES)){
+      for (const [name, cfg] of Object.entries(MYSTERIES)) {
         const details = document.createElement('details');
-        if(name === TODAY_SET) details.open = true; // only today's expanded
+        if (name === TODAY_SET) details.open = true; // only today's expanded
 
         const summary = document.createElement('summary');
         const left = document.createElement('span');
@@ -382,14 +414,14 @@ through the same Christ our Lord. Amen.</p></details>
         const mysteryName = name === TODAY_SET ? `<span class="today-tag">${name}</span>` : name;
         const daysString = `(${getDaysString(cfg.days)})`;
         left.innerHTML = `${mysteryName} ${daysString}`;
-        const chev = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        chev.setAttribute('viewBox','0 0 24 24'); chev.classList.add('chev'); chev.setAttribute('width','18'); chev.setAttribute('height','18');
+        const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        chev.setAttribute('viewBox', '0 0 24 24'); chev.classList.add('chev'); chev.setAttribute('width', '18'); chev.setAttribute('height', '18');
         chev.innerHTML = '<path d="M8 5l8 7-8 7" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
         summary.appendChild(left); summary.appendChild(chev);
         details.appendChild(summary);
 
         const ul = document.createElement('ul');
-        cfg.items.forEach(item => { const li=document.createElement('li'); li.textContent=item; ul.appendChild(li); });
+        cfg.items.forEach(item => { const li = document.createElement('li'); li.textContent = item; ul.appendChild(li); });
         details.appendChild(ul);
 
         accordionEl.appendChild(details);
@@ -398,7 +430,7 @@ through the same Christ our Lord. Amen.</p></details>
       // Make it behave like a true accordion: only one open at a time.
       accordionEl.querySelectorAll('details').forEach(d => {
         d.addEventListener('toggle', () => {
-          if (d.open){
+          if (d.open) {
             accordionEl.querySelectorAll('details').forEach(other => { if (other !== d) other.open = false; });
           }
         });
@@ -408,7 +440,7 @@ through the same Christ our Lord. Amen.</p></details>
 
     // Update the main prayer interface with the current step's content
     // Shows the image, title, prayer text, and step count
-    function renderStep(){
+    function renderStep() {
       const step = GUIDE[stepIndex];
       // For Hail Mary steps, show beads instead of "#/10"
       if (step.isHailMary && step.hailMaryNumber) {
@@ -426,7 +458,7 @@ through the same Christ our Lord. Amen.</p></details>
       const announceSteps = GUIDE.filter((s, idx) => idx <= stepIndex && s.title.startsWith('Announce the'));
       const currentDecade = announceSteps.length;
       const nextDecadeIdx = GUIDE.findIndex((s, idx) => idx > stepIndex && s.title.startsWith('Announce the'));
-      
+
       // Hide jump button if we're in the 5th decade or later
       if (currentDecade >= 5) {
         jumpBtnEl.style.display = 'none';
@@ -457,18 +489,18 @@ through the same Christ our Lord. Amen.</p></details>
     }
 
     // Initialize the UI on page load
-    function hydrateUI(){
+    function hydrateUI() {
       todayMysteryEl.textContent = TODAY_SET;
       mysteryBadgeEl.textContent = TODAY_SET + ' Mysteries';
       renderMysteryAccordion();
       renderStep();
       syncStats();
-      
+
       // Show/hide Rosary Progress section based on feature flag
       if (rosaryProgressCardEl) {
         rosaryProgressCardEl.style.display = FEATURES.SHOW_ROSARY_PROGRESS ? 'block' : 'none';
       }
-      
+
       // Initialize rosary visualization (if feature is enabled)
       if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
         window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
@@ -476,16 +508,16 @@ through the same Christ our Lord. Amen.</p></details>
     }
 
     // ========== EVENT HANDLERS ==========
-    
+
     // Navigation: Move forward through the rosary steps
     // Next button: Go to next step, or log rosary if on final step
-    nextBtnEl.addEventListener('click',()=>{ 
+    nextBtnEl.addEventListener('click', () => {
       // Add visual feedback animation
       nextBtnEl.classList.add('clicked');
       setTimeout(() => {
         nextBtnEl.classList.remove('clicked');
       }, 300);
-      
+
       const isFinalStep = stepIndex === GUIDE.length - 1;
       if (isFinalStep) {
         // Log the rosary with celebration
@@ -496,55 +528,55 @@ through the same Christ our Lord. Amen.</p></details>
         renderStep();
       }
     });
-    
+
     // Previous button: Go back to previous step
-    document.getElementById('prevBtn').addEventListener('click',()=>{ stepIndex=Math.max(0,stepIndex-1); renderStep(); });
-    
+    document.getElementById('prevBtn').addEventListener('click', () => { stepIndex = Math.max(0, stepIndex - 1); renderStep(); });
+
     // Jump button: Skip directly to the first decade
-    jumpBtnEl.addEventListener('click',()=>{
+    jumpBtnEl.addEventListener('click', () => {
       const targetIdx = stepIndex >= 5
         ? GUIDE.findIndex((s, idx) => idx > stepIndex && s.title.startsWith('Announce the'))
         : GUIDE.findIndex(s => s.title.startsWith('Announce the'));
-      if(targetIdx !== -1){
+      if (targetIdx !== -1) {
         stepIndex = targetIdx;
         renderStep();
       }
     });
-    
+
     // Restart button: Return to the first step of the guide
-    restartBtnEl.addEventListener('click',()=>{
+    restartBtnEl.addEventListener('click', () => {
       stepIndex = 0;
       renderStep();
     });
-    
+
     // Begin button: Start from the beginning and scroll to the guide
-    document.getElementById('beginBtn').addEventListener('click',()=>{ stepIndex=0; renderStep(); window.scrollTo({top:document.querySelector('.guide').offsetTop-80,behavior:'smooth'}); });
-    
+    document.getElementById('beginBtn').addEventListener('click', () => { stepIndex = 0; renderStep(); window.scrollTo({ top: document.querySelector('.guide').offsetTop - 80, behavior: 'smooth' }); });
+
     // Keyboard navigation: Left/Right arrows to move through steps
-    window.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){ stepIndex=Math.min(GUIDE.length-1,stepIndex+1); renderStep(); } if(e.key==='ArrowLeft'){ stepIndex=Math.max(0,stepIndex-1); renderStep(); } });
+    window.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1); renderStep(); } if (e.key === 'ArrowLeft') { stepIndex = Math.max(0, stepIndex - 1); renderStep(); } });
 
     // ========== LOCALSTORAGE & STATS ==========
-    
+
     // Helper functions to read/write localStorage (persistent storage in browser)
-    function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
-    function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
-    
+    function getLS(k, f) { try { const v = localStorage.getItem(k); return v === null ? f : JSON.parse(v); } catch { return f; } }
+    function setLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } }
+
     // Update the displayed stats (streak, total count, progress bar)
-    function syncStats(){ const total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0); totalEl.textContent=total; streakEl.textContent=streak; progressEl.style.width=Math.min(100,(total%50)*2)+'%'; }
-    
+    function syncStats() { const total = getLS(LS_KEYS.TOTAL, 0), streak = getLS(LS_KEYS.STREAK, 0); totalEl.textContent = total; streakEl.textContent = streak; progressEl.style.width = Math.min(100, (total % 50) * 2) + '%'; }
+
     // Celebration animation and message
-    function celebrate(){
+    function celebrate() {
       // Create celebration overlay
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease;';
-      
+
       const message = document.createElement('div');
       message.style.cssText = 'background:white;padding:40px 60px;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;animation:scaleIn 0.4s ease;';
       message.innerHTML = '<div style="font-size:64px;margin-bottom:20px;">🙏✨</div><h2 style="font-size:32px;margin:0 0 16px;color:#1862A8;">Rosary Complete!</h2><p style="font-size:18px;color:#6b7280;margin:0;">Thank you for your devotion. May God bless you.</p>';
-      
+
       overlay.appendChild(message);
       document.body.appendChild(overlay);
-      
+
       // Add CSS animations
       if (!document.getElementById('celebration-styles')) {
         const style = document.createElement('style');
@@ -552,18 +584,18 @@ through the same Christ our Lord. Amen.</p></details>
         style.textContent = '@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scaleIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}';
         document.head.appendChild(style);
       }
-      
+
       // Remove overlay after 3 seconds
       setTimeout(() => {
         overlay.style.animation = 'fadeIn 0.3s ease reverse';
         setTimeout(() => overlay.remove(), 300);
       }, 3000);
-      
+
       // Confetti effect (simple version)
       for (let i = 0; i < 50; i++) {
         setTimeout(() => {
           const confetti = document.createElement('div');
-          confetti.style.cssText = `position:fixed;width:10px;height:10px;background:${['#1862A8','#FDDB6F','#ff6b6b','#4ecdc4'][Math.floor(Math.random()*4)]};left:${Math.random()*100}%;top:-10px;z-index:10001;border-radius:50%;pointer-events:none;`;
+          confetti.style.cssText = `position:fixed;width:10px;height:10px;background:${['#1862A8', '#FDDB6F', '#ff6b6b', '#4ecdc4'][Math.floor(Math.random() * 4)]};left:${Math.random() * 100}%;top:-10px;z-index:10001;border-radius:50%;pointer-events:none;`;
           document.body.appendChild(confetti);
           const duration = 2000 + Math.random() * 1000;
           const endX = Math.random() * window.innerWidth;
@@ -575,29 +607,29 @@ through the same Christ our Lord. Amen.</p></details>
         }, i * 30);
       }
     }
-    
+
     // Log rosary: Record that you prayed the rosary today
     // Tracks streaks (consecutive days) and total count
-    function logRosary(showCelebration = false){
-      const last=getLS(LS_KEYS.LAST_DATE,null), total=getLS(LS_KEYS.TOTAL,0), streak=getLS(LS_KEYS.STREAK,0), today=todayStr();
-      if(last===today){ 
-        if(showCelebration) {
-          alert('You already logged today 🙌'); 
+    function logRosary(showCelebration = false) {
+      const last = getLS(LS_KEYS.LAST_DATE, null), total = getLS(LS_KEYS.TOTAL, 0), streak = getLS(LS_KEYS.STREAK, 0), today = todayStr();
+      if (last === today) {
+        if (showCelebration) {
+          alert('You already logged today 🙌');
         }
-        return false; 
+        return false;
       }
-      let newStreak=1;
-      if(last){ const y=new Date(); y.setDate(y.getDate()-1); if(y.toISOString().slice(0,10)===last) newStreak=streak+1; }
-      setLS(LS_KEYS.LAST_DATE,today); setLS(LS_KEYS.TOTAL,total+1); setLS(LS_KEYS.STREAK,newStreak); 
+      let newStreak = 1;
+      if (last) { const y = new Date(); y.setDate(y.getDate() - 1); if (y.toISOString().slice(0, 10) === last) newStreak = streak + 1; }
+      setLS(LS_KEYS.LAST_DATE, today); setLS(LS_KEYS.TOTAL, total + 1); setLS(LS_KEYS.STREAK, newStreak);
       syncStats();
-      if(showCelebration) {
+      if (showCelebration) {
         celebrate();
       }
       return true;
     }
-    
+
     // Log button: Record that you prayed the rosary today
-    document.getElementById('logBtn').addEventListener('click',()=>{
+    document.getElementById('logBtn').addEventListener('click', () => {
       logRosary(true);
     });
 
@@ -606,4 +638,5 @@ through the same Christ our Lord. Amen.</p></details>
     hydrateUI();
   </script>
 </body>
+
 </html>
