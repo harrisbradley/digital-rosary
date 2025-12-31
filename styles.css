@@ -12,6 +12,17 @@
   --radius: 16px;
 }
 
+/* Dark mode variables */
+.dark-mode {
+  --bg: #1a1a1a;
+  --card: #2d2d2d;
+  --ink: #e5e5e5;
+  --muted: #a0a0a0;
+  --primary: #4a9ee8;
+  --ring: rgba(74, 158, 232, 0.24);
+  --shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
 /* ==========================================
    Reset & Base Styles
    ========================================== */
@@ -55,6 +66,11 @@ body {
   backdrop-filter: saturate(140%) blur(8px);
 }
 
+.dark-mode .nav {
+  background: #1a1a1acc;
+  border-bottom: 1px solid #404040;
+}
+
 .nav-inner {
   max-width: 1200px;
   margin: 0 auto;
@@ -88,6 +104,10 @@ a {
   font-weight: 600;
 }
 
+.dark-mode a {
+  color: #d4d4d4;
+}
+
 /* ==========================================
    Buttons
    ========================================== */
@@ -100,6 +120,18 @@ a {
   font-size: 16px;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
+}
+
+.dark-mode .button {
+  background: #2d2d2d;
+  border-color: #404040;
+  color: #e5e5e5;
+}
+
+.dark-mode-toggle {
+  font-size: 20px;
+  padding: 8px 12px;
+  min-width: 44px;
 }
 
 .button:active {
@@ -170,6 +202,10 @@ a {
   border: 1px solid #ece8e0;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+.dark-mode .card {
+  border-color: #404040;
 }
 
 .card.pad {
@@ -291,6 +327,11 @@ h3 {
   border-radius: 999px;
 }
 
+.dark-mode .pill {
+  background: #1e3a5f;
+  color: #4a9ee8;
+}
+
 /* Larger pills on mobile */
 @media (max-width: 768px) {
   .pill {
@@ -329,6 +370,11 @@ h3 {
   justify-content: center;
 }
 
+.dark-mode .image-frame {
+  background: #252525;
+  border-color: #404040;
+}
+
 .step-img {
   width: 100%;
   height: auto;
@@ -344,6 +390,11 @@ h3 {
   border: 1px dashed #e8e2d6;
   border-radius: 12px;
   padding: 18px;
+}
+
+.dark-mode .prayer-panel {
+  background: #252525;
+  border-color: #404040;
 }
 
 .panel-head {
@@ -500,6 +551,10 @@ h3 {
   overflow: hidden;
 }
 
+.dark-mode .progress {
+  background: #404040;
+}
+
 .progress > span {
   display: block;
   height: 100%;
@@ -544,6 +599,10 @@ footer {
   padding: 40px 0 60px;
 }
 
+.dark-mode footer {
+  color: #a0a0a0;
+}
+
 /* ==========================================
    Accordion (Prayer Log)
    ========================================== */
@@ -552,6 +611,11 @@ footer {
   border-radius: 12px;
   padding: 10px 12px;
   background: #fffcf6;
+}
+
+.dark-mode .accordion details {
+  border-color: #404040;
+  background: #252525;
 }
 
 .accordion details + details {
@@ -566,6 +630,10 @@ footer {
   justify-content: space-between;
   font-weight: 700;
   color: #1f2937;
+}
+
+.dark-mode .accordion summary {
+  color: #e5e5e5;
 }
 
 /* Larger accordion on mobile */
@@ -632,6 +700,10 @@ footer {
 .accordion .today-tag {
   color: #b91c1c;
   font-weight: 800;
+}
+
+.dark-mode .accordion .today-tag {
+  color: #f87171;
 }
 
 .accordion ul {

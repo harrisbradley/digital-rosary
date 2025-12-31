@@ -43,7 +43,8 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 const LS_KEYS = { 
   TOTAL: 'rosary_total_v1',      // Total count of rosaries prayed
   LAST_DATE: 'rosary_last_date_v1', // Date of last rosary
-  STREAK: 'rosary_streak_v1'      // Current streak count
+  STREAK: 'rosary_streak_v1',    // Current streak count
+  DARK_MODE: 'dark_mode_v1'      // Dark mode preference
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -225,6 +226,8 @@ const rosaryVisualizerEl = document.getElementById('rosaryVisualizer');      // 
 const jumpBtnEl = document.getElementById('jumpBtn');               // Jump to decades button
 const restartBtnEl = document.getElementById('restartBtn');          // Restart button
 const nextBtnEl = document.getElementById('nextBtn');                // Next button
+const darkModeToggleEl = document.getElementById('darkModeToggle'); // Dark mode toggle button
+const htmlRootEl = document.documentElement;                        // HTML root element
 
 // 📍 Current position in the prayer guide (which step are we on?)
 // This number points to an index in the GUIDE array (0 = first step)
@@ -668,8 +671,36 @@ document.getElementById('logBtn').addEventListener('click', () => {
   logRosary(true);  // Log with celebration
 });
 
+// ========== DARK MODE FUNCTIONALITY ==========
+// 🌙 Dark mode toggle functionality
+
+// Toggle dark mode on/off
+function toggleDarkMode() {
+  const isDarkMode = htmlRootEl.classList.toggle('dark-mode');
+  // Update button emoji: 🌙 when light mode, ☀️ when dark mode
+  darkModeToggleEl.textContent = isDarkMode ? '☀️' : '🌙';
+  // Save preference to localStorage
+  setLS(LS_KEYS.DARK_MODE, isDarkMode);
+}
+
+// Initialize dark mode based on saved preference
+function initDarkMode() {
+  const savedDarkMode = getLS(LS_KEYS.DARK_MODE, false);
+  if (savedDarkMode) {
+    htmlRootEl.classList.add('dark-mode');
+    darkModeToggleEl.textContent = '☀️';
+  } else {
+    htmlRootEl.classList.remove('dark-mode');
+    darkModeToggleEl.textContent = '🌙';
+  }
+}
+
+// Dark mode toggle button event listener
+darkModeToggleEl.addEventListener('click', toggleDarkMode);
+
 // ========== INITIALIZE APP ==========
 // 🚀 Start the application when page loads
 // This runs automatically when the page finishes loading
+initDarkMode(); // Initialize dark mode first
 hydrateUI();
 
