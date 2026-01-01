@@ -31,6 +31,7 @@ const STEP_IMAGES = {
 
 // 🖼️ Maps mystery names to their corresponding image filenames
 // Organized by mystery set - currently only Joyful Mysteries have images
+// Temporarily mapping Joyful images to Luminous for testing purposes
 // Other mystery sets will fall back to default images until images are added
 const MYSTERY_IMAGES = {
   Joyful: {
@@ -42,7 +43,15 @@ const MYSTERY_IMAGES = {
   },
   Sorrowful: {}, // Images to be added later
   Glorious: {},  // Images to be added later
-  Luminous: {}   // Images to be added later
+  Luminous: {
+    // Temporarily using Joyful Mystery images for testing
+    // TODO: Replace with actual Luminous Mystery images when available
+    'The Baptism of the Lord': 'Annunciation.png',
+    'The Wedding at Cana': 'Visitation.png',
+    'The Proclamation of the Kingdom': 'Nativity.png',
+    'The Transfiguration': 'Presentation.png',
+    'The Institution of the Eucharist': 'Finding.png'
+  }
 };
 
 // 🔄 Cache-busting: prevents browser from using old cached images during development
