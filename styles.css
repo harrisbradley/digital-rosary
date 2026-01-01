@@ -352,6 +352,7 @@ h3 {
   display: grid;
   grid-template-columns: 420px 1fr;
   gap: 20px;
+  align-items: start; /* Align items to top */
 }
 
 @media (max-width: 1000px) {
