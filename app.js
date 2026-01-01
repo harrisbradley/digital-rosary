@@ -29,6 +29,22 @@ const STEP_IMAGES = {
   "The Sign of the Cross (Final)": "sign_of_the_cross.png"
 };
 
+// 🖼️ Maps mystery names to their corresponding image filenames
+// Organized by mystery set - currently only Joyful Mysteries have images
+// Other mystery sets will fall back to default images until images are added
+const MYSTERY_IMAGES = {
+  Joyful: {
+    'The Annunciation': 'Annunciation.png',
+    'The Visitation': 'Visitation.png',
+    'The Nativity': 'Nativity.png',
+    'The Presentation': 'Presentation.png',
+    'The Finding in the Temple': 'Finding.png'
+  },
+  Sorrowful: {}, // Images to be added later
+  Glorious: {},  // Images to be added later
+  Luminous: {}   // Images to be added later
+};
+
 // 🔄 Cache-busting: prevents browser from using old cached images during development
 // When testing locally, adds ?t=timestamp to image URLs to force fresh load
 const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
@@ -116,8 +132,8 @@ function createDecadeSteps(decadeIndex) {
   
   // Return an array of step objects for this decade
   return [
-    { title: announceTitle, text: () => announceText },  // Announce step
-    { title: 'Our Father', text: () => PRAYERS.ourFather },  // Our Father
+    { title: announceTitle, text: () => announceText, decadeIndex: decadeIndex },  // Announce step
+    { title: 'Our Father', text: () => PRAYERS.ourFather, decadeIndex: decadeIndex },  // Our Father
     // Generate 10 Hail Mary steps (one for each bead in a decade)
     // Array.from creates an array, and ... spreads it into the parent array
     ...Array.from({ length: 10 }, (_, i) => ({
@@ -181,10 +197,25 @@ function generateBeads(currentNumber) {
   return `<span class="beads-container">${beads.join('')}</span>`;
 }
 
-// 🖼️ Find the appropriate image for a prayer step title
+// 🖼️ Find the appropriate image for a prayer step
 // This function looks up which image file to show for each prayer step
 // Falls back to generating an SVG placeholder if no image found
-function imageForTitle(title) {
+function imageForTitle(step) {
+  const title = typeof step === 'string' ? step : step.title;
+  
+  // Check if this is a decade step (Announce, Our Father, or Hail Mary within a decade)
+  if (step && typeof step === 'object' && step.decadeIndex !== undefined) {
+    // Get the mystery name for this decade
+    const mysteryName = TODAY_MYSTERIES[step.decadeIndex];
+    // Check if we have images for this mystery set
+    const mysteryImageMap = MYSTERY_IMAGES[TODAY_SET];
+    if (mysteryImageMap && mysteryName && mysteryImageMap[mysteryName]) {
+      // Use the mystery-specific image
+      return ASSET_BASE + mysteryImageMap[mysteryName] + CACHE_BUST;
+    }
+    // If no mystery image exists, fall through to default behavior below
+  }
+  
   // First, check if we have an exact match in STEP_IMAGES
   if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
   
@@ -376,7 +407,7 @@ function renderStep() {
   prayerTextEl.innerHTML = step.text();
   
   // Find and set the image for this step
-  const src = imageForTitle(step.title);
+  const src = imageForTitle(step);
   stepImageEl.alt = step.title + ' illustration';
   stepImageEl.src = src;
   
