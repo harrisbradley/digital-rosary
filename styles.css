@@ -352,11 +352,22 @@ h3 {
   display: grid;
   grid-template-columns: 420px 1fr;
   gap: 20px;
+  min-height: 500px; /* Lock minimum height to prevent layout shifts */
+  align-items: start; /* Align items to top */
 }
 
 @media (max-width: 1000px) {
   .guide {
     grid-template-columns: 1fr;
+    min-height: auto; /* Allow natural height on mobile */
+  }
+  
+  .prayer-panel {
+    min-height: auto; /* Allow natural height on mobile */
+  }
+  
+  .prayer-text {
+    max-height: none; /* Remove scroll limit on mobile */
   }
 }
 
@@ -390,6 +401,10 @@ h3 {
   border: 1px dashed #e8e2d6;
   border-radius: 12px;
   padding: 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 500px; /* Match guide min-height minus padding */
 }
 
 .dark-mode .prayer-panel {
@@ -457,6 +472,37 @@ h3 {
   margin-top: 8px;
   white-space: pre-wrap;
   font-size: inherit;
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(500px - 200px); /* Allow scrolling if content exceeds available space */
+  padding-right: 8px; /* Add padding for scrollbar */
+}
+
+/* Custom scrollbar styling for prayer text */
+.prayer-text::-webkit-scrollbar {
+  width: 8px;
+}
+
+.prayer-text::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.prayer-text::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.prayer-text::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.dark-mode .prayer-text::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark-mode .prayer-text::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Larger prayer text on mobile for better readability */
