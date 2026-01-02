@@ -41,16 +41,26 @@ const MYSTERY_IMAGES = {
     'The Presentation': 'Presentation.png',
     'The Finding in the Temple': 'Finding.png'
   },
-  Sorrowful: {}, // Images to be added later
-  Glorious: {},  // Images to be added later
+  Sorrowful: {
+    'The Agony In The Garden': 'Baptism.png',
+    'The Scourging At The Pillar': 'Visitation.png',
+    'The Crowning With Thorns': 'Nativity.png',
+    'The Carrying Of The Cross': 'Presentation.png',
+    'The Crucifixion': 'Finding.png'
+  }, 
+  Glorious: {
+    'The Resurrection': 'Resurrection.png',
+    'The Ascension': 'Ascension.png',
+    'The Descent Of The Holy Spirit': 'Descent.png',
+    'The Assumption': 'Assumption.png',
+    'The Coronation Of Mary': 'Coronation.png'
+  }, 
   Luminous: {
-    // Temporarily using Joyful Mystery images for testing
-    // TODO: Replace with actual Luminous Mystery images when available
-    'The Baptism of the Lord': 'Annunciation.png',
-    'The Wedding at Cana': 'Visitation.png',
-    'The Proclamation of the Kingdom': 'Nativity.png',
-    'The Transfiguration': 'Presentation.png',
-    'The Institution of the Eucharist': 'Finding.png'
+    'The Baptism of the Lord': 'Baptism.png',
+    'The Wedding at Cana': 'Wedding.png',
+    'The Proclamation of the Kingdom': 'Proclamation.png',
+    'The Transfiguration': 'Transfiguration.png',
+    'The Institution of the Eucharist': 'Eucharist.png'
   }
 };
 
