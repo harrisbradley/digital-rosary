@@ -569,10 +569,46 @@ document.getElementById('beginBtn').addEventListener('click', () => {
   stepIndex = 0; 
   renderStep(); 
   // Smoothly scroll to the guide section
-  window.scrollTo({ 
-    top: document.querySelector('.guide').offsetTop - 80, 
-    behavior: 'smooth' 
-  }); 
+  // Use setTimeout to ensure DOM is fully updated before scrolling (important for mobile)
+  setTimeout(() => {
+    const guideElement = document.getElementById('interactiveRosaryGuide');
+    if (guideElement) {
+      // Calculate scroll position accounting for sticky nav
+      const isMobile = window.innerWidth <= 768;
+      const navOffset = isMobile ? 70 : 90; // Slightly larger offset for better visibility
+      
+      // Get element position relative to document
+      const rect = guideElement.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+      const elementTop = rect.top + scrollTop;
+      const targetPosition = Math.max(0, elementTop - navOffset);
+      
+      // Scroll to position - this works reliably on mobile
+      window.scrollTo({ 
+        top: targetPosition,
+        behavior: 'smooth' 
+      });
+      
+      // Fallback for older browsers or if smooth scroll fails
+      if (!('scrollBehavior' in document.documentElement.style)) {
+        window.scrollTo(0, targetPosition);
+      }
+    } else {
+      // Fallback to original method if ID not found
+      const guideFallback = document.querySelector('.guide');
+      if (guideFallback) {
+        const isMobile = window.innerWidth <= 768;
+        const navOffset = isMobile ? 70 : 90;
+        const rect = guideFallback.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        const elementTop = rect.top + scrollTop;
+        window.scrollTo({ 
+          top: Math.max(0, elementTop - navOffset),
+          behavior: 'smooth' 
+        });
+      }
+    }
+  }, 100); // Small delay to ensure DOM is ready, especially important on mobile
 });
 
 // ⌨️ Keyboard navigation: Left/Right arrows to move through steps
