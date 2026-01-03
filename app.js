@@ -565,51 +565,73 @@ restartBtnEl.addEventListener('click', () => {
 });
 
 // 🚀 Begin button: Start from the beginning and scroll to the guide
-document.getElementById('beginBtn').addEventListener('click', () => { 
-  stepIndex = 0; 
-  renderStep(); 
-  // Smoothly scroll to the guide section
-  // Use setTimeout to ensure DOM is fully updated before scrolling (important for mobile)
-  setTimeout(() => {
-    const guideElement = document.getElementById('interactiveRosaryGuide');
-    if (guideElement) {
-      // Calculate scroll position accounting for sticky nav
-      const isMobile = window.innerWidth <= 768;
-      const navOffset = isMobile ? 70 : 90; // Slightly larger offset for better visibility
-      
-      // Get element position relative to document
-      const rect = guideElement.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-      const elementTop = rect.top + scrollTop;
-      const targetPosition = Math.max(0, elementTop - navOffset);
-      
-      // Scroll to position - this works reliably on mobile
-      window.scrollTo({ 
-        top: targetPosition,
-        behavior: 'smooth' 
-      });
-      
-      // Fallback for older browsers or if smooth scroll fails
-      if (!('scrollBehavior' in document.documentElement.style)) {
-        window.scrollTo(0, targetPosition);
-      }
-    } else {
-      // Fallback to original method if ID not found
-      const guideFallback = document.querySelector('.guide');
-      if (guideFallback) {
-        const isMobile = window.innerWidth <= 768;
-        const navOffset = isMobile ? 70 : 90;
-        const rect = guideFallback.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-        const elementTop = rect.top + scrollTop;
-        window.scrollTo({ 
-          top: Math.max(0, elementTop - navOffset),
-          behavior: 'smooth' 
-        });
-      }
+// Wait for DOM to be ready before attaching event listener
+function initBeginButton() {
+  const beginBtn = document.getElementById('beginBtn');
+  if (!beginBtn) {
+    console.error('Begin button not found');
+    return;
+  }
+  
+  // Handle both click and touch events for mobile compatibility
+  const handleBeginClick = function(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  }, 100); // Small delay to ensure DOM is ready, especially important on mobile
-});
+    
+    stepIndex = 0; 
+    renderStep(); 
+    
+    // Scroll to guide section
+    // Use multiple methods to ensure it works on all devices
+    setTimeout(function() {
+      const guideElement = document.getElementById('interactiveRosaryGuide');
+      
+      if (!guideElement) {
+        console.warn('Interactive Rosary Guide element not found');
+        return;
+      }
+      
+      const isMobile = window.innerWidth <= 768;
+      const navOffset = isMobile ? 70 : 90;
+      
+      // Method 1: scrollIntoView (most reliable on mobile)
+      guideElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Method 2: Adjust for nav offset after scrollIntoView
+      setTimeout(function() {
+        const rect = guideElement.getBoundingClientRect();
+        const currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        const elementTop = rect.top + currentScroll;
+        const targetPos = elementTop - navOffset;
+        
+        // If we need to adjust further, do it
+        if (rect.top < navOffset) {
+          window.scrollTo({
+            top: Math.max(0, targetPos),
+            behavior: 'smooth'
+          });
+        }
+      }, 200);
+    }, 100);
+  };
+  
+  // Attach both click and touchstart events for maximum compatibility
+  beginBtn.addEventListener('click', handleBeginClick);
+  beginBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    handleBeginClick(e);
+  });
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBeginButton);
+} else {
+  // DOM is already ready
+  initBeginButton();
+}
 
 // ⌨️ Keyboard navigation: Left/Right arrows to move through steps
 // This lets users navigate with keyboard instead of clicking buttons
