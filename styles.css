@@ -66,6 +66,8 @@ body {
   background: #fbfaf7cc;
   border-bottom: 1px solid #eae7e1;
   backdrop-filter: saturate(140%) blur(8px);
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
 }
 
 .dark-mode .nav {
@@ -98,6 +100,87 @@ body {
   display: flex;
   gap: 20px;
   align-items: center;
+}
+
+/* Mobile navigation fixes */
+@media (max-width: 768px) {
+  .nav-inner {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .brand {
+    font-size: 16px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .brand img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .brand span {
+    display: none; /* Hide "Digital Rosary" text on very small screens */
+  }
+  
+  .nav-links {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1;
+    min-width: 0; /* Allow flex items to shrink */
+  }
+  
+  .nav-links a {
+    font-size: 14px;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+  
+  .nav-links .button {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: 36px;
+  }
+  
+  .dark-mode-toggle {
+    font-size: 18px;
+    padding: 6px 10px;
+    min-width: 36px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .nav-inner {
+    padding: 8px 10px;
+  }
+  
+  .brand span {
+    display: none; /* Always hide text on very small screens */
+  }
+  
+  .nav-links {
+    gap: 6px;
+  }
+  
+  .nav-links a {
+    font-size: 13px;
+    padding: 5px 6px;
+  }
+  
+  .nav-links .button {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-height: 32px;
+  }
+  
+  /* Hide "Log In" button on very small screens to save space */
+  .nav-links .button:last-child {
+    display: none;
+  }
 }
 
 a {
