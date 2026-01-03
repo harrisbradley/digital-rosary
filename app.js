@@ -115,7 +115,15 @@ const MYSTERIES = {
 const weekday = new Date().getDay();
 // Find the mystery set that includes today's weekday
 // The ?? 'Joyful' means "if nothing found, default to Joyful"
-const TODAY_SET = Object.entries(MYSTERIES).find(([_, cfg]) => cfg.days.includes(weekday))?.[0] ?? 'Joyful';
+let TODAY_SET = Object.entries(MYSTERIES).find(([_, cfg]) => cfg.days.includes(weekday))?.[0] ?? 'Joyful';
+
+// 🧪 Allow URL parameter to override mystery set for testing
+// Example: ?mystery=Joyful or ?mystery=Sorrowful
+const urlParams = new URLSearchParams(window.location.search);
+const overrideMystery = urlParams.get('mystery');
+if (overrideMystery && MYSTERIES[overrideMystery]) {
+  TODAY_SET = overrideMystery;
+}
 
 // ========== PRAYER TEXTS ==========
 // 📖 This object stores all the actual prayer texts
