@@ -42,18 +42,18 @@ const MYSTERY_IMAGES = {
     'The Finding in the Temple': 'Finding.png'
   },
   Sorrowful: {
-    'The Agony In The Garden': 'Baptism.png',
-    'The Scourging At The Pillar': 'Visitation.png',
-    'The Crowning With Thorns': 'Nativity.png',
-    'The Carrying Of The Cross': 'Presentation.png',
-    'The Crucifixion': 'Finding.png'
+    'The Agony in the Garden': 'Agony.png',
+    'The Scourging at the Pillar': 'Scourging.png',
+    'The Crowning with Thorns': 'Crowning.png',
+    'The Carrying of the Cross': 'Carrying.png',
+    'The Crucifixion': 'Crucifixion.png'
   }, 
   Glorious: {
     'The Resurrection': 'Resurrection.png',
     'The Ascension': 'Ascension.png',
-    'The Descent Of The Holy Spirit': 'Descent.png',
+    'The Descent of the Holy Spirit': 'Descent.png',
     'The Assumption': 'Assumption.png',
-    'The Coronation Of Mary': 'Coronation.png'
+    'The Coronation of Mary': 'Coronation.png'
   }, 
   Luminous: {
     'The Baptism of the Lord': 'Baptism.png',
