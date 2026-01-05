@@ -78,7 +78,7 @@ const MEDITATIONS = {
       'Meditation for Hail Mary 8',
       'Meditation for Hail Mary 9',
       'Meditation for Hail Mary 10'
-    ],
+    ], 
     'The Scourging at the Pillar': [
       'Meditation for Hail Mary 1',
       'Meditation for Hail Mary 2',
