@@ -495,6 +495,18 @@ h3 {
   background: #fff;
   object-fit: cover;
   aspect-ratio: 4 / 3;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.step-img:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.step-img:active {
+  opacity: 0.7;
+  transform: scale(0.98);
   max-width: 100%; /* Prevent overflow */
 }
 

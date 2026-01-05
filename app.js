@@ -613,6 +613,34 @@ nextBtnEl.addEventListener('click', () => {
   }
 });
 
+// 🖼️ Image click: Same functionality as Next button
+// Clicking the prayer illustration advances to the next step
+stepImageEl.addEventListener('click', () => {
+  // Add visual feedback animation (image briefly changes opacity when clicked)
+  stepImageEl.style.opacity = '0.7';
+  setTimeout(() => {
+    stepImageEl.style.opacity = '';
+  }, 200);  // Remove the opacity change after 200 milliseconds
+
+  // Also trigger the Next button's visual feedback to show they're equivalent
+  nextBtnEl.classList.add('clicked');
+  setTimeout(() => {
+    nextBtnEl.classList.remove('clicked');
+  }, 300);  // Remove the class after 300 milliseconds (same as button click)
+
+  // Check if we're on the very last step
+  const isFinalStep = stepIndex === GUIDE.length - 1;
+  if (isFinalStep) {
+    // If on final step, log the rosary and show celebration
+    logRosary(true);
+  } else {
+    // Otherwise, move to the next step
+    // Math.min ensures we never go past the last step
+    stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+    renderStep();  // Update the display
+  }
+});
+
 // ⬅️ Previous button: Go back to previous step
 document.getElementById('prevBtn').addEventListener('click', () => { 
   // Math.max ensures we never go below 0 (first step)
