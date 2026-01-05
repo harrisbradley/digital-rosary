@@ -559,6 +559,33 @@ h3 {
   font-size: inherit;
 }
 
+/* Scrollable prayer text for longer prayers */
+.prayer-text.scrollable {
+  overflow-y: auto;
+  padding-right: 8px;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  /* max-height will be set inline by JavaScript based on actual line-height */
+}
+
+/* Custom scrollbar styling for prayer text */
+.prayer-text.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.prayer-text.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prayer-text.scrollable::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.prayer-text.scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--ink);
+}
+
 /* Meditation text displayed above Hail Mary prayers */
 .meditation {
   font-style: italic;

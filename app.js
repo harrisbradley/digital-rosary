@@ -8,6 +8,11 @@ const FEATURES = {
   // Change to true to show the visual rosary progress indicator
 };
 
+// 📜 Prayer scrolling configuration
+// If a prayer exceeds this many lines, scrolling will be enabled
+// Set to a high number (e.g., 999) to disable scrolling
+const PRAYER_SCROLL_THRESHOLD_LINES = 8;
+
 // 🖼️ Base path for rosary step images
 // This tells JavaScript where to find the prayer illustration images
 const ASSET_BASE = "./images/rosary/";
@@ -183,7 +188,7 @@ const GUIDE = [
   { title: 'The Sign of the Cross', text: () => PRAYERS.signOfCross },
   { title: 'Apostles\' Creed', text: () => PRAYERS.apostlesCreed },
   { title: 'Our Father (Intro)', text: () => PRAYERS.ourFather },
-  { title: '3× Hail Mary (Faith, Hope, Charity)', text: () => PRAYERS.hailMary + '\\n\\nRepeat 3 times with these intentions.' },
+  { title: '3× Hail Mary (Faith, Hope, Charity)', text: () => PRAYERS.hailMary + 'Repeat 3 times with these intentions.' },
   { title: 'Glory Be', text: () => PRAYERS.gloryBe },
   // 📿 The 5 decades (each decade has ~14 steps: announce + Our Father + 10 Hail Marys + Glory Be + Fatima)
   // ...createDecadeSteps(0) spreads all the steps from decade 0 into this array
@@ -482,6 +487,36 @@ function renderStep() {
     }
   } else {
     prayerTextEl.innerHTML = prayerText;
+  }
+  
+  // Check if prayer text exceeds threshold and enable scrolling if needed
+  if (PRAYER_SCROLL_THRESHOLD_LINES < 999) {
+    // Remove scrollable class first to get accurate measurements
+    prayerTextEl.classList.remove('scrollable');
+    
+    // Force a reflow to ensure measurements are accurate
+    prayerTextEl.offsetHeight;
+    
+    // Get the computed line-height (in pixels)
+    const computedStyle = window.getComputedStyle(prayerTextEl);
+    const lineHeight = parseFloat(computedStyle.lineHeight) || parseFloat(computedStyle.fontSize) * 1.6;
+    
+    // Calculate the threshold height based on number of lines
+    const thresholdHeight = lineHeight * PRAYER_SCROLL_THRESHOLD_LINES;
+    
+    // If the content height exceeds the threshold, enable scrolling
+    if (prayerTextEl.scrollHeight > thresholdHeight) {
+      prayerTextEl.classList.add('scrollable');
+      // Set max-height directly based on calculated threshold
+      prayerTextEl.style.maxHeight = thresholdHeight + 'px';
+    } else {
+      // Reset max-height if scrolling is not needed
+      prayerTextEl.style.maxHeight = '';
+    }
+  } else {
+    // Threshold is disabled (set to 999 or higher), remove scrollable class
+    prayerTextEl.classList.remove('scrollable');
+    prayerTextEl.style.maxHeight = '';
   }
   
   // Find and set the image for this step
