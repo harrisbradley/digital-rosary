@@ -92,10 +92,13 @@
           </div>
         </div>
 
-        <!-- 🙏 INTERACTIVE ROSARY GUIDE: The main prayer interface -->
+        <!-- 🙏 INTERACTIVE ROSARY GUIDE: The main prayer interface.  NOTE: IRG is an acronym for Interactive Rosary Guide. -->
         <!-- This is the heart of the app - where users actually pray through the rosary -->
         <div id="interactiveRosaryGuide" class="card pad" style="margin-top:18px">
-          <h2>Interactive Rosary Guide</h2>
+          <div class="irg-header">
+            <h2>Interactive Rosary Guide</h2>
+            <span id="mysteryBadge" class="pill">Mystery</span>
+          </div>
           <div class="guide" style="margin-top:12px">
             <!-- 🖼️ Left side: Current step illustration -->
             <!-- JavaScript will update this image as you move through the prayers -->
@@ -116,12 +119,10 @@
                 <button id="restartBtn" class="button" aria-label="Restart Guide" title="Restart Guide">↻</button>
                 <!-- 🔄 Start over from the beginning -->
               </div>
-              <!-- 📋 Header showing current step name and mystery type -->
+              <!-- 📋 Header showing current step name -->
               <div class="panel-head">
                 <div class="step" id="stepTitle">The Sign of the Cross</div>
                 <!-- JavaScript updates this with the current prayer name -->
-                <span id="mysteryBadge" class="pill">Mystery</span>
-                <!-- Shows which mystery set (Joyful, Sorrowful, etc.) -->
               </div>
               <!-- 📖 Dynamically updated prayer text -->
               <!-- JavaScript fills this with the actual prayer words -->
