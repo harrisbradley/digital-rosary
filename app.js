@@ -257,6 +257,30 @@ function getMeditation(decadeIndex, hailMaryNumber) {
   return '';
 }
 
+// 🚀 Preload images for upcoming steps to improve performance
+// Preloads the next N images so they're ready when user navigates
+function preloadNextImages(currentIndex, count = 3) {
+  for (let i = 1; i <= count; i++) {
+    const nextIndex = currentIndex + i;
+    if (nextIndex < GUIDE.length) {
+      const nextStep = GUIDE[nextIndex];
+      const nextImageSrc = imageForTitle(nextStep);
+      
+      // Skip if it's an SVG data URL (already generated, no need to preload)
+      if (nextImageSrc && !nextImageSrc.startsWith('data:')) {
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.as = 'image';
+        link.href = nextImageSrc;
+        // Add to head only if not already added
+        if (!document.querySelector(`link[href="${nextImageSrc}"]`)) {
+          document.head.appendChild(link);
+        }
+      }
+    }
+  }
+}
+
 // 🖼️ Find the appropriate image for a prayer step
 // This function looks up which image file to show for each prayer step
 // Falls back to generating an SVG placeholder if no image found
@@ -512,11 +536,29 @@ function renderStep() {
   // Find and set the image for this step
   const src = imageForTitle(step);
   stepImageEl.alt = step.title + ' illustration';
+  
+  // Optimize image loading: use eager loading for current image, add fetchpriority
+  stepImageEl.loading = 'eager';
+  stepImageEl.fetchPriority = 'high';
+  
+  // Show loading state while image loads
+  stepImageEl.classList.add('loading');
+  
+  // Set image source
   stepImageEl.src = src;
+  
+  // Remove loading state when image loads
+  stepImageEl.onload = () => {
+    stepImageEl.classList.remove('loading');
+  };
+  
+  // Preload next 2-3 images for smoother navigation
+  preloadNextImages(stepIndex, 3);
   
   // If image fails to load, show a fallback SVG placeholder
   stepImageEl.onerror = () => { 
-    stepImageEl.onerror = null; 
+    stepImageEl.onerror = null;
+    stepImageEl.classList.remove('loading');
     stepImageEl.src = imageForTitle(''); 
   };
   

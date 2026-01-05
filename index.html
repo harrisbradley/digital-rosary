@@ -103,8 +103,9 @@
             <!-- 🖼️ Left side: Current step illustration -->
             <!-- JavaScript will update this image as you move through the prayers -->
             <div class="image-frame">
-              <img id="stepImage" class="step-img" alt="Illustration for current step">
+              <img id="stepImage" class="step-img" alt="Illustration for current step" loading="eager" fetchpriority="high">
               <!-- The "id" attribute lets JavaScript find and update this element -->
+              <!-- loading="eager" and fetchpriority="high" ensure fast loading on mobile -->
             </div>
             <!-- 📝 Right side: Prayer text and controls -->
             <div class="prayer-panel">
