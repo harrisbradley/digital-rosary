@@ -146,9 +146,9 @@ const MEDITATIONS = {
       'He gives them His last instructions',
       'He sends them to preach to the whole world.',
       'He lifts up His Hands and blesses them.',
-      'He ascends into heaver',
+      'He ascends into heaven.',
       'The Angels welcome their King.',
-      'He sits at the right hand of Hist Father.',
+      'He sits at the right hand of His Father.',
       'He is our Advocate in heaven.',
       'He prepares a place for us there.',
       'He teaches us to hope for heaven, and to desire heavenly things.'
