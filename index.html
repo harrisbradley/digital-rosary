@@ -34,6 +34,8 @@
 
   <!-- 📊 Rosary Visualizer - loads the JavaScript file that draws the visual rosary -->
   <script src="rosary-visualizer.js"></script>
+  <!-- 📿 Meditations data - loads the meditation texts for each Hail Mary -->
+  <script src="meditations.js"></script>
 </head>
 
 
@@ -90,7 +92,7 @@
 
         <!-- 🙏 INTERACTIVE ROSARY GUIDE: The main prayer interface -->
         <!-- This is the heart of the app - where users actually pray through the rosary -->
-        <div class="card pad" style="margin-top:18px">
+        <div id="interactiveRosaryGuide" class="card pad" style="margin-top:18px">
           <h2>Interactive Rosary Guide</h2>
           <div class="guide" style="margin-top:12px">
             <!-- 🖼️ Left side: Current step illustration -->

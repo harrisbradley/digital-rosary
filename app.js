@@ -224,6 +224,44 @@ function generateBeads(currentNumber) {
   return `<span class="beads-container">${beads.join('')}</span>`;
 }
 
+// 📿 Get meditation text for a specific Hail Mary in a decade
+// Returns the meditation text or empty string if not found
+// decadeIndex: which decade (0-4)
+// hailMaryNumber: which Hail Mary in that decade (1-10)
+function getMeditation(decadeIndex, hailMaryNumber) {
+  // Check if MEDITATIONS object exists (loaded from meditations.js)
+  if (typeof MEDITATIONS === 'undefined' || !MEDITATIONS) {
+    return '';
+  }
+  
+  // Get the current mystery set and mystery name for this decade
+  const mysterySet = TODAY_SET;
+  const mysteryName = TODAY_MYSTERIES[decadeIndex];
+  
+  // Validate inputs
+  if (!mysterySet || !mysteryName || !hailMaryNumber || hailMaryNumber < 1 || hailMaryNumber > 10) {
+    return '';
+  }
+  
+  // Check if meditation exists for this mystery set and mystery name
+  if (!MEDITATIONS[mysterySet] || !MEDITATIONS[mysterySet][mysteryName]) {
+    return '';
+  }
+  
+  // Get the meditation array for this mystery (should have 10 items)
+  const meditations = MEDITATIONS[mysterySet][mysteryName];
+  
+  // Array index is 0-9, hailMaryNumber is 1-10, so subtract 1
+  const index = hailMaryNumber - 1;
+  
+  // Return the meditation text, or empty string if index is out of range or empty
+  if (index >= 0 && index < meditations.length && meditations[index]) {
+    return meditations[index].trim();
+  }
+  
+  return '';
+}
+
 // 🖼️ Find the appropriate image for a prayer step
 // This function looks up which image file to show for each prayer step
 // Falls back to generating an SVG placeholder if no image found
@@ -431,7 +469,20 @@ function renderStep() {
   }
   
   // Update the prayer text (step.text() is a function that returns the prayer)
-  prayerTextEl.innerHTML = step.text();
+  // For Hail Mary steps, also display the meditation above the prayer
+  const prayerText = step.text();
+  if (step.isHailMary && step.decadeIndex !== undefined && step.hailMaryNumber) {
+    // Get meditation for this Hail Mary
+    const meditation = getMeditation(step.decadeIndex, step.hailMaryNumber);
+    // If meditation exists, display it above the prayer text
+    if (meditation) {
+      prayerTextEl.innerHTML = `<div class="meditation">${meditation}</div>${prayerText}`;
+    } else {
+      prayerTextEl.innerHTML = prayerText;
+    }
+  } else {
+    prayerTextEl.innerHTML = prayerText;
+  }
   
   // Find and set the image for this step
   const src = imageForTitle(step);
@@ -565,15 +616,73 @@ restartBtnEl.addEventListener('click', () => {
 });
 
 // 🚀 Begin button: Start from the beginning and scroll to the guide
-document.getElementById('beginBtn').addEventListener('click', () => { 
-  stepIndex = 0; 
-  renderStep(); 
-  // Smoothly scroll to the guide section
-  window.scrollTo({ 
-    top: document.querySelector('.guide').offsetTop - 80, 
-    behavior: 'smooth' 
-  }); 
-});
+// Wait for DOM to be ready before attaching event listener
+function initBeginButton() {
+  const beginBtn = document.getElementById('beginBtn');
+  if (!beginBtn) {
+    console.error('Begin button not found');
+    return;
+  }
+  
+  // Handle both click and touch events for mobile compatibility
+  const handleBeginClick = function(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    stepIndex = 0; 
+    renderStep(); 
+    
+    // Scroll to guide section
+    // Use multiple methods to ensure it works on all devices
+    setTimeout(function() {
+      const guideElement = document.getElementById('interactiveRosaryGuide');
+      
+      if (!guideElement) {
+        console.warn('Interactive Rosary Guide element not found');
+        return;
+      }
+      
+      const isMobile = window.innerWidth <= 768;
+      const navOffset = isMobile ? 70 : 90;
+      
+      // Method 1: scrollIntoView (most reliable on mobile)
+      guideElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Method 2: Adjust for nav offset after scrollIntoView
+      setTimeout(function() {
+        const rect = guideElement.getBoundingClientRect();
+        const currentScroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        const elementTop = rect.top + currentScroll;
+        const targetPos = elementTop - navOffset;
+        
+        // If we need to adjust further, do it
+        if (rect.top < navOffset) {
+          window.scrollTo({
+            top: Math.max(0, targetPos),
+            behavior: 'smooth'
+          });
+        }
+      }, 200);
+    }, 100);
+  };
+  
+  // Attach both click and touchstart events for maximum compatibility
+  beginBtn.addEventListener('click', handleBeginClick);
+  beginBtn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    handleBeginClick(e);
+  });
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBeginButton);
+} else {
+  // DOM is already ready
+  initBeginButton();
+}
 
 // ⌨️ Keyboard navigation: Left/Right arrows to move through steps
 // This lets users navigate with keyboard instead of clicking buttons
