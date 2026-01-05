@@ -224,6 +224,44 @@ function generateBeads(currentNumber) {
   return `<span class="beads-container">${beads.join('')}</span>`;
 }
 
+// 📿 Get meditation text for a specific Hail Mary in a decade
+// Returns the meditation text or empty string if not found
+// decadeIndex: which decade (0-4)
+// hailMaryNumber: which Hail Mary in that decade (1-10)
+function getMeditation(decadeIndex, hailMaryNumber) {
+  // Check if MEDITATIONS object exists (loaded from meditations.js)
+  if (typeof MEDITATIONS === 'undefined' || !MEDITATIONS) {
+    return '';
+  }
+  
+  // Get the current mystery set and mystery name for this decade
+  const mysterySet = TODAY_SET;
+  const mysteryName = TODAY_MYSTERIES[decadeIndex];
+  
+  // Validate inputs
+  if (!mysterySet || !mysteryName || !hailMaryNumber || hailMaryNumber < 1 || hailMaryNumber > 10) {
+    return '';
+  }
+  
+  // Check if meditation exists for this mystery set and mystery name
+  if (!MEDITATIONS[mysterySet] || !MEDITATIONS[mysterySet][mysteryName]) {
+    return '';
+  }
+  
+  // Get the meditation array for this mystery (should have 10 items)
+  const meditations = MEDITATIONS[mysterySet][mysteryName];
+  
+  // Array index is 0-9, hailMaryNumber is 1-10, so subtract 1
+  const index = hailMaryNumber - 1;
+  
+  // Return the meditation text, or empty string if index is out of range or empty
+  if (index >= 0 && index < meditations.length && meditations[index]) {
+    return meditations[index].trim();
+  }
+  
+  return '';
+}
+
 // 🖼️ Find the appropriate image for a prayer step
 // This function looks up which image file to show for each prayer step
 // Falls back to generating an SVG placeholder if no image found
@@ -431,7 +469,20 @@ function renderStep() {
   }
   
   // Update the prayer text (step.text() is a function that returns the prayer)
-  prayerTextEl.innerHTML = step.text();
+  // For Hail Mary steps, also display the meditation above the prayer
+  const prayerText = step.text();
+  if (step.isHailMary && step.decadeIndex !== undefined && step.hailMaryNumber) {
+    // Get meditation for this Hail Mary
+    const meditation = getMeditation(step.decadeIndex, step.hailMaryNumber);
+    // If meditation exists, display it above the prayer text
+    if (meditation) {
+      prayerTextEl.innerHTML = `<div class="meditation">${meditation}</div>${prayerText}`;
+    } else {
+      prayerTextEl.innerHTML = prayerText;
+    }
+  } else {
+    prayerTextEl.innerHTML = prayerText;
+  }
   
   // Find and set the image for this step
   const src = imageForTitle(step);

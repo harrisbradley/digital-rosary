@@ -558,6 +558,16 @@ h3 {
   font-size: inherit;
 }
 
+/* Meditation text displayed above Hail Mary prayers */
+.meditation {
+  font-style: italic;
+  font-size: 0.9em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  line-height: 1.5;
+  display: block;
+}
+
 /* Larger prayer text on mobile for better readability */
 @media (max-width: 768px) {
   .prayer-text {
@@ -577,6 +587,12 @@ h3 {
   
   .panel-head .muted {
     font-size: 18px;
+  }
+  
+  .meditation {
+    font-size: 18px;
+    margin-bottom: 16px;
+    line-height: 1.6;
   }
 }
 
