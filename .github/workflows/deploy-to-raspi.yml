@@ -25,9 +25,24 @@ jobs:
 
       # 4) Trust the Pi host key (prevents interactive prompt)
       - name: Add host to known_hosts
+        shell: bash
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.RASPI_PORT || 22 }} -H ${{ secrets.RASPI_HOST }} >> ~/.ssh/known_hosts
+          set -euxo pipefail
+      
+          # Use $HOME explicitly (more reliable than ~)
+          SSH_DIR="$HOME/.ssh"
+      
+          # If something created ~/.ssh as a FILE, remove it so mkdir can succeed
+          if [ -f "$SSH_DIR" ]; then
+            rm -f "$SSH_DIR"
+          fi
+      
+          mkdir -p "$SSH_DIR"
+          chmod 700 "$SSH_DIR"
+      
+          ssh-keyscan -p "${{ secrets.RASPI_PORT }}" -H "${{ secrets.RASPI_HOST }}" >> "$SSH_DIR/known_hosts"
+          chmod 600 "$SSH_DIR/known_hosts"
+
 
       # 5) Rsync site files to the web root
       #    Adjust the source path if your built site lives somewhere else.
