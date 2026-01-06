@@ -532,6 +532,17 @@ h3 {
   }
 }
 
+/* Mystery name in welcome section - colored text */
+.mystery-name {
+  color: var(--primary);
+  font-weight: 700;
+  font-style: italic;
+}
+
+.dark-mode .mystery-name {
+  color: #4a9ee8;
+}
+
 .today {
   color: #b91c1c;
   font-weight: 800;
