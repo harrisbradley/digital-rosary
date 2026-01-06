@@ -4,7 +4,7 @@
 // 🚩 Feature flags - turn features on/off easily
 // Think of these like light switches for different parts of the app
 const FEATURES = {
-  SHOW_ROSARY_PROGRESS: true // Set to false to hide the Rosary Progress section
+  SHOW_ROSARY_PROGRESS: false // Set to false to hide the Rosary Progress section
   // Change to true to show the visual rosary progress indicator
 };
 
