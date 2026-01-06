@@ -576,7 +576,7 @@ function renderStep() {
     jumpBtnEl.style.display = '';
     if (stepIndex >= 5) {
       // If we're past the intro, change button text
-      jumpBtnEl.textContent = 'Jump to Next Decade';
+      jumpBtnEl.textContent = 'Next Decade';
       jumpBtnEl.disabled = nextDecadeIdx === -1;
     } else {
       // If we're still in intro, show "Jump to Decades"
