@@ -85,7 +85,8 @@ const LS_KEYS = {
   LAST_DATE: 'rosary_last_date_v1', // Date of last rosary
   STREAK: 'rosary_streak_v1',    // Current streak count
   DARK_MODE: 'dark_mode_v1',      // Dark mode preference
-  HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1' // Hide "New to the Rosary?" section
+  HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
+  ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1' // 1-click Hail Marys toggle preference
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -195,7 +196,7 @@ const GUIDE = [
 ];
 
 // ========== UTILITY FUNCTIONS ==========
-// 🛠️ Helper functions that do specific tasks
+// 🛠️ Hail Mary Decade Helper functions that do specific tasks
 
 // 🔵 Generate bead visualization for Hail Mary steps
 // Creates visual beads showing progress through the 10 Hail Marys in a decade
@@ -256,6 +257,44 @@ function getMeditation(decadeIndex, hailMaryNumber) {
   }
   
   return '';
+}
+
+// 📿 Find the end of the current decade (Glory Be step)
+// Returns the index of the "Glory Be" step for the decade containing stepIndex
+// If not in a decade or not found, returns -1
+function findDecadeEnd(stepIndex) {
+  const currentStep = GUIDE[stepIndex];
+  if (!currentStep || !currentStep.isHailMary || currentStep.decadeIndex === undefined) {
+    return -1; // Not on a Hail Mary step in a decade
+  }
+  
+  const decadeIndex = currentStep.decadeIndex;
+  
+  // Find the first non-Hail Mary step after the current Hail Mary
+  // This will be the Glory Be step (structure: Announce → Our Father → 10 Hail Marys → Glory Be → Fatima)
+  for (let i = stepIndex + 1; i < GUIDE.length; i++) {
+    const step = GUIDE[i];
+    
+    // If we find a step that's not a Hail Mary, it's the Glory Be (or we've moved past the decade)
+    if (!step.isHailMary) {
+      // Check if we're still in the same decade by looking at previous steps
+      // If the previous step was a Hail Mary with the same decadeIndex, we're still in the decade
+      if (i > 0 && GUIDE[i - 1].isHailMary && GUIDE[i - 1].decadeIndex === decadeIndex) {
+        return i; // This is the Glory Be step
+      }
+      // If we've moved to a different decade (next decade's Announce step), stop
+      if (step.title && step.title.startsWith('Announce the')) {
+        break;
+      }
+    }
+    
+    // If we encounter a Hail Mary from a different decade, stop searching
+    if (step.isHailMary && step.decadeIndex !== undefined && step.decadeIndex !== decadeIndex) {
+      break;
+    }
+  }
+  
+  return -1;
 }
 
 // 🚀 Preload images for upcoming steps to improve performance
@@ -343,6 +382,8 @@ const jumpBtnEl = document.getElementById('jumpBtn');               // Jump to d
 const restartBtnEl = document.getElementById('restartBtn');          // Restart button
 const nextBtnEl = document.getElementById('nextBtn');                // Next button
 const darkModeToggleEl = document.getElementById('darkModeToggle'); // Dark mode toggle button
+const completeDecadeBtnEl = document.getElementById('completeDecadeBtn'); // Complete Decade button
+const oneClickHailMarysToggleEl = document.getElementById('oneClickHailMarysToggle'); // 1-click Hail Marys toggle
 const htmlRootEl = document.documentElement;                        // HTML root element
 
 // 📍 Current position in the prayer guide (which step are we on?)
@@ -479,10 +520,17 @@ function renderStep() {
   // Get the current step from the GUIDE array
   const step = GUIDE[stepIndex];
   
-  // For Hail Mary steps, show visual beads instead of just "#/10"
+  // For Hail Mary steps, show visual beads only when toggle is OFF
+  // When toggle is ON, just show "Hail Mary" without beads
   if (step.isHailMary && step.hailMaryNumber) {
-    // Generate the bead visualization (shows progress through the 10 Hail Marys)
-    stepTitleEl.innerHTML = `Hail Mary ${generateBeads(step.hailMaryNumber)}`;
+    const isOneClickHailMarysEnabled = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
+    if (isOneClickHailMarysEnabled) {
+      // Toggle is ON - show simple "Hail Mary" without beads
+      stepTitleEl.textContent = 'Hail Mary';
+    } else {
+      // Toggle is OFF - show beads visualization (shows progress through the 10 Hail Marys)
+      stepTitleEl.innerHTML = `Hail Mary ${generateBeads(step.hailMaryNumber)}`;
+    }
   } else {
     // For other steps, just show the title text
     stepTitleEl.textContent = step.title;
@@ -589,9 +637,40 @@ function renderStep() {
   // On the final step, change Next button to "Log Today's Rosary"
   // Next button always keeps primary class (blue background, gold text)
   const isFinalStep = stepIndex === GUIDE.length - 1;
+  const isOneClickHailMarysEnabled = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
+  const isOnHailMary = step.isHailMary && step.hailMaryNumber;
+  const isFirstHailMary = isOnHailMary && step.hailMaryNumber === 1;
+  
+  // Show/hide Complete Decade button based on toggle state and whether we're on a Hail Mary step
+  // Toggle OFF: show Complete Decade button when on Hail Mary
+  // Toggle ON: hide Complete Decade button (only show Next button)
+  if (completeDecadeBtnEl) {
+    // Always hide Complete Decade button when toggle is ON
+    if (isOneClickHailMarysEnabled) {
+      // Toggle is ON - hide Complete Decade button
+      completeDecadeBtnEl.style.display = 'none';
+      completeDecadeBtnEl.setAttribute('hidden', '');
+    } else if (isOnHailMary) {
+      // Toggle is OFF and we're on a Hail Mary - show Complete Decade button
+      completeDecadeBtnEl.style.display = '';
+      completeDecadeBtnEl.removeAttribute('hidden');
+    } else {
+      // Not on a Hail Mary step - hide Complete Decade button
+      completeDecadeBtnEl.style.display = 'none';
+      completeDecadeBtnEl.setAttribute('hidden', '');
+    }
+  }
+  
+  // Ensure Next button is always visible (unless it's the final step which shows "Log Today's Rosary")
+  if (nextBtnEl) {
+    nextBtnEl.style.display = '';
+  }
+  
+  // Update Next button text based on toggle state and current step
   if (isFinalStep) {
     nextBtnEl.textContent = 'Log Today\'s Rosary';
   } else {
+    // Always show "Next ▶" - the toggle controls behavior, not the button text
     nextBtnEl.textContent = 'Next ▶';
   }
   // Ensure primary class is always present (makes button blue/gold)
@@ -651,9 +730,25 @@ nextBtnEl.addEventListener('click', () => {
     // If on final step, log the rosary and show celebration
     logRosary(true);
   } else {
-    // Otherwise, move to the next step
-    // Math.min ensures we never go past the last step
-    stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+    // Check if 1-click Hail Marys is enabled and we're on the first Hail Mary
+    const currentStep = GUIDE[stepIndex];
+    const isOneClickHailMarysEnabled = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
+    const isFirstHailMary = currentStep.isHailMary && currentStep.hailMaryNumber === 1;
+    
+    if (isOneClickHailMarysEnabled && isFirstHailMary) {
+      // Skip to the end of the decade (Glory Be step)
+      const decadeEndIndex = findDecadeEnd(stepIndex);
+      if (decadeEndIndex !== -1) {
+        stepIndex = decadeEndIndex;
+      } else {
+        // Fallback: move to next step if we can't find decade end
+        stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+      }
+    } else {
+      // Otherwise, move to the next step
+      // Math.min ensures we never go past the last step
+      stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+    }
     renderStep();  // Update the display
   }
 });
@@ -679,9 +774,25 @@ stepImageEl.addEventListener('click', () => {
     // If on final step, log the rosary and show celebration
     logRosary(true);
   } else {
-    // Otherwise, move to the next step
-    // Math.min ensures we never go past the last step
-    stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+    // Check if 1-click Hail Marys is enabled and we're on the first Hail Mary
+    const currentStep = GUIDE[stepIndex];
+    const isOneClickHailMarysEnabled = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
+    const isFirstHailMary = currentStep.isHailMary && currentStep.hailMaryNumber === 1;
+    
+    if (isOneClickHailMarysEnabled && isFirstHailMary) {
+      // Skip to the end of the decade (Glory Be step)
+      const decadeEndIndex = findDecadeEnd(stepIndex);
+      if (decadeEndIndex !== -1) {
+        stepIndex = decadeEndIndex;
+      } else {
+        // Fallback: move to next step if we can't find decade end
+        stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+      }
+    } else {
+      // Otherwise, move to the next step
+      // Math.min ensures we never go past the last step
+      stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
+    }
     renderStep();  // Update the display
   }
 });
@@ -706,6 +817,24 @@ jumpBtnEl.addEventListener('click', () => {
     renderStep();
   }
 });
+
+// ⏭️ Complete Decade button: Skip all remaining Hail Marys in current decade (when 1-click is OFF)
+if (completeDecadeBtnEl) {
+  completeDecadeBtnEl.addEventListener('click', () => {
+    // Add visual feedback animation
+    completeDecadeBtnEl.classList.add('clicked');
+    setTimeout(() => {
+      completeDecadeBtnEl.classList.remove('clicked');
+    }, 300);
+    
+    // Find the end of the current decade (Glory Be step)
+    const decadeEndIndex = findDecadeEnd(stepIndex);
+    if (decadeEndIndex !== -1) {
+      stepIndex = decadeEndIndex;
+      renderStep();
+    }
+  });
+}
 
 // 🔄 Restart button: Return to the first step of the guide
 restartBtnEl.addEventListener('click', () => {
@@ -1037,10 +1166,58 @@ function showNewToRosarySection() {
 // Make it available globally for easy console access
 window.showNewToRosarySection = showNewToRosarySection;
 
+// ========== 1-CLICK HAIL MARYS TOGGLE FUNCTIONALITY ==========
+// ⚙️ Toggle for 1-click Hail Marys feature
+
+// Initialize 1-click Hail Marys toggle based on saved preference
+function initOneClickHailMarysToggle() {
+  if (!oneClickHailMarysToggleEl) return;
+  
+  const savedPreference = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
+  oneClickHailMarysToggleEl.checked = savedPreference;
+}
+
+// Toggle 1-click Hail Marys on/off
+function toggleOneClickHailMarys() {
+  if (!oneClickHailMarysToggleEl) return;
+  
+  const isEnabled = oneClickHailMarysToggleEl.checked;
+  setLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, isEnabled);
+  
+  // Immediately update Complete Decade button visibility
+  if (completeDecadeBtnEl) {
+    if (isEnabled) {
+      // Toggle is ON - hide Complete Decade button
+      completeDecadeBtnEl.style.display = 'none';
+      completeDecadeBtnEl.setAttribute('hidden', '');
+    } else {
+      // Toggle is OFF - show Complete Decade button if we're on a Hail Mary
+      const currentStep = GUIDE[stepIndex];
+      const isOnHailMary = currentStep && currentStep.isHailMary && currentStep.hailMaryNumber;
+      if (isOnHailMary) {
+        completeDecadeBtnEl.style.display = '';
+        completeDecadeBtnEl.removeAttribute('hidden');
+      } else {
+        completeDecadeBtnEl.style.display = 'none';
+        completeDecadeBtnEl.setAttribute('hidden', '');
+      }
+    }
+  }
+  
+  // Re-render step to update button text if needed
+  renderStep();
+}
+
+// 1-click Hail Marys toggle event listener
+if (oneClickHailMarysToggleEl) {
+  oneClickHailMarysToggleEl.addEventListener('change', toggleOneClickHailMarys);
+}
+
 // ========== INITIALIZE APP ==========
 // 🚀 Start the application when page loads
 // This runs automatically when the page finishes loading
 initDarkMode(); // Initialize dark mode first
+initOneClickHailMarysToggle(); // Initialize 1-click Hail Marys toggle
 hydrateUI();
 
 // Set up restore link event listener after DOM is ready

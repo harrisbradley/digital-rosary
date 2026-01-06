@@ -136,6 +136,8 @@
                 <!-- ➡️ Go forward one step (primary = main/important button) -->
                 <button id="jumpBtn" class="button">Jump to Decades</button>
                 <!-- ⏩ Skip to the first decade (skips intro prayers) -->
+                <button id="completeDecadeBtn" class="button" style="display: none;">Complete Decade</button>
+                <!-- ⏭️ Skip all remaining Hail Marys in current decade (when 1-click is OFF) -->
               </div>
               <!-- 📋 Header showing current step name -->
               <div class="panel-head">
@@ -147,6 +149,13 @@
               <div class="prayer-text" id="prayerText"></div>
               <!-- 💡 Helpful tip for users -->
               <div class="muted" style="font-size:13px;margin-top:6px">Tip: Use ←/→ keys to navigate.</div>
+              <!-- ⚙️ Toggle for 1-click Hail Marys feature -->
+              <div class="one-click-hail-marys-toggle" style="margin-top: 8px;">
+                <label class="toggle-label">
+                  <span class="toggle-text">1-click Hail Marys (decades)</span>
+                  <input type="checkbox" id="oneClickHailMarysToggle" aria-label="1-click Hail Marys">
+                </label>
+              </div>
             </div>
           </div>
         </div>

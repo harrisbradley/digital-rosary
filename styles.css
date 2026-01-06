@@ -994,3 +994,137 @@ footer {
   margin: 8px 0 0 18px;
   padding: 0;
 }
+
+/* ==========================================
+   1-Click Hail Marys Toggle
+   ========================================== */
+.one-click-hail-marys-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.toggle-label input[type="checkbox"] {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #d9d6cf;
+  border: 1px solid #c4c0b8;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark-mode .toggle-label input[type="checkbox"] {
+  background: #404040;
+  border-color: #505050;
+}
+
+.toggle-label input[type="checkbox"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.toggle-label input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-label input[type="checkbox"]:checked::before {
+  transform: translateX(16px);
+}
+
+.toggle-label input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.toggle-text {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dark-mode .toggle-text {
+  color: var(--muted);
+}
+
+/* Larger toggle on mobile for better touch targets */
+@media (max-width: 768px) {
+  .one-click-hail-marys-toggle {
+    margin-top: 12px;
+  }
+  
+  .toggle-label {
+    gap: 12px;
+  }
+  
+  .toggle-text {
+    font-size: 13px; /* Keep same size as Tip on mobile too */
+  }
+  
+  .toggle-label input[type="checkbox"] {
+    width: 40px;
+    height: 22px;
+  }
+  
+  .toggle-label input[type="checkbox"]::before {
+    width: 16px;
+    height: 16px;
+    top: 2px;
+    left: 2px;
+  }
+  
+  .toggle-label input[type="checkbox"]:checked::before {
+    transform: translateX(18px);
+  }
+}
+
+/* Complete Decade button styling */
+#completeDecadeBtn {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: var(--ink);
+}
+
+.dark-mode #completeDecadeBtn {
+  background: #374151;
+  border-color: #4b5563;
+  color: var(--ink);
+}
+
+#completeDecadeBtn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dark-mode #completeDecadeBtn:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+/* Ensure Complete Decade button is hidden when it has the hidden attribute */
+#completeDecadeBtn[hidden] {
+  display: none !important;
+}
