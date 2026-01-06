@@ -2,62 +2,66 @@ name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [ "main" ]   # ✅ runs after merges to main
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout the repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2) Install rsync (usually already present, but safe)
       - name: Install rsync
         run: sudo apt-get update && sudo apt-get install -y rsync
 
-      # 3) Start SSH agent and add private key
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.RASPI_SSH_KEY }}
 
-      # 4) Trust the Pi host key (prevents interactive prompt)
+      - name: Debug home + ssh dir
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo "HOME=$HOME"
+          whoami
+          pwd
+          ls -la "$HOME" || true
+          ls -la "$HOME/.ssh" || true
+          file "$HOME/.ssh" || true
+
       - name: Add host to known_hosts
         shell: bash
         run: |
           set -euxo pipefail
-      
-          # Use $HOME explicitly (more reliable than ~)
+
           SSH_DIR="$HOME/.ssh"
-      
+
           # If something created ~/.ssh as a FILE, remove it so mkdir can succeed
           if [ -f "$SSH_DIR" ]; then
             rm -f "$SSH_DIR"
           fi
-      
+
           mkdir -p "$SSH_DIR"
           chmod 700 "$SSH_DIR"
-      
+
           ssh-keyscan -p "${{ secrets.RASPI_PORT }}" -H "${{ secrets.RASPI_HOST }}" >> "$SSH_DIR/known_hosts"
           chmod 600 "$SSH_DIR/known_hosts"
 
-
-      # 5) Rsync site files to the web root
-      #    Adjust the source path if your built site lives somewhere else.
       - name: Deploy files via rsync
+        shell: bash
         run: |
           rsync -avz --delete \
             --exclude ".git" \
             --exclude ".github" \
-            -e "ssh -p ${{ secrets.RASPI_PORT || 22 }}" \
+            -e "ssh -p ${{ secrets.RASPI_PORT }}" \
             ./ \
-            ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }}:${{ secrets.RASPI_PATH || '/var/www/digital-rosary' }}
+            ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }}:${{ secrets.RASPI_PATH }}
 
-      # 6) Reload nginx
       - name: Reload nginx
+        shell: bash
         run: |
-          ssh -p ${{ secrets.RASPI_PORT || 22 }} \
+          ssh -p ${{ secrets.RASPI_PORT }} \
             ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }} \
             "sudo systemctl reload nginx"
