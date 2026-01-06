@@ -1,0 +1,48 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [ "main" ]   # ✅ runs after merges to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Install rsync (usually already present, but safe)
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      # 3) Start SSH agent and add private key
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.RASPI_SSH_KEY }}
+
+      # 4) Trust the Pi host key (prevents interactive prompt)
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.RASPI_PORT || 22 }} -H ${{ secrets.RASPI_HOST }} >> ~/.ssh/known_hosts
+
+      # 5) Rsync site files to the web root
+      #    Adjust the source path if your built site lives somewhere else.
+      - name: Deploy files via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            -e "ssh -p ${{ secrets.RASPI_PORT || 22 }}" \
+            ./ \
+            ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }}:${{ secrets.RASPI_PATH || '/var/www/digital-rosary' }}
+
+      # 6) Reload nginx
+      - name: Reload nginx
+        run: |
+          ssh -p ${{ secrets.RASPI_PORT || 22 }} \
+            ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }} \
+            "sudo systemctl reload nginx"
