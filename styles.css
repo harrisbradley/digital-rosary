@@ -306,6 +306,31 @@ a {
   padding: 22px;
 }
 
+/* Rosary info links section */
+.rosary-info-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rosary-info-links .button {
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .rosary-info-links {
+    flex-direction: column;
+  }
+  
+  .rosary-info-links .button {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
 /* Larger padding on mobile for better touch targets */
 @media (max-width: 768px) {
   .card.pad {
@@ -365,6 +390,49 @@ h2 {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Section header with dismiss button */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.button-icon {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background 0.2s ease;
+  min-width: auto;
+  min-height: auto;
+  font-weight: 300;
+}
+
+.button-icon:hover {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .button-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.button-icon:active {
+  transform: scale(0.9);
 }
 
 h3 {

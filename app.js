@@ -84,7 +84,8 @@ const LS_KEYS = {
   TOTAL: 'rosary_total_v1',      // Total count of rosaries prayed
   LAST_DATE: 'rosary_last_date_v1', // Date of last rosary
   STREAK: 'rosary_streak_v1',    // Current streak count
-  DARK_MODE: 'dark_mode_v1'      // Dark mode preference
+  DARK_MODE: 'dark_mode_v1',      // Dark mode preference
+  HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1' // Hide "New to the Rosary?" section
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -617,6 +618,8 @@ function hydrateUI() {
   renderStep();
   // Update the stats (streak, total, progress bar)
   syncStats();
+  // Initialize "New to the Rosary?" section visibility
+  initNewToRosarySection();
 
   // Show/hide Rosary Progress section based on feature flag
   if (rosaryProgressCardEl) {
@@ -960,9 +963,93 @@ function initDarkMode() {
 // Dark mode toggle button event listener
 darkModeToggleEl.addEventListener('click', toggleDarkMode);
 
+// ========== "NEW TO THE ROSARY" SECTION FUNCTIONALITY ==========
+// 👋 Allow users to dismiss the "New to the Rosary?" section
+
+// Initialize "New to the Rosary?" section visibility
+function initNewToRosarySection() {
+  const newToRosarySection = document.getElementById('newToRosarySection');
+  const showLink = document.getElementById('showNewToRosaryLink');
+  if (!newToRosarySection) return;
+  
+  const shouldHide = getLS(LS_KEYS.HIDE_NEW_TO_ROSARY, false);
+  if (shouldHide) {
+    newToRosarySection.style.display = 'none';
+    // Show the restore link in footer
+    if (showLink) {
+      showLink.style.display = 'inline';
+    }
+  } else {
+    // Hide the restore link if section is visible
+    if (showLink) {
+      showLink.style.display = 'none';
+    }
+  }
+}
+
+// Dismiss the "New to the Rosary?" section
+function dismissNewToRosarySection() {
+  const newToRosarySection = document.getElementById('newToRosarySection');
+  const showLink = document.getElementById('showNewToRosaryLink');
+  if (!newToRosarySection) return;
+  
+  // Hide the section
+  newToRosarySection.style.display = 'none';
+  
+  // Show the restore link in footer
+  if (showLink) {
+    showLink.style.display = 'inline';
+  }
+  
+  // Save preference to localStorage
+  setLS(LS_KEYS.HIDE_NEW_TO_ROSARY, true);
+}
+
+// Dismiss button event listener
+const dismissNewToRosaryBtn = document.getElementById('dismissNewToRosary');
+if (dismissNewToRosaryBtn) {
+  dismissNewToRosaryBtn.addEventListener('click', dismissNewToRosarySection);
+}
+
+// Show the "New to the Rosary?" section again (for testing/resetting)
+function showNewToRosarySection() {
+  const newToRosarySection = document.getElementById('newToRosarySection');
+  const showLink = document.getElementById('showNewToRosaryLink');
+  if (!newToRosarySection) return;
+  
+  // Show the section
+  newToRosarySection.style.display = '';
+  
+  // Hide the restore link in footer
+  if (showLink) {
+    showLink.style.display = 'none';
+  }
+  
+  // Clear the preference from localStorage
+  setLS(LS_KEYS.HIDE_NEW_TO_ROSARY, false);
+  
+  // Scroll to the section so user can see it
+  newToRosarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  
+  console.log('✅ "New to the Rosary?" section is now visible again');
+}
+
+// Make it available globally for easy console access
+window.showNewToRosarySection = showNewToRosarySection;
+
 // ========== INITIALIZE APP ==========
 // 🚀 Start the application when page loads
 // This runs automatically when the page finishes loading
 initDarkMode(); // Initialize dark mode first
 hydrateUI();
+
+// Set up restore link event listener after DOM is ready
+// This ensures the footer link exists before we try to attach the listener
+const restoreNewToRosaryLink = document.getElementById('restoreNewToRosaryLink');
+if (restoreNewToRosaryLink) {
+  restoreNewToRosaryLink.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent default link behavior
+    showNewToRosarySection();
+  });
+}
 

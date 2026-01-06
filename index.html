@@ -92,6 +92,22 @@
           </div>
         </div>
 
+        <!-- 📚 NEW TO THE ROSARY SECTION: Information for newcomers -->
+        <div id="newToRosarySection" class="card pad" style="margin-top:18px">
+          <div class="section-header">
+            <h2>New to the Rosary?</h2>
+            <button id="dismissNewToRosary" class="button-icon" aria-label="Dismiss this section" title="Don't show this again">×</button>
+          </div>
+          <p class="muted" style="margin-bottom:16px">
+            The Rosary is a beautiful prayer tradition that combines meditation on the life of Jesus and Mary with repetitive prayers. 
+            It's a powerful way to grow closer to God through contemplation and devotion.
+          </p>
+          <div class="rosary-info-links">
+            <a href="why-rosary.html" class="button">Why we pray the rosary</a>
+            <a href="history-rosary.html" class="button">The history of the rosary</a>
+          </div>
+        </div>
+
         <!-- 🙏 INTERACTIVE ROSARY GUIDE: The main prayer interface.  NOTE: IRG is an acronym for Interactive Rosary Guide. -->
         <!-- This is the heart of the app - where users actually pray through the rosary -->
         <div id="interactiveRosaryGuide" class="card pad" style="margin-top:18px">
@@ -193,7 +209,12 @@
   </main>
 
   <!-- 👣 Footer - appears at the bottom of the page -->
-  <footer>Made with ❤️ to help you pray.</footer>
+  <footer>
+    Made with ❤️ to help you pray.
+    <span id="showNewToRosaryLink" style="display: none;">
+      | <a href="#" id="restoreNewToRosaryLink" style="color: var(--primary); text-decoration: none;">Show "New to the Rosary?" section</a>
+    </span>
+  </footer>
 
   <!-- ===== JAVASCRIPT APPLICATION LOGIC ===== -->
   <!-- 💻 All the interactive functionality is now in app.js -->
