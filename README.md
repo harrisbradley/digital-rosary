@@ -2,7 +2,7 @@
 
 An interactive web application designed to help you learn and pray the Holy Rosary. This digital guide provides step-by-step instructions, visual illustrations, and prayer tracking to enhance your prayer experience.
 
-## ✝️ Live Site
+## ✝️ Live Site!
 
 **[Visit www.digital-rosary.com to see it in action →](https://www.digital-rosary.com)**
 
