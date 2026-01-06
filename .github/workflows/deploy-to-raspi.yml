@@ -23,19 +23,15 @@ jobs:
       - name: Marker - start
         run: echo "=== START DEPLOY JOB ==="
 
-      - name: Check Tailscale secrets are present
+      - name: Check Tailscale auth key secret is present
         shell: bash
         run: |
-          echo "Checking Tailscale secrets..."
-          if [ -z "${{ secrets.TAILSCALE_CLIENT_ID }}" ]; then
-            echo "❌ Missing TAILSCALE_CLIENT_ID secret"
+          echo "Checking Tailscale auth key secret..."
+          if [ -z "${{ secrets.TAILSCALE_AUTHKEY }}" ]; then
+            echo "❌ Missing TAILSCALE_AUTHKEY secret"
             exit 1
           fi
-          if [ -z "${{ secrets.TAILSCALE_CLIENT_SECRET }}" ]; then
-            echo "❌ Missing TAILSCALE_CLIENT_SECRET secret"
-            exit 1
-          fi
-          echo "✅ Tailscale secrets look present"
+          echo "✅ TAILSCALE_AUTHKEY looks present"
 
       - name: Marker - before Tailscale
         run: echo "=== BEFORE TAILSCALE ==="
@@ -43,8 +39,7 @@ jobs:
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
-          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           tags: tag:github-actions
 
       - name: Marker - after Tailscale
