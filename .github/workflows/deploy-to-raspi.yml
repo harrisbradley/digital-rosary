@@ -20,12 +20,25 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.RASPI_SSH_KEY }}
 
+      - name: Marker - start
+        run: echo "=== START DEPLOY JOB ==="
+
       - name: Check Tailscale secrets are present
         shell: bash
         run: |
-          set -e
-          [ -n "${{ secrets.TAILSCALE_CLIENT_ID }}" ] || (echo "Missing TAILSCALE_CLIENT_ID secret" && exit 1)
-          [ -n "${{ secrets.TAILSCALE_CLIENT_SECRET }}" ] || (echo "Missing TAILSCALE_CLIENT_SECRET secret" && exit 1)
+          echo "Checking Tailscale secrets..."
+          if [ -z "${{ secrets.TAILSCALE_CLIENT_ID }}" ]; then
+            echo "❌ Missing TAILSCALE_CLIENT_ID secret"
+            exit 1
+          fi
+          if [ -z "${{ secrets.TAILSCALE_CLIENT_SECRET }}" ]; then
+            echo "❌ Missing TAILSCALE_CLIENT_SECRET secret"
+            exit 1
+          fi
+          echo "✅ Tailscale secrets look present"
+
+      - name: Marker - before Tailscale
+        run: echo "=== BEFORE TAILSCALE ==="
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
@@ -34,6 +47,16 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
           tags: tag:github-actions
 
+      - name: Marker - after Tailscale
+        run: echo "=== AFTER TAILSCALE ==="
+
+      - name: Show Tailscale status
+        shell: bash
+        run: |
+          echo "=== TAILSCALE STATUS ==="
+          tailscale status || true
+          echo "=== RUNNER TAILSCALE IP ==="
+          tailscale ip -4 || true
 
       - name: Debug home + ssh dir
         shell: bash
@@ -45,6 +68,14 @@ jobs:
           ls -la "$HOME" || true
           ls -la "$HOME/.ssh" || true
           file "$HOME/.ssh" || true
+
+      - name: Connectivity check to Pi over Tailscale (TCP)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo "Checking TCP connectivity to ${{ secrets.RASPI_HOST }}:${{ secrets.RASPI_PORT }} ..."
+          timeout 10 bash -c "cat < /dev/null > /dev/tcp/${{ secrets.RASPI_HOST }}/${{ secrets.RASPI_PORT }}"
+          echo "✅ TCP connectivity OK"
 
       - name: Add host to known_hosts
         shell: bash
@@ -61,12 +92,14 @@ jobs:
           mkdir -p "$SSH_DIR"
           chmod 700 "$SSH_DIR"
 
-          ssh-keyscan -p "${{ secrets.RASPI_PORT }}" -H "${{ secrets.RASPI_HOST }}" >> "$SSH_DIR/known_hosts"
+          # Prevent ssh-keyscan from hanging forever
+          timeout 15 ssh-keyscan -p "${{ secrets.RASPI_PORT }}" -H "${{ secrets.RASPI_HOST }}" >> "$SSH_DIR/known_hosts"
           chmod 600 "$SSH_DIR/known_hosts"
 
       - name: Deploy files via rsync
         shell: bash
         run: |
+          set -euxo pipefail
           rsync -avz --delete \
             --exclude ".git" \
             --exclude ".github" \
@@ -77,6 +110,10 @@ jobs:
       - name: Reload nginx
         shell: bash
         run: |
+          set -euxo pipefail
           ssh -p ${{ secrets.RASPI_PORT }} \
             ${{ secrets.RASPI_USER }}@${{ secrets.RASPI_HOST }} \
             "sudo systemctl reload nginx"
+
+      - name: Marker - end
+        run: echo "=== DEPLOY COMPLETE ==="
