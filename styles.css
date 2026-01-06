@@ -351,13 +351,20 @@ h2 {
   margin: 0;
 }
 
-/* IRG header: h2 with mystery pill */
+/* IRG header: h2 with mystery pill and restart button */
 .irg-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.irg-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 h3 {
@@ -372,6 +379,15 @@ h3 {
   
   .irg-header {
     margin-bottom: 16px;
+  }
+  
+  .irg-header-actions {
+    gap: 6px;
+  }
+  
+  .irg-header-actions .button {
+    padding: 6px 10px;
+    min-width: auto;
   }
   
   h3 {

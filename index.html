@@ -97,7 +97,10 @@
         <div id="interactiveRosaryGuide" class="card pad" style="margin-top:18px">
           <div class="irg-header">
             <h2>Interactive Rosary Guide</h2>
-            <span id="mysteryBadge" class="pill">Mystery</span>
+            <div class="irg-header-actions">
+              <span id="mysteryBadge" class="pill">Mystery</span>
+              <button id="restartBtn" class="button" aria-label="Restart Guide" title="Restart Guide">↻</button>
+            </div>
           </div>
           <div class="guide" style="margin-top:12px">
             <!-- 🖼️ Left side: Current step illustration -->
@@ -117,8 +120,6 @@
                 <!-- ➡️ Go forward one step (primary = main/important button) -->
                 <button id="jumpBtn" class="button">Jump to Decades</button>
                 <!-- ⏩ Skip to the first decade (skips intro prayers) -->
-                <button id="restartBtn" class="button" aria-label="Restart Guide" title="Restart Guide">↻</button>
-                <!-- 🔄 Start over from the beginning -->
               </div>
               <!-- 📋 Header showing current step name -->
               <div class="panel-head">
