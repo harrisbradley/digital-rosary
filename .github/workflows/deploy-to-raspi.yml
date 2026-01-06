@@ -20,6 +20,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.RASPI_SSH_KEY }}
 
+      - name: Check Tailscale secrets are present
+        shell: bash
+        run: |
+          set -e
+          [ -n "${{ secrets.TAILSCALE_CLIENT_ID }}" ] || (echo "Missing TAILSCALE_CLIENT_ID secret" && exit 1)
+          [ -n "${{ secrets.TAILSCALE_CLIENT_SECRET }}" ] || (echo "Missing TAILSCALE_CLIENT_SECRET secret" && exit 1)
+
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
