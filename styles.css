@@ -528,7 +528,7 @@ h3 {
   }
 }
 
-.sunrise {
+.mary_points_us {
   aspect-ratio: 16 / 10;
   border-radius: 12px;
 }
@@ -1151,4 +1151,8 @@ footer {
 /* Ensure Complete Decade button is hidden when it has the hidden attribute */
 #completeDecadeBtn[hidden] {
   display: none !important;
+}
+ul li::marker {
+  content: "✓ ";
+  color: var(--primary);
 }
