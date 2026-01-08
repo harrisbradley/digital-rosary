@@ -205,6 +205,12 @@ a {
   font-size: 16px;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .dark-mode .button {
@@ -237,6 +243,18 @@ a {
   color: #FDDB6F;
   border-color: transparent;
   box-shadow: 0 6px 14px rgba(24, 98, 168, 0.18);
+}
+
+.button-secondary {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: var(--ink);
+}
+
+.dark-mode .button-secondary {
+  background: #374151;
+  border-color: #4b5563;
+  color: var(--ink);
 }
 
 .button.clicked {
@@ -318,6 +336,12 @@ a {
   min-width: 150px;
   text-align: center;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
 }
 
 @media (max-width: 768px) {
