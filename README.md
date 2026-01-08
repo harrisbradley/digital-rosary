@@ -8,14 +8,20 @@ An interactive web application designed to help you learn and pray the Holy Rosa
 
 ## Features
 
-- **Interactive Prayer Guide**: Step-by-step navigation through the complete Rosary prayer sequence
-- **1-Click Hail Marys** ⚡: Optional toggle to complete all 10 Hail Marys in a decade with a single click, or click through each one individually
-- **Visual Illustrations** 🖼️: Beautiful images accompany each prayer step and mystery
-- **All Four Mystery Sets**: Support for Joyful, Sorrowful, Glorious, and Luminous mysteries with automatic daily selection
-- **Prayer Tracking** 📊: Track your prayer journey with streak counters and total rosaries prayed
-- **Dark Mode**: Comfortable viewing in light or dark themes
-- **Keyboard Navigation**: Use arrow keys (←/→) for easy navigation through prayers
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Interactive Prayer Guide**: Step-by-step navigation through the complete Rosary prayer sequence with visual progress indicators
+- **1-Click Hail Marys** ⚡: Optional toggle to complete all 10 Hail Marys in a decade with a single click, or click through each one individually with visual bead indicators
+- **Visual Illustrations** 🖼️: Beautiful images accompany each prayer step and mystery to aid in meditation
+- **Meditation Guide** 💭: Thoughtful meditations provided for each Hail Mary to deepen your prayer experience
+- **All Four Mystery Sets**: Support for Joyful, Sorrowful, Glorious, and Luminous mysteries with automatic daily selection based on traditional prayer schedule
+- **Prayer Tracking** 📊: Track your prayer journey with streak counters and total rosaries prayed, stored locally in your browser
+- **New to the Rosary?** 🙏: Welcoming section for newcomers with helpful resources and encouragement
+- **Dark Mode**: Comfortable viewing in light or dark themes with preference saved automatically
+- **Multiple Navigation Options**: 
+  - Keyboard shortcuts (←/→ arrow keys) for easy navigation
+  - Click the prayer image to advance
+  - Jump to decades button for quick navigation
+  - Restart button to begin again anytime
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices with touch-optimized controls
 - **Prayer Reference**: Quick access to common prayers and all mysteries in an accordion-style interface
 
 ## Technology Stack
