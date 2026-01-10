@@ -297,6 +297,7 @@ a {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
+  align-items: start;
 }
 
 @media (max-width: 980px) {
@@ -304,6 +305,37 @@ a {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+}
+
+/* Right sidebar spacing - ensure cards have consistent vertical spacing */
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.aside > .card {
+  margin-top: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Ensure first card in aside doesn't have extra margin */
+.aside > .card:first-child {
+  margin-top: 0;
+}
+
+/* Left section spacing - ensure consistent spacing */
+section > .card {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Ensure consistent horizontal alignment for both sections */
+.grid > section,
+.grid > .aside {
+  margin: 0;
+  padding: 0;
 }
 
 /* ==========================================

@@ -552,10 +552,17 @@ function renderStep() {
     prayerTextEl.innerHTML = prayerText;
   }
   
+  // Reset scroll position immediately after content update
+  // This prevents browser from preserving scroll position when innerHTML changes
+  prayerTextEl.scrollTop = 0;
+  
   // Check if prayer text exceeds threshold and enable scrolling if needed
   if (PRAYER_SCROLL_THRESHOLD_LINES < 999) {
     // Remove scrollable class first to get accurate measurements
     prayerTextEl.classList.remove('scrollable');
+    
+    // Reset scroll position again after removing class to ensure it's at top
+    prayerTextEl.scrollTop = 0;
     
     // Force a reflow to ensure measurements are accurate
     prayerTextEl.offsetHeight;
@@ -572,6 +579,9 @@ function renderStep() {
       prayerTextEl.classList.add('scrollable');
       // Set max-height directly based on calculated threshold
       prayerTextEl.style.maxHeight = thresholdHeight + 'px';
+      // Reset scroll position immediately after adding scrollable class
+      // This prevents browser from preserving scroll position when class is re-added
+      prayerTextEl.scrollTop = 0;
     } else {
       // Reset max-height if scrolling is not needed
       prayerTextEl.style.maxHeight = '';
@@ -581,6 +591,14 @@ function renderStep() {
     prayerTextEl.classList.remove('scrollable');
     prayerTextEl.style.maxHeight = '';
   }
+  
+  // Reset scroll position to top AFTER all content and styling updates are complete
+  // Use requestAnimationFrame as a safety measure to ensure scroll resets after browser rendering
+  requestAnimationFrame(() => {
+    if (prayerTextEl) {
+      prayerTextEl.scrollTop = 0;
+    }
+  });
   
   // Find and set the image for this step
   const src = imageForTitle(step);
