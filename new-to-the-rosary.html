@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>New to the Rosary | Digital Rosary</title>
+  <title>New to the Rosary? Look here.</title>
   <meta name="description"
     content="New to the Rosary? Start here. Learn what it is, how long it takes, what to do if you get distracted, and how to begin without memorizing anything." />
 
@@ -73,8 +73,8 @@
     </section>
 
     <!-- WHAT IT IS -->
-    <section class="card pad" style="margin-bottom:18px;">
-      <h3 style="margin-top:0;">What the Rosary is (and isn’t)</h3>
+    <section id="why" class="card pad" style="margin-bottom:18px;">
+      <h3 style="margin-top:0;">What the Rosary is (and isn't)</h3>
 
       <p class="muted" style="margin-bottom:12px;">
         The Rosary is a simple, peaceful prayer that helps you reflect on key moments in the life of Jesus —
@@ -88,7 +88,7 @@
     </section>
 
     <!-- TIME -->
-    <section class="card pad" style="margin-bottom:18px;">
+    <section id="how-long" class="card pad" style="margin-bottom:18px;">
       <h3 style="margin-top:0;">How long does it take?</h3>
 
       <ul class="muted" style="margin: 0 0 12px 18px; line-height: 1.6;">
@@ -151,5 +151,47 @@
   </main>
 
   <script src="dark-mode.js"></script>
+  <script>
+    // Handle anchor links with smooth scrolling and nav offset
+    function scrollToAnchor() {
+      if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const element = document.getElementById(hash);
+        if (element) {
+          // Try to find the h3 heading within the section for more precise scrolling
+          const heading = element.querySelector('h3');
+          const targetElement = heading || element;
+          
+          // Get the nav height (sticky navigation)
+          const nav = document.querySelector('.nav');
+          const navHeight = nav ? nav.offsetHeight : 70;
+          
+          // Get the element's position relative to the document
+          const rect = targetElement.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const elementTop = rect.top + scrollTop;
+          
+          // Scroll to show the heading with nav offset + small padding
+          const targetPosition = elementTop - navHeight - 20; // 20px padding for visibility
+          
+          window.scrollTo({
+            top: Math.max(0, targetPosition),
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+    
+    // Try scrolling immediately if DOM is ready, otherwise wait for load
+    if (document.readyState === 'loading') {
+      window.addEventListener('load', function() {
+        // Small delay to ensure layout is complete
+        setTimeout(scrollToAnchor, 100);
+      });
+    } else {
+      // DOM is already loaded, but wait a tick for any layout shifts
+      setTimeout(scrollToAnchor, 100);
+    }
+  </script>
 </body>
 </html>
