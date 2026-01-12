@@ -23,7 +23,9 @@ const STEP_IMAGES = {
   "The Sign of the Cross": "sign_of_the_cross.png",
   "Apostles\' Creed": "Creed2.png",
   "Our Father (Intro)": "our_father.png",
-  "3× Hail Mary (Faith, Hope, Charity)": "Hail_Mary.png",
+  "Hail Mary (Faith)": "Hail_Mary.png",
+  "Hail Mary (Hope)": "Hail_Mary.png",
+  "Hail Mary (Charity)": "Hail_Mary.png",
   "Glory Be": "glory_be.png",
   "Announce the Mystery": "announce-mystery.jpg",
   "Our Father": "our_father.png",
@@ -180,7 +182,9 @@ const GUIDE = [
   { title: 'The Sign of the Cross', text: () => PRAYERS.signOfCross },
   { title: 'Apostles\' Creed', text: () => PRAYERS.apostlesCreed },
   { title: 'Our Father (Intro)', text: () => PRAYERS.ourFather },
-  { title: '3× Hail Mary (Faith, Hope, Charity)', text: () => PRAYERS.hailMary + 'Repeat 3 times with these intentions.' },
+  { title: 'Hail Mary (Faith)', text: () => PRAYERS.hailMary, isThreeBeadHailMary: true, threeBeadNumber: 1 },
+  { title: 'Hail Mary (Hope)', text: () => PRAYERS.hailMary, isThreeBeadHailMary: true, threeBeadNumber: 2 },
+  { title: 'Hail Mary (Charity)', text: () => PRAYERS.hailMary, isThreeBeadHailMary: true, threeBeadNumber: 3 },
   { title: 'Glory Be', text: () => PRAYERS.gloryBe },
   // 📿 The 5 decades (each decade has ~14 steps: announce + Our Father + 10 Hail Marys + Glory Be + Fatima)
   // ...createDecadeSteps(0) spreads all the steps from decade 0 into this array
@@ -219,6 +223,27 @@ function generateBeads(currentNumber) {
   }
   // Join all beads together and wrap in container
   return `<span class="beads-container">${beads.join('')}</span>`;
+}
+
+// 🔴 Generate 3-bead visualization for Faith, Hope, Charity Hail Marys
+// Creates 3 beads: previous beads are filled, current bead is red, future beads are empty
+function generateThreeBeads(currentNumber) {
+  const beads = [];  // Start with empty array
+  // Loop through 1 to 3 (Faith, Hope, Charity)
+  for (let i = 1; i <= 3; i++) {
+    let classes = 'bead';  // Base CSS class
+    if (i < currentNumber) {
+      // Previous beads: filled blue (already prayed)
+      classes += ' bead-filled';
+    } else if (i === currentNumber) {
+      // Current bead: red (the one you're on now)
+      classes += ' bead-current';
+    }
+    // Future beads (i > currentNumber): remain empty (just 'bead' class)
+    beads.push(`<span class="${classes}"></span>`);
+  }
+  // Join all beads together and wrap in container
+  return `<span class="beads-container three-beads-container">${beads.join('')}</span>`;
 }
 
 // 📿 Get meditation text for a specific Hail Mary in a decade
@@ -520,9 +545,39 @@ function renderStep() {
   // Get the current step from the GUIDE array
   const step = GUIDE[stepIndex];
   
-  // For Hail Mary steps, show visual beads only when toggle is OFF
-  // When toggle is ON, just show "Hail Mary" without beads
-  if (step.isHailMary && step.hailMaryNumber) {
+  // Handle 3-bead Hail Mary steps (Faith, Hope, Charity)
+  if (step.isThreeBeadHailMary && step.threeBeadNumber) {
+    const virtues = ['Faith', 'Hope', 'Charity'];
+    const currentVirtue = virtues[step.threeBeadNumber - 1];
+    const beads = generateThreeBeads(step.threeBeadNumber);
+    
+    // Build the title with styled virtues
+    let titleHTML = 'Hail Mary (';
+    virtues.forEach((virtue, index) => {
+      const isCurrent = index === step.threeBeadNumber - 1;
+      const isCompleted = index < step.threeBeadNumber - 1;
+      
+      if (isCurrent) {
+        // Current virtue: red and bold
+        titleHTML += `<span class="virtue-current">${virtue}</span>`;
+      } else if (isCompleted) {
+        // Completed virtue: bold but not red
+        titleHTML += `<span class="virtue-completed">${virtue}</span>`;
+      } else {
+        // Future virtue: normal
+        titleHTML += `<span class="virtue-future">${virtue}</span>`;
+      }
+      
+      if (index < virtues.length - 1) {
+        titleHTML += ', ';
+      }
+    });
+    titleHTML += ')';
+    
+    stepTitleEl.innerHTML = `<div style="margin-bottom: 8px;">${beads}</div>${titleHTML}`;
+  }
+  // For regular Hail Mary steps in decades, show visual beads only when toggle is OFF
+  else if (step.isHailMary && step.hailMaryNumber) {
     const isOneClickHailMarysEnabled = getLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, false);
     if (isOneClickHailMarysEnabled) {
       // Toggle is ON - show simple "Hail Mary" without beads

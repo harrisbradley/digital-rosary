@@ -11,17 +11,19 @@
     if (stepIdx === 0) return {type: 'cross'}; // Sign of the Cross
     if (stepIdx === 1) return {type: 'cross'}; // Apostles' Creed - Step 1 points to cross
     if (stepIdx === 2) return {type: 'intro', bead: 'ourFather'}; // Our Father (Intro) - first large bead above cross
-    if (stepIdx === 3) return {type: 'intro', bead: 'hailMary', count: 3}; // 3× Hail Mary - three small beads
-    if (stepIdx === 4) return {type: 'intro', bead: 'gloryBe'}; // Glory Be - second large bead above the 3 small beads
+    if (stepIdx === 3) return {type: 'intro', bead: 'hailMary', beadIdx: 0}; // Hail Mary (Faith) - first of three small beads
+    if (stepIdx === 4) return {type: 'intro', bead: 'hailMary', beadIdx: 1}; // Hail Mary (Hope) - second of three small beads
+    if (stepIdx === 5) return {type: 'intro', bead: 'hailMary', beadIdx: 2}; // Hail Mary (Charity) - third of three small beads
+    if (stepIdx === 6) return {type: 'intro', bead: 'gloryBe'}; // Glory Be - second large bead above the 3 small beads
     
-    // Step 5: Announce the Mystery (first decade) - maps to centerpiece
-    if (stepIdx === 5) return {type: 'centerpiece'};
+    // Step 7: Announce the Mystery (first decade) - maps to centerpiece
+    if (stepIdx === 7) return {type: 'centerpiece'};
     
-    // Step 6: Our Father (first decade) - also maps to centerpiece
-    if (stepIdx === 6) return {type: 'centerpiece'};
+    // Step 8: Our Father (first decade) - also maps to centerpiece
+    if (stepIdx === 8) return {type: 'centerpiece'};
     
-    // Decades start at step 5 (but step 5 is the centerpiece, so first decade Our Father is step 6)
-    const decadeStartIdx = 5;
+    // Decades start at step 7 (but step 7 is the centerpiece, so first decade Our Father is step 8)
+    const decadeStartIdx = 7;
     const stepsPerDecade = 14; // Announce + Our Father + 10 Hail Marys + Glory Be + Fatima
     const decadeIdx = Math.floor((stepIdx - decadeStartIdx) / stepsPerDecade);
     
@@ -35,7 +37,7 @@
       return {type: 'decade', decade: decadeIdx, bead: 'ourFather'}; // Other decades Announce → their OF bead
     }
     if (stepInDecade === 1) {
-      // First decade Our Father (step 6) maps to centerpiece, others map to decade bead
+      // First decade Our Father (step 8) maps to centerpiece, others map to decade bead
       if (decadeIdx === 0) return {type: 'centerpiece'};
       return {type: 'decade', decade: decadeIdx, bead: 'ourFather'};
     }
@@ -62,8 +64,10 @@
         if (beadInfo.bead === 'hailMary') {
           const beadIdx = beadInfo.index || 0;
           const currentIdx = currentBead.index || 0;
-          // If current step has a count (3× Hail Mary), color all 3 beads as current
-          if (currentBead.count) return true;
+          // For intro Hail Mary beads, match by beadIdx
+          if (beadInfo.beadIdx !== undefined && currentBead.beadIdx !== undefined) {
+            return beadInfo.beadIdx === currentBead.beadIdx;
+          }
           return beadIdx === currentIdx;
         }
         return true;
@@ -103,17 +107,20 @@
         // Our Father intro (step 2) - maps to ourFather bead (first large bead above cross), color once step 2 is reached
         if (beadInfo.bead === 'ourFather' && stepBead.bead === 'ourFather' && i >= 2) return true;
         
-        // 3× Hail Mary intro (step 3) - color all 3 small beads when step 3 is reached
-        if (beadInfo.bead === 'hailMary' && stepBead.bead === 'hailMary' && stepBead.count && i >= 3) {
-          return true; // Color all 3 Hail Mary beads once step 3 is reached or passed
+        // Hail Mary intro (steps 3-5: Faith, Hope, Charity) - color individual beads as steps progress
+        if (beadInfo.bead === 'hailMary' && stepBead.bead === 'hailMary') {
+          // If both have beadIdx, match by index
+          if (beadInfo.beadIdx !== undefined && stepBead.beadIdx !== undefined) {
+            if (stepBead.beadIdx >= beadInfo.beadIdx && i >= 3) return true;
+          }
         }
         
-        // Glory Be intro (step 4) - maps to gloryBe bead (second large bead above the 3 small beads), color once step 4 is reached
-        if (beadInfo.bead === 'gloryBe' && stepBead.bead === 'gloryBe' && i >= 4) return true;
+        // Glory Be intro (step 6) - maps to gloryBe bead (second large bead above the 3 small beads), color once step 6 is reached
+        if (beadInfo.bead === 'gloryBe' && stepBead.bead === 'gloryBe' && i >= 6) return true;
       }
       
-      // Centerpiece - color if we've reached step 5 (Announce Mystery)
-      if (beadInfo.type === 'centerpiece' && stepBead.type === 'centerpiece' && i >= 5) return true;
+      // Centerpiece - color if we've reached step 7 (Announce Mystery)
+      if (beadInfo.type === 'centerpiece' && stepBead.type === 'centerpiece' && i >= 7) return true;
       
       // Decade beads
       if (beadInfo.type === 'decade' && stepBead.type === 'decade') {

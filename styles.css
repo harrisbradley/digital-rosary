@@ -750,6 +750,28 @@ h3 {
   }
 }
 
+/* Three-bead container styling (Faith, Hope, Charity) */
+.three-beads-container {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* Virtue styling for Faith, Hope, Charity */
+.virtue-current {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.virtue-completed {
+  font-weight: 700;
+  color: inherit;
+}
+
+.virtue-future {
+  font-weight: normal;
+  color: inherit;
+}
+
 .prayer-text {
   margin-top: 8px;
   white-space: pre-wrap;
