@@ -13,7 +13,7 @@ const MEDITATIONS = {
       'He tells her she is to be the Mother of our Lord.',  
       'Mary answers, "How shall this be?"',  
       'The Angel says, "The Holy Ghost shall come upon thee."',  
-      'Mary relies, "Behold the handmaid of the Lord."',  
+      'Mary replies, "Behold the handmaid of the Lord."',  
       'Our Lord becomes Man.',  
       'Let us learn humility from Jesus and Mary.'  
     ],
@@ -26,7 +26,7 @@ const MEDITATIONS = {
       'She says, "Blessed art thou among women."',  
       'St. John the Baptist is sanctified before his birth.',  
       'Mary sings her song of praise.',  
-      'She remains three months serving hes cousin.',  
+      'She remains three months serving her cousin.',  
       'Jesus and Mary teach us charity to our neighbor.'   
     ],
     'The Nativity': [
@@ -45,7 +45,7 @@ const MEDITATIONS = {
       'Mary takes her Son to the Temple.',  
       'She presents Him to His Eternal Father.',  
       'She offers a pair of turtle doves for Him.',  
-      'She fulfils exactly all the commands of the Law.',  
+      'She fulfills exactly all the commands of the Law.',  
       'Jesus offers Himself to His Father.',  
       'Simeon takes our Lord into his arms.',  
       'He thanks God for the sight of Jesus.',  
