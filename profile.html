@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile | Digital Rosary</title>
+  <link rel="icon" type="image/png" href="images/logo/plain_logo_v0.1.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary"
+          style="width: 50px; height: 50px; object-fit: contain;">
+        <span>Digital Rosary</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html#home">Home</a>
+        <a href="prayer-log.html">Prayer Log</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#settings">Settings</a>
+        <button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="margin-top: 18px;">
+    <div id="loadingState" style="text-align: center; padding: 40px;">
+      <p class="muted">Loading profile...</p>
+    </div>
+    
+    <div id="profileContent" style="display: none;">
+      <!-- Profile Header -->
+      <section class="card pad" style="margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+          <div style="position: relative;">
+            <img id="profilePicture" src="" alt="Profile Picture" 
+              style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23e5e7eb\'/%3E%3Ctext x=\'50\' y=\'60\' text-anchor=\'middle\' font-size=\'40\' fill=\'%236b7280\'%3E?%3C/text%3E%3C/svg%3E';">
+            <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+            <button id="changePictureBtn" class="button" style="position: absolute; bottom: 0; right: 0; padding: 4px 8px; font-size: 12px; border-radius: 50%; width: 32px; height: 32px;">📷</button>
+          </div>
+          <div style="flex: 1;">
+            <h2 style="margin: 0 0 8px 0;" id="userName">User Name</h2>
+            <p class="muted" style="margin: 0;" id="userEmail">user@example.com</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Prayer Stats -->
+      <section class="card pad" style="margin-bottom: 18px;">
+        <h3 style="margin-top: 0;">Your Prayer Journey</h3>
+        <div class="kpi" style="margin-bottom: 12px;">
+          <span class="muted">Current Streak</span>
+          <strong id="streakDays">0</strong>
+          <span class="muted">Days</span>
+        </div>
+        <div class="kpi" style="margin-top: 0;">
+          <span class="muted">Total Rosaries</span>
+          <strong id="totalRosaries">0</strong>
+        </div>
+      </section>
+
+      <!-- Last 5 Prayers -->
+      <section class="card pad" style="margin-bottom: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="margin: 0;">Recent Prayers</h3>
+          <a href="prayer-log.html" style="color: var(--primary); text-decoration: none; font-size: 14px;">View All →</a>
+        </div>
+        <div id="recentPrayers">
+          <p class="muted">No prayers logged yet.</p>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="card pad" style="margin-bottom: 18px;">
+        <h3 style="margin-top: 0;">Settings</h3>
+        
+        <div style="margin-bottom: 16px;">
+          <label class="toggle-label" style="display: flex; align-items: center; justify-content: space-between;">
+            <span>Default Dark Mode</span>
+            <input type="checkbox" id="darkModeSetting" aria-label="Default Dark Mode">
+          </label>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label class="toggle-label" style="display: flex; align-items: center; justify-content: space-between;">
+            <span>Default 1-click Hail Marys</span>
+            <input type="checkbox" id="oneClickSetting" aria-label="Default 1-click Hail Marys">
+          </label>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label for="timezone" style="display: block; margin-bottom: 6px; font-weight: 500;">Timezone</label>
+          <select id="timezone" style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+            <!-- Timezones will be populated by JavaScript -->
+          </select>
+        </div>
+      </section>
+
+      <!-- Password Change -->
+      <section class="card pad" style="margin-bottom: 18px;">
+        <h3 style="margin-top: 0;">Change Password</h3>
+        <div id="passwordError" class="error-message" style="display:none; margin-bottom: 12px;"></div>
+        <div id="passwordSuccess" class="success-message" style="display:none; margin-bottom: 12px;"></div>
+        
+        <form id="passwordChangeForm">
+          <div style="margin-bottom: 12px;">
+            <label for="currentPassword" style="display:block; margin-bottom: 6px; font-weight: 500;">Current Password</label>
+            <input type="password" id="currentPassword" required 
+              style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label for="newPassword" style="display:block; margin-bottom: 6px; font-weight: 500;">New Password</label>
+            <input type="password" id="newPassword" required minlength="6"
+              style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label for="confirmNewPassword" style="display:block; margin-bottom: 6px; font-weight: 500;">Confirm New Password</label>
+            <input type="password" id="confirmNewPassword" required
+              style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+          </div>
+          <button type="submit" class="button primary">Change Password</button>
+        </form>
+      </section>
+
+      <!-- Sign Out -->
+      <section class="card pad">
+        <button id="signOutBtn" class="button" style="width: 100%;">Sign Out</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>Made with ❤️ to help you pray.</footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  
+  <script src="firebase-config.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="firestore-service.js"></script>
+  <script src="storage-service.js"></script>
+  <script src="dark-mode.js"></script>
+  
+  <script>
+    let currentUserId = null;
+    let settingsUnsubscribe = null;
+    let statsUnsubscribe = null;
+
+    // Redirect if not logged in
+    authService.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      currentUserId = user.uid;
+      await loadProfile();
+    });
+
+    // Load profile data
+    async function loadProfile() {
+      try {
+        const user = authService.getCurrentUser();
+        if (!user) return;
+
+        // Load user profile
+        const profile = await firestoreService.getUserProfile(user.uid);
+        if (profile.success && profile.data) {
+          // Use profile data if available, otherwise fall back to auth user data
+          const name = profile.data.name || user.displayName || user.email?.split('@')[0] || 'User';
+          const email = profile.data.email || user.email || '';
+          document.getElementById('userName').textContent = name;
+          document.getElementById('userEmail').textContent = email;
+          
+          // Load profile picture
+          const picUrl = await storageService.getProfilePictureUrl(user.uid);
+          if (picUrl.success && picUrl.url) {
+            document.getElementById('profilePicture').src = picUrl.url;
+          }
+        } else {
+          // Fallback if profile doesn't exist yet
+          document.getElementById('userName').textContent = user.displayName || user.email?.split('@')[0] || 'User';
+          document.getElementById('userEmail').textContent = user.email || '';
+        }
+
+        // Load stats
+        const stats = await firestoreService.getUserStats(user.uid);
+        if (stats.success) {
+          document.getElementById('streakDays').textContent = stats.data.streak || 0;
+          document.getElementById('totalRosaries').textContent = stats.data.total || 0;
+        }
+
+        // Load recent prayers
+        const recentPrayers = await firestoreService.getPrayerLog(user.uid, 5);
+        if (recentPrayers.success && recentPrayers.data.length > 0) {
+          const html = recentPrayers.data.map(entry => {
+            // Get date consistently - prefer entry.date, fallback to createdAt
+            let dateStr = entry.date;
+            if (!dateStr && entry.createdAt) {
+              const date = entry.createdAt?.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt);
+              dateStr = date.toISOString().slice(0, 10);
+            }
+            // Format date consistently with prayer-log page (YYYY-MM-DD format)
+            return `<div style="margin: 8px 0; padding: 8px; background: var(--bg); border-radius: 8px;">
+              <strong>${dateStr}</strong> — ${entry.notes || 'Rosary prayed'}
+            </div>`;
+          }).join('');
+          document.getElementById('recentPrayers').innerHTML = html;
+        }
+
+        // Load settings
+        const settings = await firestoreService.getUserSettings(user.uid);
+        if (settings.success) {
+          document.getElementById('darkModeSetting').checked = settings.data.darkMode || false;
+          document.getElementById('oneClickSetting').checked = settings.data.oneClickHailMarys || false;
+          
+          // Populate timezone dropdown
+          populateTimezones(settings.data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+        }
+
+        // Set up real-time listeners
+        settingsUnsubscribe = firestoreService.listenToSettings(user.uid, (result) => {
+          if (result.success) {
+            document.getElementById('darkModeSetting').checked = result.data.darkMode || false;
+            document.getElementById('oneClickSetting').checked = result.data.oneClickHailMarys || false;
+          }
+        });
+
+        statsUnsubscribe = firestoreService.listenToStats(user.uid, (result) => {
+          if (result.success) {
+            document.getElementById('streakDays').textContent = result.data.streak || 0;
+            document.getElementById('totalRosaries').textContent = result.data.total || 0;
+          }
+        });
+
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('profileContent').style.display = 'block';
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        document.getElementById('loadingState').innerHTML = '<p class="error-message">Error loading profile. Please refresh the page.</p>';
+      }
+    }
+
+    // Populate timezone dropdown
+    function populateTimezones(selectedTimezone) {
+      const timezones = Intl.supportedValuesOf('timeZone');
+      const select = document.getElementById('timezone');
+      select.innerHTML = timezones.map(tz => 
+        `<option value="${tz}" ${tz === selectedTimezone ? 'selected' : ''}>${tz}</option>`
+      ).join('');
+    }
+
+    // Profile picture upload
+    document.getElementById('changePictureBtn').addEventListener('click', () => {
+      document.getElementById('profilePictureInput').click();
+    });
+
+    document.getElementById('profilePictureInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const btn = document.getElementById('changePictureBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳';
+
+      const result = await storageService.uploadProfilePicture(currentUserId, file);
+      
+      if (result.success) {
+        document.getElementById('profilePicture').src = result.url;
+      } else {
+        alert('Error uploading picture: ' + result.error);
+      }
+
+      btn.disabled = false;
+      btn.textContent = '📷';
+      e.target.value = ''; // Reset input
+    });
+
+    // Settings updates
+    document.getElementById('darkModeSetting').addEventListener('change', async (e) => {
+      const settings = await firestoreService.getUserSettings(currentUserId);
+      if (settings.success) {
+        await firestoreService.updateUserSettings(currentUserId, {
+          ...settings.data,
+          darkMode: e.target.checked
+        });
+      }
+    });
+
+    document.getElementById('oneClickSetting').addEventListener('change', async (e) => {
+      const settings = await firestoreService.getUserSettings(currentUserId);
+      if (settings.success) {
+        await firestoreService.updateUserSettings(currentUserId, {
+          ...settings.data,
+          oneClickHailMarys: e.target.checked
+        });
+      }
+    });
+
+    document.getElementById('timezone').addEventListener('change', async (e) => {
+      const settings = await firestoreService.getUserSettings(currentUserId);
+      if (settings.success) {
+        await firestoreService.updateUserSettings(currentUserId, {
+          ...settings.data,
+          timezone: e.target.value
+        });
+      }
+    });
+
+    // Password change
+    document.getElementById('passwordChangeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmNewPassword').value;
+      const errorDiv = document.getElementById('passwordError');
+      const successDiv = document.getElementById('passwordSuccess');
+
+      errorDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+
+      if (newPassword !== confirmPassword) {
+        errorDiv.textContent = 'New passwords do not match';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        errorDiv.textContent = 'Password must be at least 6 characters';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      const result = await authService.changePassword(currentPassword, newPassword);
+      
+      if (result.success) {
+        successDiv.textContent = 'Password changed successfully!';
+        successDiv.style.display = 'block';
+        document.getElementById('passwordChangeForm').reset();
+      } else {
+        errorDiv.textContent = result.error;
+        errorDiv.style.display = 'block';
+      }
+    });
+
+    // Sign out
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      if (settingsUnsubscribe) settingsUnsubscribe();
+      if (statsUnsubscribe) statsUnsubscribe();
+      await authService.signOut();
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

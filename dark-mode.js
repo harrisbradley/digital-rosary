@@ -28,13 +28,31 @@ if (typeof window.setLS === 'undefined') {
 const DARK_MODE_KEY = 'dark_mode_v1';
 
 // Initialize dark mode based on saved preference
-function initDarkMode() {
+async function initDarkMode() {
   const darkModeToggleEl = document.getElementById('darkModeToggle');
   const htmlRootEl = document.documentElement;
   
   if (!darkModeToggleEl) return; // Button doesn't exist on this page
   
-  const savedDarkMode = window.getLS(DARK_MODE_KEY, false);
+  let savedDarkMode = window.getLS(DARK_MODE_KEY, false);
+  
+  // If authenticated, try to get from Firestore
+  if (window.authService && window.firestoreService) {
+    const user = window.authService.getCurrentUser();
+    if (user) {
+      try {
+        const settings = await window.firestoreService.getUserSettings(user.uid);
+        if (settings.success && settings.data.darkMode !== undefined) {
+          savedDarkMode = settings.data.darkMode;
+          // Update localStorage cache
+          window.setLS(DARK_MODE_KEY, savedDarkMode);
+        }
+      } catch (error) {
+        console.warn('Failed to load dark mode from Firestore:', error);
+      }
+    }
+  }
+  
   if (savedDarkMode) {
     htmlRootEl.classList.add('dark-mode');
     darkModeToggleEl.textContent = '☀️';
@@ -45,7 +63,7 @@ function initDarkMode() {
 }
 
 // Toggle dark mode on/off
-function toggleDarkMode() {
+async function toggleDarkMode() {
   const darkModeToggleEl = document.getElementById('darkModeToggle');
   const htmlRootEl = document.documentElement;
   
@@ -54,8 +72,26 @@ function toggleDarkMode() {
   const isDarkMode = htmlRootEl.classList.toggle('dark-mode');
   // Update button emoji: 🌙 when light mode, ☀️ when dark mode
   darkModeToggleEl.textContent = isDarkMode ? '☀️' : '🌙';
+  
   // Save preference to localStorage
   window.setLS(DARK_MODE_KEY, isDarkMode);
+  
+  // Also sync to Firestore if authenticated
+  if (window.authService && window.firestoreService) {
+    const user = window.authService.getCurrentUser();
+    if (user) {
+      try {
+        const settings = await window.firestoreService.getUserSettings(user.uid);
+        const currentSettings = settings.success ? settings.data : {};
+        await window.firestoreService.updateUserSettings(user.uid, {
+          ...currentSettings,
+          darkMode: isDarkMode
+        });
+      } catch (error) {
+        console.warn('Failed to sync dark mode to Firestore:', error);
+      }
+    }
+  }
 }
 
 // Set up event listener when DOM is ready

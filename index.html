@@ -38,6 +38,17 @@
   <script src="meditations.js"></script>
   <!-- 🙏 Prayer texts - loads all the prayer texts used throughout the rosary -->
   <script src="prayers.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  
+  <!-- Firebase Services -->
+  <script src="firebase-config.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="firestore-service.js"></script>
 </head>
 
 
@@ -57,7 +68,7 @@
           style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
       <!-- 📎 Navigation links on the right -->
       <div class="nav-links"><a href="#home">Home</a><a href="prayer-log.html">Prayer Log</a><a
-          href="#about">About</a><a href="#settings">Settings</a><button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button><button class="button">Log In</button></div>
+          href="#about">About</a><a href="#settings">Settings</a><button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button><a id="authNavLink" href="login.html" class="button">Log In</a></div>
     </div>
   </nav>
 
@@ -266,6 +277,19 @@
   <!-- 💻 All the interactive functionality is now in app.js -->
   <!-- Load app.js after rosary-visualizer.js (since app.js uses the visualizer) -->
   <script src="app.js"></script>
+  <script>
+    // Update navigation based on auth state
+    authService.onAuthStateChanged((user) => {
+      const authLink = document.getElementById('authNavLink');
+      if (user) {
+        authLink.textContent = 'Profile';
+        authLink.href = 'profile.html';
+      } else {
+        authLink.textContent = 'Log In';
+        authLink.href = 'login.html';
+      }
+    });
+  </script>
 </body>
 
 </html>
