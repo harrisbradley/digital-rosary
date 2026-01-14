@@ -279,11 +279,65 @@
   <script src="app.js"></script>
   <script>
     // Update navigation based on auth state
-    authService.onAuthStateChanged((user) => {
+    authService.onAuthStateChanged(async (user) => {
       const authLink = document.getElementById('authNavLink');
       if (user) {
         authLink.textContent = 'Profile';
         authLink.href = 'profile.html';
+
+        // Load initial stats from Firestore when user logs in
+        if (window.firestoreService) {
+          try {
+            const stats = await firestoreService.getUserStats(user.uid);
+            if (stats.success && stats.data) {
+              // Update localStorage cache
+              localStorage.setItem('digital-rosary-total', stats.data.total || 0);
+              localStorage.setItem('digital-rosary-streak', stats.data.streak || 0);
+              localStorage.setItem('digital-rosary-last-date', stats.data.lastDate || null);
+
+              // Update display elements immediately
+              const totalEl = document.getElementById('totalRosaries');
+              const streakEl = document.getElementById('streakDays');
+              const progressEl = document.getElementById('progressBar');
+
+              if (totalEl) totalEl.textContent = stats.data.total || 0;
+              if (streakEl) streakEl.textContent = stats.data.streak || 0;
+              if (progressEl) {
+                const total = stats.data.total || 0;
+                progressEl.style.width = Math.min(100, (total % 50) * 2) + '%';
+              }
+            }
+          } catch (error) {
+            console.warn('Error loading initial stats:', error);
+          }
+
+          // Set up real-time stats listener for authenticated users
+          firestoreService.listenToStats(user.uid, (result) => {
+            if (result.success) {
+              // Update localStorage and sync display
+              if (result.data.total !== undefined) {
+                localStorage.setItem('digital-rosary-total', result.data.total);
+              }
+              if (result.data.streak !== undefined) {
+                localStorage.setItem('digital-rosary-streak', result.data.streak);
+              }
+              if (result.data.lastDate !== undefined) {
+                localStorage.setItem('digital-rosary-last-date', result.data.lastDate);
+              }
+              // Update display elements
+              const totalEl = document.getElementById('totalRosaries');
+              const streakEl = document.getElementById('streakDays');
+              if (totalEl) totalEl.textContent = result.data.total || 0;
+              if (streakEl) streakEl.textContent = result.data.streak || 0;
+              // Update progress bar
+              const progressEl = document.getElementById('progressBar');
+              if (progressEl) {
+                const total = result.data.total || 0;
+                progressEl.style.width = Math.min(100, (total % 50) * 2) + '%';
+              }
+            }
+          });
+        }
       } else {
         authLink.textContent = 'Log In';
         authLink.href = 'login.html';
