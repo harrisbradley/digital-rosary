@@ -32,7 +32,7 @@ async function initDarkMode() {
   const darkModeToggleEl = document.getElementById('darkModeToggle');
   const htmlRootEl = document.documentElement;
   
-  if (!darkModeToggleEl) return; // Button doesn't exist on this page
+  if (!darkModeToggleEl) return; // Toggle doesn't exist on this page
   
   let savedDarkMode = window.getLS(DARK_MODE_KEY, false);
   
@@ -55,10 +55,10 @@ async function initDarkMode() {
   
   if (savedDarkMode) {
     htmlRootEl.classList.add('dark-mode');
-    darkModeToggleEl.textContent = '☀️';
+    darkModeToggleEl.checked = true;
   } else {
     htmlRootEl.classList.remove('dark-mode');
-    darkModeToggleEl.textContent = '🌙';
+    darkModeToggleEl.checked = false;
   }
 }
 
@@ -67,11 +67,16 @@ async function toggleDarkMode() {
   const darkModeToggleEl = document.getElementById('darkModeToggle');
   const htmlRootEl = document.documentElement;
   
-  if (!darkModeToggleEl) return; // Button doesn't exist on this page
+  if (!darkModeToggleEl) return; // Toggle doesn't exist on this page
   
-  const isDarkMode = htmlRootEl.classList.toggle('dark-mode');
-  // Update button emoji: 🌙 when light mode, ☀️ when dark mode
-  darkModeToggleEl.textContent = isDarkMode ? '☀️' : '🌙';
+  const isDarkMode = darkModeToggleEl.checked;
+  
+  // Update dark mode class based on checkbox state
+  if (isDarkMode) {
+    htmlRootEl.classList.add('dark-mode');
+  } else {
+    htmlRootEl.classList.remove('dark-mode');
+  }
   
   // Save preference to localStorage
   window.setLS(DARK_MODE_KEY, isDarkMode);
@@ -98,7 +103,7 @@ async function toggleDarkMode() {
 function setupDarkMode() {
   const darkModeToggleEl = document.getElementById('darkModeToggle');
   if (darkModeToggleEl) {
-    darkModeToggleEl.addEventListener('click', toggleDarkMode);
+    darkModeToggleEl.addEventListener('change', toggleDarkMode);
   }
   initDarkMode();
 }
