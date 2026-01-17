@@ -30,7 +30,7 @@
     rel="stylesheet">
 
   <!-- 🎨 External stylesheet - all the CSS styling rules are in styles.css -->
-  <link rel="stylesheet" href="styles.css?v=1.2">
+  <link rel="stylesheet" href="styles.css?v=1.5">
 
   <!-- 📊 Rosary Visualizer - loads the JavaScript file that draws the visual rosary -->
   <script src="rosary-visualizer.js"></script>
@@ -49,6 +49,7 @@
   <script src="firebase-config.js"></script>
   <script src="auth-service.js"></script>
   <script src="firestore-service.js"></script>
+  <script src="storage-service.js"></script>
 </head>
 
 
@@ -67,7 +68,10 @@
       <a class="brand" href="#"><img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary"
           style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
       <!-- 📎 Navigation links on the right -->
-      <div class="nav-links"><button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button><a id="authNavLink" href="login.html" class="button">Log In</a></div>
+      <div class="nav-links"><button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button><a id="authNavLink" href="login.html" class="button">
+        <span id="authText" class="auth-text">Log In</span>
+        <img id="navProfilePic" class="nav-profile-pic" alt="Profile" style="display: none;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'%3E%3Ccircle cx=\'20\' cy=\'20\' r=\'20\' fill=\'%23e5e7eb\'/%3E%3Ctext x=\'20\' y=\'26\' text-anchor=\'middle\' font-size=\'16\' fill=\'%236b7280\'%3E?%3C/text%3E%3C/svg%3E';">
+      </a></div>
     </div>
   </nav>
 
@@ -282,9 +286,39 @@
     // Update navigation based on auth state
     authService.onAuthStateChanged(async (user) => {
       const authLink = document.getElementById('authNavLink');
+      const authText = document.getElementById('authText');
+      const profilePic = document.getElementById('navProfilePic');
+
       if (user) {
-        authLink.textContent = 'Profile';
         authLink.href = 'profile.html';
+
+        // Load profile picture
+        if (window.storageService) {
+          try {
+            const picUrl = await storageService.getProfilePictureUrl(user.uid);
+            if (picUrl.success && picUrl.url) {
+              profilePic.src = picUrl.url;
+              profilePic.style.display = 'block';
+              authText.style.display = 'none';
+            } else {
+              // No profile picture, show text
+              profilePic.style.display = 'none';
+              authText.textContent = 'Profile';
+              authText.style.display = 'block';
+            }
+          } catch (error) {
+            console.warn('Error loading profile picture:', error);
+            // Fallback to text
+            profilePic.style.display = 'none';
+            authText.textContent = 'Profile';
+            authText.style.display = 'block';
+          }
+        } else {
+          // Fallback if storage service not available
+          profilePic.style.display = 'none';
+          authText.textContent = 'Profile';
+          authText.style.display = 'block';
+        }
 
         // Load initial stats from Firestore when user logs in
         if (window.firestoreService) {
@@ -340,8 +374,12 @@
           });
         }
       } else {
-        authLink.textContent = 'Log In';
         authLink.href = 'login.html';
+        const authText = document.getElementById('authText');
+        const profilePic = document.getElementById('navProfilePic');
+        authText.textContent = 'Log In';
+        authText.style.display = 'block';
+        profilePic.style.display = 'none';
       }
     });
   </script>

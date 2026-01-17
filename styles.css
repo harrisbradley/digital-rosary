@@ -98,7 +98,7 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   align-items: center;
   justify-content: flex-end;
   flex-shrink: 0;
@@ -111,6 +111,21 @@ body {
   visibility: visible !important;
   flex-shrink: 0;
   order: 999; /* Ensure it appears last in flex order */
+  position: relative;
+}
+
+/* Profile picture in navigation */
+.nav-profile-pic {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--primary);
+  transition: box-shadow 0.2s ease;
+}
+
+.nav-profile-pic:hover {
+  box-shadow: 0 0 0 1.5px var(--primary-hover, var(--primary));
 }
 
 /* Mobile navigation fixes */
@@ -221,6 +236,11 @@ body {
       font-size: 12px !important;
       padding: 4px 8px !important;
       min-height: 28px !important;
+    }
+
+    .nav-profile-pic {
+      width: 29px !important;
+      height: 26px !important;
     }
 
     .nav-inner {
