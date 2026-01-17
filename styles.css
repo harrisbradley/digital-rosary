@@ -101,6 +101,8 @@ body {
   gap: 20px;
   align-items: center;
   justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 /* Ensure Profile button always appears in top right across all screen sizes */
@@ -117,6 +119,12 @@ body {
     padding: 10px 12px;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  /* Ensure nav-links never wrap on narrow screens */
+  .nav-links {
+    flex-wrap: nowrap !important;
+    min-width: fit-content;
   }
   
   .brand {
@@ -199,6 +207,25 @@ body {
     display: block !important;
     visibility: visible !important;
     flex-shrink: 0;
+  }
+
+  /* Extra narrow screens (like Pixel 9 Pro portrait) */
+  @media (max-width: 420px) {
+    .nav-links {
+      flex-wrap: nowrap !important;
+      justify-content: flex-end !important;
+      min-width: 0;
+    }
+
+    #authNavLink {
+      font-size: 12px !important;
+      padding: 4px 8px !important;
+      min-height: 28px !important;
+    }
+
+    .nav-inner {
+      padding: 6px 8px !important;
+    }
   }
 }
 
