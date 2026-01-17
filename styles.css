@@ -177,8 +177,8 @@ body {
     min-height: 32px;
   }
   
-  /* Hide "Log In" button on very small screens to save space */
-  .nav-links .button:last-child {
+  /* Hide dark mode toggle on very small screens to save space if needed */
+  .nav-links .dark-mode-toggle {
     display: none;
   }
 }
