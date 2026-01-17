@@ -100,6 +100,15 @@ body {
   display: flex;
   gap: 20px;
   align-items: center;
+  justify-content: flex-end;
+}
+
+/* Ensure Profile button always appears in top right across all screen sizes */
+#authNavLink {
+  display: block !important;
+  visibility: visible !important;
+  flex-shrink: 0;
+  order: 999; /* Ensure it appears last in flex order */
 }
 
 /* Mobile navigation fixes */
@@ -164,6 +173,9 @@ body {
   
   .nav-links {
     gap: 6px;
+    flex-wrap: nowrap; /* Prevent wrapping on very small screens */
+    justify-content: flex-end;
+    align-items: center;
   }
   
   .nav-links a {
@@ -180,6 +192,13 @@ body {
   /* Hide dark mode toggle on very small screens to save space if needed */
   .nav-links .dark-mode-toggle {
     display: none;
+  }
+
+  /* Ensure Profile button always appears in top right */
+  #authNavLink {
+    display: block !important;
+    visibility: visible !important;
+    flex-shrink: 0;
   }
 }
 
