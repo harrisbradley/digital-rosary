@@ -14,7 +14,7 @@
   <nav class="nav">
     <div class="nav-inner">
       <a class="brand" href="index.html"><img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary" style="width: 50px; height: 50px; object-fit: contain;"><span>Digital Rosary</span></a>
-      <div class="nav-links"><a href="index.html#home">Home</a><a href="prayer-log.html" class="button primary" style="padding:6px 12px">Prayer Log</a><a href="index.html#about">About</a><a href="index.html#settings">Settings</a><button id="darkModeToggle" class="button dark-mode-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button><button class="button">Log In</button></div>
+      <div class="nav-links"><a href="index.html#home">Home</a><a href="prayer-log.html" class="button primary" style="padding:6px 12px">Prayer Log</a><a href="index.html#about">About</a><a href="index.html#settings">Settings</a><label class="dark-mode-toggle-label" aria-label="Toggle dark mode" title="Toggle dark mode"><input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode"></label><a id="authNavLink" href="login.html" class="button">Log In</a></div>
     </div>
   </nav>
 
@@ -38,6 +38,17 @@
 
   <footer>Made with ❤️ to help you pray.</footer>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  
+  <script src="firebase-config.js"></script>
+  <script src="auth-service.js"></script>
+  <script src="firestore-service.js"></script>
+  <script src="dark-mode.js"></script>
+  
   <script>
     const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LOG:'rosary_log_v1' };
     function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
@@ -46,11 +57,45 @@
 
     const listEl = document.getElementById('logList');
     const emptyEl = document.getElementById('emptyState');
+    let currentUserId = null;
 
-    function renderLog(){
-      const log = getLS(LS_KEYS.LOG, []);
+    // Check auth state
+    authService.onAuthStateChanged((user) => {
+      currentUserId = user ? user.uid : null;
+      renderLog();
+    });
+
+    async function renderLog(){
       listEl.innerHTML = '';
-      if (log.length === 0){ emptyEl.style.display='block'; return; }
+      
+      let log = [];
+      
+      if (currentUserId && window.firestoreService) {
+        // Load from Firestore
+        const result = await firestoreService.getPrayerLog(currentUserId);
+        if (result.success) {
+          log = result.data.map(entry => {
+            // Get date consistently - prefer entry.date, fallback to createdAt
+            let dateStr = entry.date;
+            if (!dateStr && entry.createdAt) {
+              const date = entry.createdAt?.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt);
+              dateStr = date.toISOString().slice(0, 10);
+            }
+            return {
+              date: dateStr,
+              notes: entry.notes || ''
+            };
+          });
+        }
+      } else {
+        // Load from localStorage
+        log = getLS(LS_KEYS.LOG, []);
+      }
+      
+      if (log.length === 0){
+        emptyEl.style.display='block';
+        return;
+      }
       emptyEl.style.display='none';
       log.sort((a,b)=> b.date.localeCompare(a.date));
       for(const entry of log){
@@ -61,34 +106,108 @@
       }
     }
 
-    document.getElementById('addEntryBtn').addEventListener('click', ()=>{
-      const log = getLS(LS_KEYS.LOG, []);
+    document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
       const date = todayStr();
-      if (log.some(e => e.date === date)) { alert("You've already added today's entry."); return; }
+      
+      // Check if already logged today
+      let log = [];
+      if (currentUserId && window.firestoreService) {
+        const result = await firestoreService.getPrayerLog(currentUserId);
+        if (result.success) {
+          log = result.data.map(e => e.createdAt?.toDate ? e.createdAt.toDate().toISOString().slice(0, 10) : e.date);
+        }
+      } else {
+        log = getLS(LS_KEYS.LOG, []).map(e => e.date);
+      }
+      
+      if (log.includes(date)) {
+        alert("You've already added today's entry.");
+        return;
+      }
+      
       const notes = prompt('Optional: add a note for today', '');
-      log.push({ date, notes: (notes||'').trim() });
-      setLS(LS_KEYS.LOG, log);
-      // Also update totals used by the main page
-      const total = getLS(LS_KEYS.TOTAL, 0);
-      setLS(LS_KEYS.TOTAL, total + 1);
-      setLS(LS_KEYS.LAST_DATE, date);
-      // streak update (simple)
-      const last = getLS(LS_KEYS.LAST_DATE, null);
-      let streak = getLS(LS_KEYS.STREAK, 0);
-      if (last){ const y=new Date(); y.setDate(y.getDate()-1); if(y.toISOString().slice(0,10)===last) streak = streak + 1; else streak = 1; }
-      else { streak = 1; }
-      setLS(LS_KEYS.STREAK, streak);
+      
+      if (currentUserId && window.firestoreService) {
+        // Save to Firestore
+        await firestoreService.addPrayerLogEntry(currentUserId, {
+          date: date,
+          notes: (notes||'').trim()
+        });
+        
+        // Update stats
+        const stats = await firestoreService.getUserStats(currentUserId);
+        const currentStats = stats.success ? stats.data : {};
+        const last = currentStats.lastDate;
+        let streak = currentStats.streak || 0;
+        if (last) {
+          const y = new Date();
+          y.setDate(y.getDate() - 1);
+          if (y.toISOString().slice(0, 10) === last) {
+            streak = streak + 1;
+          } else {
+            streak = 1;
+          }
+        } else {
+          streak = 1;
+        }
+        
+        await firestoreService.updateUserStats(currentUserId, {
+          total: (currentStats.total || 0) + 1,
+          streak: streak,
+          lastDate: date
+        });
+      } else {
+        // Save to localStorage
+        const log = getLS(LS_KEYS.LOG, []);
+        log.push({ date, notes: (notes||'').trim() });
+        setLS(LS_KEYS.LOG, log);
+        
+        // Also update totals
+        const total = getLS(LS_KEYS.TOTAL, 0);
+        setLS(LS_KEYS.TOTAL, total + 1);
+        setLS(LS_KEYS.LAST_DATE, date);
+        
+        const last = getLS(LS_KEYS.LAST_DATE, null);
+        let streak = getLS(LS_KEYS.STREAK, 0);
+        if (last) {
+          const y = new Date();
+          y.setDate(y.getDate() - 1);
+          if (y.toISOString().slice(0, 10) === last) streak = streak + 1;
+          else streak = 1;
+        } else {
+          streak = 1;
+        }
+        setLS(LS_KEYS.STREAK, streak);
+      }
+      
       renderLog();
     });
 
-    document.getElementById('clearLogBtn').addEventListener('click', ()=>{
+    document.getElementById('clearLogBtn').addEventListener('click', async ()=>{
       if (!confirm('Clear the prayer log?')) return;
-      setLS(LS_KEYS.LOG, []);
+      
+      if (currentUserId && window.firestoreService) {
+        await firestoreService.clearPrayerLog(currentUserId);
+      } else {
+        setLS(LS_KEYS.LOG, []);
+      }
+      
       renderLog();
     });
 
     renderLog();
+    
+    // Update navigation based on auth state
+    authService.onAuthStateChanged((user) => {
+      const authLink = document.getElementById('authNavLink');
+      if (user) {
+        authLink.textContent = 'Profile';
+        authLink.href = 'profile.html';
+      } else {
+        authLink.textContent = 'Log In';
+        authLink.href = 'login.html';
+      }
+    });
   </script>
-  <script src="dark-mode.js"></script>
 </body>
 </html>
