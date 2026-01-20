@@ -88,7 +88,9 @@ const LS_KEYS = {
   STREAK: 'rosary_streak_v1',    // Current streak count
   DARK_MODE: 'dark_mode_v1',      // Dark mode preference
   HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
-  ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1' // 1-click Hail Marys toggle preference
+  ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1', // 1-click Hail Marys toggle preference
+  IRG_STEP: 'irg_step_v1',       // Current IRG step index (0-based)
+  IRG_STEP_DATE: 'irg_step_date_v1' // Date when IRG progress was last saved (YYYY-MM-DD)
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -757,7 +759,7 @@ function renderStep() {
 
 // 🚀 Initialize the UI on page load
 // "Hydrate" means "fill with data" - this sets up everything when the page first loads
-function hydrateUI() {
+async function hydrateUI() {
   // Set today's mystery name in the hero section
   todayMysteryEl.textContent = TODAY_SET;
   // Set the mystery badge (e.g., "Joyful Mysteries")
@@ -766,7 +768,12 @@ function hydrateUI() {
   renderMysteryAccordion();
   // Build and display the common prayers section
   renderCommonPrayers();
-  // Show the first step of the rosary
+  
+  // Restore IRG progress before showing the step
+  const savedStep = await loadIRGProgress();
+  stepIndex = savedStep;
+  
+  // Show the current step of the rosary (restored or default)
   renderStep();
   // Update the stats (streak, total, progress bar)
   syncStats();
@@ -822,6 +829,7 @@ nextBtnEl.addEventListener('click', () => {
       // Math.min ensures we never go past the last step
       stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
     }
+    saveIRGProgress(); // Save progress
     renderStep();  // Update the display
   }
 });
@@ -866,6 +874,7 @@ stepImageEl.addEventListener('click', () => {
       // Math.min ensures we never go past the last step
       stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
     }
+    saveIRGProgress(); // Save progress
     renderStep();  // Update the display
   }
 });
@@ -874,6 +883,7 @@ stepImageEl.addEventListener('click', () => {
 document.getElementById('prevBtn').addEventListener('click', () => { 
   // Math.max ensures we never go below 0 (first step)
   stepIndex = Math.max(0, stepIndex - 1); 
+  saveIRGProgress(); // Save progress
   renderStep(); 
 });
 
@@ -887,6 +897,7 @@ jumpBtnEl.addEventListener('click', () => {
   // If we found a target, jump there
   if (targetIdx !== -1) {
     stepIndex = targetIdx;
+    saveIRGProgress(); // Save progress
     renderStep();
   }
 });
@@ -904,6 +915,7 @@ if (completeDecadeBtnEl) {
     const decadeEndIndex = findDecadeEnd(stepIndex);
     if (decadeEndIndex !== -1) {
       stepIndex = decadeEndIndex;
+      saveIRGProgress(); // Save progress
       renderStep();
     }
   });
@@ -912,6 +924,7 @@ if (completeDecadeBtnEl) {
 // 🔄 Restart button: Return to the first step of the guide
 restartBtnEl.addEventListener('click', () => {
   stepIndex = 0;  // Go back to beginning
+  saveIRGProgress(); // Save progress
   renderStep();
 });
 
@@ -932,6 +945,7 @@ function initBeginButton() {
     }
     
     stepIndex = 0; 
+    saveIRGProgress(); // Save progress
     renderStep(); 
     
     // Scroll to guide section
@@ -990,11 +1004,13 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { 
     // Right arrow = next step
     stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1); 
+    saveIRGProgress(); // Save progress
     renderStep(); 
   } 
   if (e.key === 'ArrowLeft') { 
     // Left arrow = previous step
     stepIndex = Math.max(0, stepIndex - 1); 
+    saveIRGProgress(); // Save progress
     renderStep(); 
   } 
 });
@@ -1022,6 +1038,171 @@ function setLS(k, v) {
   } catch { 
     // If error, silently fail (localStorage might be disabled)
   } 
+}
+
+// ========== IRG PROGRESS TRACKING ==========
+// 📿 Track user progress through the Interactive Rosary Guide (IRG)
+// Supports localStorage (always) and Firebase sync (when authenticated)
+
+// 🔍 Check if midnight has passed since last save
+// Returns true if the date string is different from today's date
+function hasMidnightPassed(lastDateStr) {
+  if (!lastDateStr) return true; // No date means treat as new day
+  const today = todayStr();
+  return lastDateStr !== today;
+}
+
+// 🔄 Sync IRG progress to Firebase/Firestore (if available and user is authenticated)
+// Gracefully falls back to localStorage-only if Firebase is unavailable
+async function syncIRGProgressToFirebase(stepIndex, dateStr) {
+  try {
+    // Check if Firebase services are available
+    // Look for common Firebase service patterns
+    const firestoreService = window.firestoreService || 
+                            (window.firebase && window.firebase.firestore) ||
+                            null;
+    
+    // Check if user is authenticated
+    // Look for common auth service patterns
+    const authService = window.authService || 
+                       (window.firebase && window.firebase.auth) ||
+                       null;
+    
+    if (!firestoreService || !authService) {
+      // Firebase not available, skip sync (will use localStorage only)
+      return;
+    }
+    
+    // Check authentication state
+    let currentUser = null;
+    if (authService.currentUser) {
+      currentUser = authService.currentUser;
+    } else if (authService.getCurrentUser) {
+      currentUser = await authService.getCurrentUser();
+    } else if (typeof authService === 'function') {
+      // If authService is a function, it might be a getter
+      currentUser = authService();
+    }
+    
+    if (!currentUser || !currentUser.uid) {
+      // User not authenticated, skip sync
+      return;
+    }
+    
+    // Save to Firestore
+    const userData = {
+      irgStep: stepIndex,
+      irgStepDate: dateStr,
+      updatedAt: new Date().toISOString()
+    };
+    
+    if (firestoreService.updateUserData) {
+      await firestoreService.updateUserData(currentUser.uid, userData);
+    } else if (firestoreService.collection) {
+      // Direct Firestore access pattern
+      await firestoreService.collection('users')
+        .doc(currentUser.uid)
+        .set({ irgProgress: userData }, { merge: true });
+    }
+  } catch (error) {
+    // Silently fail - localStorage will be used as fallback
+    console.debug('Firebase sync failed, using localStorage only:', error);
+  }
+}
+
+// 💾 Save IRG progress (localStorage + optional Firebase sync)
+// Always saves to localStorage, also syncs to Firebase if user is authenticated
+function saveIRGProgress() {
+  const dateStr = todayStr();
+  
+  // Always save to localStorage (works offline)
+  setLS(LS_KEYS.IRG_STEP, stepIndex);
+  setLS(LS_KEYS.IRG_STEP_DATE, dateStr);
+  
+  // Try to sync to Firebase (non-blocking, graceful fallback)
+  syncIRGProgressToFirebase(stepIndex, dateStr).catch(() => {
+    // Silently handle errors - localStorage is already saved
+  });
+}
+
+// 📖 Load IRG progress (Firebase first if available, then localStorage)
+// Returns the step index to restore, or 0 if no progress or new day
+async function loadIRGProgress() {
+  try {
+    // First, try to load from Firebase if available and user is authenticated
+    const firestoreService = window.firestoreService || 
+                            (window.firebase && window.firebase.firestore) ||
+                            null;
+    const authService = window.authService || 
+                       (window.firebase && window.firebase.auth) ||
+                       null;
+    
+    if (firestoreService && authService) {
+      // Check authentication state
+      let currentUser = null;
+      if (authService.currentUser) {
+        currentUser = authService.currentUser;
+      } else if (authService.getCurrentUser) {
+        currentUser = await authService.getCurrentUser();
+      } else if (typeof authService === 'function') {
+        currentUser = authService();
+      }
+      
+      if (currentUser && currentUser.uid) {
+        // Try to load from Firestore
+        try {
+          let userData = null;
+          if (firestoreService.getUserData) {
+            userData = await firestoreService.getUserData(currentUser.uid);
+          } else if (firestoreService.collection) {
+            const doc = await firestoreService.collection('users')
+              .doc(currentUser.uid)
+              .get();
+            if (doc.exists) {
+              userData = doc.data();
+            }
+          }
+          
+          if (userData && userData.irgProgress) {
+            const { irgStep, irgStepDate } = userData.irgProgress;
+            
+            // Validate step index
+            if (typeof irgStep === 'number' && irgStep >= 0 && irgStep < GUIDE.length) {
+              // Check if midnight has passed
+              if (!hasMidnightPassed(irgStepDate)) {
+                // Valid progress from today - return it
+                return irgStep;
+              }
+              // New day - will fall through to return 0
+            }
+          }
+        } catch (error) {
+          // Firebase load failed, fall back to localStorage
+          console.debug('Firebase load failed, using localStorage:', error);
+        }
+      }
+    }
+  } catch (error) {
+    // Firebase not available or error, fall back to localStorage
+    console.debug('Firebase not available, using localStorage:', error);
+  }
+  
+  // Fallback to localStorage
+  const savedStep = getLS(LS_KEYS.IRG_STEP, 0);
+  const savedDate = getLS(LS_KEYS.IRG_STEP_DATE, null);
+  
+  // Check if midnight has passed
+  if (hasMidnightPassed(savedDate)) {
+    return 0; // New day, reset to beginning
+  }
+  
+  // Validate step index
+  if (typeof savedStep === 'number' && savedStep >= 0 && savedStep < GUIDE.length) {
+    return savedStep;
+  }
+  
+  // Invalid or no saved progress
+  return 0;
 }
 
 // 📊 Update the displayed stats (streak, total count, progress bar)
@@ -1128,6 +1309,12 @@ function logRosary(showCelebration = false) {
   // Show celebration if requested
   if (showCelebration) {
     celebrate();
+    // Reset IRG progress when rosary is completed
+    // This ensures users start from the beginning next time
+    if (stepIndex === GUIDE.length - 1) {
+      stepIndex = 0;
+      saveIRGProgress();
+    }
   }
   return true;
 }
