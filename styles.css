@@ -98,8 +98,34 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+/* Ensure Profile button always appears in top right across all screen sizes */
+#authNavLink {
+  display: block !important;
+  visibility: visible !important;
+  flex-shrink: 0;
+  order: 999; /* Ensure it appears last in flex order */
+  position: relative;
+}
+
+/* Profile picture in navigation */
+.nav-profile-pic {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--primary);
+  transition: box-shadow 0.2s ease;
+}
+
+.nav-profile-pic:hover {
+  box-shadow: 0 0 0 1.5px var(--primary-hover, var(--primary));
 }
 
 /* Mobile navigation fixes */
@@ -108,6 +134,12 @@ body {
     padding: 10px 12px;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  /* Ensure nav-links never wrap on narrow screens */
+  .nav-links {
+    flex-wrap: nowrap !important;
+    min-width: fit-content;
   }
   
   .brand {
@@ -145,10 +177,22 @@ body {
     min-height: 36px;
   }
   
-  .dark-mode-toggle {
-    font-size: 18px;
-    padding: 6px 10px;
-    min-width: 36px;
+  .dark-mode-toggle-label input[type="checkbox"] {
+    width: 40px;
+    height: 22px;
+  }
+  
+  .dark-mode-toggle-label input[type="checkbox"]::before {
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    left: 2px;
+    font-size: 14px;
+  }
+  
+  .dark-mode-toggle-label input[type="checkbox"]:checked::before {
+    content: '☀️';
+    transform: translateX(18px);
   }
 }
 
@@ -164,6 +208,9 @@ body {
   
   .nav-links {
     gap: 6px;
+    flex-wrap: nowrap; /* Prevent wrapping on very small screens */
+    justify-content: flex-end;
+    align-items: center;
   }
   
   .nav-links a {
@@ -177,9 +224,40 @@ body {
     min-height: 32px;
   }
   
-  /* Hide "Log In" button on very small screens to save space */
-  .nav-links .button:last-child {
+  /* Hide dark mode toggle on very small screens to save space if needed */
+  .nav-links .dark-mode-toggle {
     display: none;
+  }
+
+  /* Ensure Profile button always appears in top right */
+  #authNavLink {
+    display: block !important;
+    visibility: visible !important;
+    flex-shrink: 0;
+  }
+
+  /* Extra narrow screens (like Pixel 9 Pro portrait) */
+  @media (max-width: 420px) {
+    .nav-links {
+      flex-wrap: nowrap !important;
+      justify-content: flex-end !important;
+      min-width: 0;
+    }
+
+    #authNavLink {
+      font-size: 12px !important;
+      padding: 4px 8px !important;
+      min-height: 28px !important;
+    }
+
+    .nav-profile-pic {
+      width: 29px !important;
+      height: 26px !important;
+    }
+
+    .nav-inner {
+      padding: 6px 8px !important;
+    }
   }
 }
 
@@ -219,10 +297,63 @@ a {
   color: #e5e5e5;
 }
 
-.dark-mode-toggle {
-  font-size: 20px;
-  padding: 8px 12px;
-  min-width: 44px;
+/* Dark mode toggle switch */
+.dark-mode-toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dark-mode-toggle-label input[type="checkbox"] {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: #d9d6cf;
+  border: 1px solid #c4c0b8;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dark-mode .dark-mode-toggle-label input[type="checkbox"] {
+  background: #404040;
+  border-color: #505050;
+}
+
+.dark-mode-toggle-label input[type="checkbox"]:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.dark-mode-toggle-label input[type="checkbox"]::before {
+  content: '🌙';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dark-mode-toggle-label input[type="checkbox"]:checked::before {
+  content: '☀️';
+  transform: translateX(16px);
+}
+
+.dark-mode-toggle-label input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .button:active {
@@ -770,6 +901,67 @@ h3 {
 .virtue-future {
   font-weight: normal;
   color: inherit;
+}
+
+/* ==========================================
+   Authentication & Profile Styles
+   ========================================== */
+
+/* Error and success messages */
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+}
+
+.dark-mode .error-message {
+  background: #7f1d1d;
+  color: #fecaca;
+  border-color: #991b1b;
+}
+
+.success-message {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #a7f3d0;
+}
+
+.dark-mode .success-message {
+  background: #064e3b;
+  color: #a7f3d0;
+  border-color: #065f46;
+}
+
+/* Form inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--muted);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.dark-mode input[type="text"],
+.dark-mode input[type="email"],
+.dark-mode input[type="password"],
+.dark-mode select {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--muted);
 }
 
 .prayer-text {

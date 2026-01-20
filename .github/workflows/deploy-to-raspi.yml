@@ -2,7 +2,7 @@ name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "feature/firebase-auth-profile" ]
 
 jobs:
   deploy:

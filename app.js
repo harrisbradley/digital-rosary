@@ -1019,22 +1019,130 @@ window.addEventListener('keydown', e => {
 // 💾 localStorage is browser storage that persists between page visits
 // It's like a tiny database that lives in your browser
 
-// 📖 Helper function to read from localStorage
+// 📖 Helper function to read from localStorage or Firestore
 // k = key (the name), f = fallback (default value if nothing found)
-function getLS(k, f) { 
+async function getLSAsync(k, f) {
+  const user = authService ? authService.getCurrentUser() : null;
+  
+  if (user && window.firestoreService) {
+    // User is authenticated - try Firestore first, then cache, then fallback
+    try {
+      const userId = user.uid;
+      
+      // Map localStorage keys to Firestore paths
+      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+        const stats = await firestoreService.getUserStats(userId);
+        if (stats.success) {
+          if (k === LS_KEYS.TOTAL) return stats.data.total ?? f;
+          if (k === LS_KEYS.STREAK) return stats.data.streak ?? f;
+          if (k === LS_KEYS.LAST_DATE) return stats.data.lastDate ?? f;
+        }
+      } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
+        const settings = await firestoreService.getUserSettings(userId);
+        if (settings.success) {
+          if (k === LS_KEYS.DARK_MODE) return settings.data.darkMode ?? f;
+          if (k === LS_KEYS.ONE_CLICK_HAIL_MARYS) return settings.data.oneClickHailMarys ?? f;
+        }
+      }
+    } catch (error) {
+      console.warn('Error reading from Firestore, falling back to localStorage:', error);
+    }
+  }
+  
+  // Fallback to localStorage
   try { 
-    const v = localStorage.getItem(k);  // Try to get the value
-    return v === null ? f : JSON.parse(v);  // If null, return fallback; otherwise parse JSON
+    const v = localStorage.getItem(k);
+    return v === null ? f : JSON.parse(v);
   } catch { 
-    return f;  // If error, return fallback
+    return f;
   } 
 }
 
-// 💾 Helper function to write to localStorage
-// k = key (the name), v = value (the data to save)
-function setLS(k, v) { 
+// Synchronous version for backwards compatibility (uses cache)
+function getLS(k, f) {
+  const user = authService ? authService.getCurrentUser() : null;
+  
+  if (user && window.firestoreService) {
+    // Try to get from cache first
+    const userId = user.uid;
+    const cacheKey = `user_${k}_${userId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached !== null) {
+      try {
+        return JSON.parse(cached);
+      } catch {}
+    }
+    
+    // Map to Firestore cache keys
+    if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+      const statsCache = localStorage.getItem(`user_stats_${userId}`);
+      if (statsCache) {
+        try {
+          const stats = JSON.parse(statsCache);
+          if (k === LS_KEYS.TOTAL) return stats.total ?? f;
+          if (k === LS_KEYS.STREAK) return stats.streak ?? f;
+          if (k === LS_KEYS.LAST_DATE) return stats.lastDate ?? f;
+        } catch {}
+      }
+    } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
+      const settingsCache = localStorage.getItem(`user_settings_${userId}`);
+      if (settingsCache) {
+        try {
+          const settings = JSON.parse(settingsCache);
+          if (k === LS_KEYS.DARK_MODE) return settings.darkMode ?? f;
+          if (k === LS_KEYS.ONE_CLICK_HAIL_MARYS) return settings.oneClickHailMarys ?? f;
+        } catch {}
+      }
+    }
+  }
+  
+  // Fallback to localStorage
   try { 
-    localStorage.setItem(k, JSON.stringify(v));  // Convert to JSON string and save
+    const v = localStorage.getItem(k);
+    return v === null ? f : JSON.parse(v);
+  } catch { 
+    return f;
+  } 
+}
+
+// 💾 Helper function to write to localStorage and Firestore
+// k = key (the name), v = value (the data to save)
+async function setLSAsync(k, v) {
+  const user = authService ? authService.getCurrentUser() : null;
+  
+  if (user && window.firestoreService) {
+    // User is authenticated - save to Firestore
+    try {
+      const userId = user.uid;
+      
+      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+        const stats = await firestoreService.getUserStats(userId);
+        const currentStats = stats.success ? stats.data : {};
+        const updatedStats = {
+          ...currentStats,
+          total: k === LS_KEYS.TOTAL ? v : currentStats.total,
+          streak: k === LS_KEYS.STREAK ? v : currentStats.streak,
+          lastDate: k === LS_KEYS.LAST_DATE ? v : currentStats.lastDate
+        };
+        await firestoreService.updateUserStats(userId, updatedStats);
+      } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
+        const settings = await firestoreService.getUserSettings(userId);
+        const currentSettings = settings.success ? settings.data : {};
+        const updatedSettings = {
+          ...currentSettings,
+          darkMode: k === LS_KEYS.DARK_MODE ? v : currentSettings.darkMode,
+          oneClickHailMarys: k === LS_KEYS.ONE_CLICK_HAIL_MARYS ? v : currentSettings.oneClickHailMarys
+        };
+        await firestoreService.updateUserSettings(userId, updatedSettings);
+      }
+    } catch (error) {
+      console.warn('Error writing to Firestore, saving to localStorage only:', error);
+    }
+  }
+  
+  // Always save to localStorage as cache/fallback
+  try { 
+    localStorage.setItem(k, JSON.stringify(v));
   } catch { 
     // If error, silently fail (localStorage might be disabled)
   } 
@@ -1205,6 +1313,20 @@ async function loadIRGProgress() {
   return 0;
 }
 
+// Synchronous version for backwards compatibility (saves to localStorage, Firestore sync happens async)
+function setLS(k, v) {
+  // Save to localStorage immediately
+  try { 
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch { 
+    // If error, silently fail
+  }
+  
+  // Sync to Firestore asynchronously if authenticated
+  if (authService && window.firestoreService) {
+    setLSAsync(k, v).catch(err => console.warn('Async Firestore sync failed:', err));
+  }
+}
 // 📊 Update the displayed stats (streak, total count, progress bar)
 // This reads from localStorage and updates what's shown on screen
 function syncStats() { 
@@ -1271,15 +1393,66 @@ function celebrate() {
 // 📝 Log rosary: Record that you prayed the rosary today
 // Tracks streaks (consecutive days) and total count
 // showCelebration: whether to show the celebration popup
-function logRosary(showCelebration = false) {
-  // Get current stats from localStorage
-  const last = getLS(LS_KEYS.LAST_DATE, null);    // Date of last rosary
-  const total = getLS(LS_KEYS.TOTAL, 0);          // Total count
-  const streak = getLS(LS_KEYS.STREAK, 0);         // Current streak
+async function logRosary(showCelebration = false) {
   const today = todayStr();                        // Today's date string
+  const user = authService ? authService.getCurrentUser() : null;
   
-  // Check if already logged today
-  if (last === today) {
+  // Check if already logged today - check both stats and prayer log
+  let alreadyLogged = false;
+  let currentStats = { total: 0, streak: 0, lastDate: null };
+  
+  if (user && window.firestoreService) {
+    // For authenticated users, check Firestore prayer log first
+    try {
+      const prayerLog = await firestoreService.getPrayerLog(user.uid);
+      if (prayerLog.success) {
+        // Check if there's already an entry for today
+        const todayEntries = prayerLog.data.filter(entry => {
+          // Prefer entry.date, fallback to parsing createdAt
+          const entryDate = entry.date || (entry.createdAt?.toDate ? entry.createdAt.toDate().toISOString().slice(0, 10) : null);
+          return entryDate === today;
+        });
+        if (todayEntries.length > 0) {
+          alreadyLogged = true;
+        }
+      }
+      
+      // Get current stats from Firestore
+      const stats = await firestoreService.getUserStats(user.uid);
+      if (stats.success) {
+        currentStats = stats.data;
+        // Also check if lastDate matches today
+        if (currentStats.lastDate === today) {
+          alreadyLogged = true;
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking Firestore data:', error);
+      // Fall back to localStorage check
+      const last = getLS(LS_KEYS.LAST_DATE, null);
+      if (last === today) {
+        alreadyLogged = true;
+      }
+      currentStats = {
+        total: getLS(LS_KEYS.TOTAL, 0),
+        streak: getLS(LS_KEYS.STREAK, 0),
+        lastDate: last
+      };
+    }
+  } else {
+    // For non-authenticated users, check localStorage
+    const last = getLS(LS_KEYS.LAST_DATE, null);
+    if (last === today) {
+      alreadyLogged = true;
+    }
+    currentStats = {
+      total: getLS(LS_KEYS.TOTAL, 0),
+      streak: getLS(LS_KEYS.STREAK, 0),
+      lastDate: last
+    };
+  }
+  
+  if (alreadyLogged) {
     if (showCelebration) {
       alert('You already logged today 🙌');
     }
@@ -1288,20 +1461,50 @@ function logRosary(showCelebration = false) {
   
   // Calculate new streak
   let newStreak = 1;  // Default to 1 if no previous log
-  if (last) { 
+  if (currentStats.lastDate) { 
     // Check if last log was yesterday (to continue streak)
     const y = new Date(); 
     y.setDate(y.getDate() - 1);  // Yesterday's date
-    if (y.toISOString().slice(0, 10) === last) {
-      newStreak = streak + 1;  // Continue streak
+    if (y.toISOString().slice(0, 10) === currentStats.lastDate) {
+      newStreak = (currentStats.streak || 0) + 1;  // Continue streak
     }
     // If last log was not yesterday, streak resets to 1
   }
   
-  // Save updated stats to localStorage
+  const newTotal = (currentStats.total || 0) + 1;
+  
+  // Save updated stats to localStorage and Firestore
   setLS(LS_KEYS.LAST_DATE, today);      // Update last date
-  setLS(LS_KEYS.TOTAL, total + 1);      // Increment total
+  setLS(LS_KEYS.TOTAL, newTotal);      // Increment total
   setLS(LS_KEYS.STREAK, newStreak);     // Update streak
+  
+  // Update Firestore if authenticated
+  if (user && window.firestoreService) {
+    try {
+      // Add to prayer log first (this checks for duplicates)
+      const logResult = await firestoreService.addPrayerLogEntry(user.uid, {
+        date: today,
+        notes: 'Rosary prayed'
+      });
+      
+      // If entry already exists, don't proceed with logging
+      if (!logResult.success && logResult.error === 'Entry already exists for this date') {
+        if (showCelebration) {
+          alert('You already logged today 🙌');
+        }
+        return false;
+      }
+      
+      // Update stats in Firestore
+      await firestoreService.updateUserStats(user.uid, {
+        total: newTotal,
+        streak: newStreak,
+        lastDate: today
+      });
+    } catch (error) {
+      console.warn('Failed to update Firestore:', error);
+    }
+  }
   
   // Update the display
   syncStats();
@@ -1476,9 +1679,126 @@ if (oneClickHailMarysToggleEl) {
 // ========== INITIALIZE APP ==========
 // 🚀 Start the application when page loads
 // This runs automatically when the page finishes loading
-initDarkMode(); // Initialize dark mode first
-initOneClickHailMarysToggle(); // Initialize 1-click Hail Marys toggle
-hydrateUI();
+
+// Initialize with Firebase if available
+async function initializeApp() {
+  initDarkMode(); // Initialize dark mode first
+  initOneClickHailMarysToggle();
+  
+  // If authenticated, load stats from Firestore
+  if (window.authService && window.firestoreService) {
+    const user = window.authService.getCurrentUser();
+    if (user) {
+      try {
+        // Load and sync stats from Firestore
+        const stats = await firestoreService.getUserStats(user.uid);
+        if (stats.success && stats.data) {
+          // Update localStorage cache with Firestore data (this is the source of truth)
+          const firestoreTotal = stats.data.total || 0;
+          const firestoreStreak = stats.data.streak || 0;
+          const firestoreLastDate = stats.data.lastDate || null;
+          
+          setLS(LS_KEYS.TOTAL, firestoreTotal);
+          setLS(LS_KEYS.STREAK, firestoreStreak);
+          setLS(LS_KEYS.LAST_DATE, firestoreLastDate);
+          
+          // Update display
+          syncStats();
+        } else {
+          // No stats in Firestore yet, use localStorage
+          syncStats();
+        }
+        
+        // Load and sync settings
+        const settings = await firestoreService.getUserSettings(user.uid);
+        if (settings.success) {
+          if (settings.data.darkMode !== undefined) {
+            setLS(LS_KEYS.DARK_MODE, settings.data.darkMode);
+            // Update dark mode UI
+            const htmlRootEl = document.documentElement;
+            const darkModeToggleEl = document.getElementById('darkModeToggle');
+            if (settings.data.darkMode) {
+              htmlRootEl.classList.add('dark-mode');
+              if (darkModeToggleEl) darkModeToggleEl.textContent = '☀️';
+            } else {
+              htmlRootEl.classList.remove('dark-mode');
+              if (darkModeToggleEl) darkModeToggleEl.textContent = '🌙';
+            }
+          }
+          if (settings.data.oneClickHailMarys !== undefined) {
+            setLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, settings.data.oneClickHailMarys);
+            // Update toggle UI
+            const toggleEl = document.getElementById('oneClickHailMarysToggle');
+            if (toggleEl) toggleEl.checked = settings.data.oneClickHailMarys;
+          }
+        }
+        
+        // Set up real-time listeners for stats updates
+        firestoreService.listenToStats(user.uid, (result) => {
+          if (result.success) {
+            if (result.data.total !== undefined) {
+              setLS(LS_KEYS.TOTAL, result.data.total);
+              syncStats();
+            }
+            if (result.data.streak !== undefined) {
+              setLS(LS_KEYS.STREAK, result.data.streak);
+              syncStats();
+            }
+            if (result.data.lastDate !== undefined) {
+              setLS(LS_KEYS.LAST_DATE, result.data.lastDate);
+            }
+          }
+        });
+        
+        // Set up real-time listener for settings updates
+        firestoreService.listenToSettings(user.uid, (result) => {
+          if (result.success) {
+            if (result.data.darkMode !== undefined) {
+              setLS(LS_KEYS.DARK_MODE, result.data.darkMode);
+              const htmlRootEl = document.documentElement;
+              const darkModeToggleEl = document.getElementById('darkModeToggle');
+              if (result.data.darkMode) {
+                htmlRootEl.classList.add('dark-mode');
+                if (darkModeToggleEl) darkModeToggleEl.textContent = '☀️';
+              } else {
+                htmlRootEl.classList.remove('dark-mode');
+                if (darkModeToggleEl) darkModeToggleEl.textContent = '🌙';
+              }
+            }
+            if (result.data.oneClickHailMarys !== undefined) {
+              setLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, result.data.oneClickHailMarys);
+              const toggleEl = document.getElementById('oneClickHailMarysToggle');
+              if (toggleEl) toggleEl.checked = result.data.oneClickHailMarys;
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Error loading data from Firestore:', error);
+        // Continue with localStorage data
+        syncStats();
+      }
+    } else {
+      // Not authenticated, use localStorage
+      syncStats();
+    }
+  } else {
+    // Firebase not available, use localStorage
+    syncStats();
+  }
+}
+
+// Run initialization
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initializeApp();
+    hydrateUI();
+  });
+} else {
+  (async () => {
+    await initializeApp();
+    hydrateUI();
+  })();
+}
 
 // Set up restore link event listener after DOM is ready
 // This ensures the footer link exists before we try to attach the listener
