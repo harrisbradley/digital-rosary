@@ -279,10 +279,27 @@ a {
    Buttons
    ========================================== */
 .button {
-  padding: 5px 5px;
+  padding: 10px 15px;
   border-radius: 999px;
   border: 1px solid #d9d6cf;
   background: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.profilebutton {
+  padding: 2px 2px;
+  border-radius: 999px;
+  border: 2px solid #FDDB6F;
+  background: #d9d6cf;
   font-weight: 600;
   font-size: 16px;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
