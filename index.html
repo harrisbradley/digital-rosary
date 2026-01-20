@@ -30,14 +30,14 @@
     rel="stylesheet">
 
   <!-- 🎨 External stylesheet - all the CSS styling rules are in styles.css -->
-  <link rel="stylesheet" href="styles.css?v=1.5">
+  <link rel="stylesheet" href="css/styles.css?v=1.5">
 
   <!-- 📊 Rosary Visualizer - loads the JavaScript file that draws the visual rosary -->
-  <script src="rosary-visualizer.js"></script>
+  <script src="js/rosary-visualizer.js"></script>
   <!-- 📿 Meditations data - loads the meditation texts for each Hail Mary -->
-  <script src="meditations.js"></script>
+  <script src="js/meditations.js"></script>
   <!-- 🙏 Prayer texts - loads all the prayer texts used throughout the rosary -->
-  <script src="prayers.js"></script>
+  <script src="js/prayers.js"></script>
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -46,10 +46,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   
   <!-- Firebase Services -->
-  <script src="firebase-config.js"></script>
-  <script src="auth-service.js"></script>
-  <script src="firestore-service.js"></script>
-  <script src="storage-service.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/firestore-service.js"></script>
+  <script src="js/storage-service.js"></script>
 </head>
 
 
@@ -281,7 +281,7 @@
   <!-- ===== JAVASCRIPT APPLICATION LOGIC ===== -->
   <!-- 💻 All the interactive functionality is now in app.js -->
   <!-- Load app.js after rosary-visualizer.js (since app.js uses the visualizer) -->
-  <script src="app.js"></script>
+  <script src="js/app.js"></script>
   <script>
     // Update navigation based on auth state
     authService.onAuthStateChanged(async (user) => {
