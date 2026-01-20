@@ -91,6 +91,10 @@ body {
   font-weight: 700;
 }
 
+.brand img {
+  border-radius: 8px;
+}
+
 .brand svg {
   width: 28px;
   height: 28px;
