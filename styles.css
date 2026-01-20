@@ -120,8 +120,8 @@ body {
 
 /* Profile picture in navigation */
 .nav-profile-pic {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 0 0 2px var(--primary);
@@ -255,8 +255,8 @@ body {
     }
 
     .nav-profile-pic {
-      width: 29px !important;
-      height: 26px !important;
+      width: 36px !important;
+      height: 36px !important;
     }
 
     .nav-inner {
@@ -279,7 +279,7 @@ a {
    Buttons
    ========================================== */
 .button {
-  padding: 10px 14px;
+  padding: 5px 5px;
   border-radius: 999px;
   border: 1px solid #d9d6cf;
   background: #fff;
