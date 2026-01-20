@@ -2,7 +2,7 @@ name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [ "feature/firebase-auth-profile" ]
+    branches: [ "cursor/irg-step-global-sync" ]
 
 jobs:
   deploy:
