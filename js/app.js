@@ -75,9 +75,16 @@ const MYSTERY_IMAGES = {
 // When testing locally, adds ?t=timestamp to image URLs to force fresh load
 const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
 
-// 📅 Helper function: Get today's date in YYYY-MM-DD format
+// 📅 Helper function: Get today's date in YYYY-MM-DD format (UTC)
 // Returns a string like "2024-01-15"
 const todayStr = () => new Date().toISOString().slice(0, 10);
+// 📅 Helper for local-day comparisons (resets at local midnight)
+const localDateStr = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 // 💾 LocalStorage keys for persistence
 // localStorage is browser storage that saves data between visits
@@ -90,7 +97,8 @@ const LS_KEYS = {
   HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
   ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1', // 1-click Hail Marys toggle preference
   IRG_STEP: 'irg_step_v1',       // Current IRG step index (0-based)
-  IRG_STEP_DATE: 'irg_step_date_v1' // Date when IRG progress was last saved (YYYY-MM-DD)
+  IRG_STEP_DATE: 'irg_step_date_v1', // Date when IRG progress was last saved (YYYY-MM-DD)
+  IRG_STEP_SAVED_AT: 'irg_step_saved_at_v1' // Timestamp when IRG progress was saved
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -1113,12 +1121,46 @@ async function setLSAsync(k, v) {
 // 📿 Track user progress through the Interactive Rosary Guide (IRG)
 // Supports localStorage (always) and Firebase sync (when authenticated)
 
-// 🔍 Check if midnight has passed since last save
-// Returns true if the date string is different from today's date
-function hasMidnightPassed(lastDateStr) {
-  if (!lastDateStr) return true; // No date means treat as new day
-  const today = todayStr();
-  return lastDateStr !== today;
+// 🔍 Parse a stored timestamp into a Date (supports Firestore Timestamp)
+function parseSavedAt(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (value && typeof value.toDate === 'function') {
+    const parsed = value.toDate();
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+// 🔍 Convert a legacy UTC date string (YYYY-MM-DD) to local date string
+function legacyUTCDateToLocal(dateStr) {
+  if (typeof dateStr !== 'string') return null;
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  const [year, month, day] = parts;
+  const utcDate = new Date(Date.UTC(year, month - 1, day));
+  return Number.isNaN(utcDate.getTime()) ? null : localDateStr(utcDate);
+}
+
+// 🔍 Resolve last saved date to local-day string for midnight checks
+function resolveIRGLocalDate(dateStr, savedAt) {
+  const savedAtDate = parseSavedAt(savedAt);
+  if (savedAtDate) return localDateStr(savedAtDate);
+  if (!dateStr) return null;
+  return legacyUTCDateToLocal(dateStr) || dateStr;
+}
+
+// 🔍 Check if midnight has passed since last save (local day)
+// Returns true if the local day is different from today's local day
+function hasMidnightPassed(lastDateStr, savedAt) {
+  const lastLocalDate = resolveIRGLocalDate(lastDateStr, savedAt);
+  if (!lastLocalDate) return true; // No date means treat as new day
+  const today = localDateStr();
+  return lastLocalDate !== today;
 }
 
 // Normalize IRG progress data from Firestore.
@@ -1131,7 +1173,8 @@ function normalizeIRGProgress(userData) {
   if (typeof userData.irgStep === 'number') {
     return {
       irgStep: userData.irgStep,
-      irgStepDate: userData.irgStepDate
+      irgStepDate: userData.irgStepDate,
+      irgStepSavedAt: userData.irgStepSavedAt
     };
   }
   return null;
@@ -1139,7 +1182,7 @@ function normalizeIRGProgress(userData) {
 
 // 🔄 Sync IRG progress to Firebase/Firestore (if available and user is authenticated)
 // Gracefully falls back to localStorage-only if Firebase is unavailable
-async function syncIRGProgressToFirebase(stepIndex, dateStr) {
+async function syncIRGProgressToFirebase(stepIndex, dateStr, savedAt = null) {
   try {
     // Check if Firebase services are available
     // Look for common Firebase service patterns
@@ -1175,10 +1218,12 @@ async function syncIRGProgressToFirebase(stepIndex, dateStr) {
     }
     
     // Save to Firestore
+    const savedAtValue = savedAt || new Date().toISOString();
     const irgProgress = {
       irgStep: stepIndex,
       irgStepDate: dateStr,
-      updatedAt: new Date().toISOString()
+      irgStepSavedAt: savedAtValue,
+      updatedAt: savedAtValue
     };
     
     if (firestoreService.updateUserData) {
@@ -1198,14 +1243,16 @@ async function syncIRGProgressToFirebase(stepIndex, dateStr) {
 // 💾 Save IRG progress (localStorage + optional Firebase sync)
 // Always saves to localStorage, also syncs to Firebase if user is authenticated
 function saveIRGProgress() {
-  const dateStr = todayStr();
+  const dateStr = localDateStr();
+  const savedAt = new Date().toISOString();
   
   // Always save to localStorage (works offline)
   setLS(LS_KEYS.IRG_STEP, stepIndex);
   setLS(LS_KEYS.IRG_STEP_DATE, dateStr);
+  setLS(LS_KEYS.IRG_STEP_SAVED_AT, savedAt);
   
   // Try to sync to Firebase (non-blocking, graceful fallback)
-  syncIRGProgressToFirebase(stepIndex, dateStr).catch(() => {
+  syncIRGProgressToFirebase(stepIndex, dateStr, savedAt).catch(() => {
     // Silently handle errors - localStorage is already saved
   });
 }
@@ -1261,14 +1308,20 @@ async function loadIRGProgress() {
             const irgProgress = normalizeIRGProgress(userData);
             if (irgProgress) {
               const { irgStep, irgStepDate } = irgProgress;
+              const irgStepSavedAt = irgProgress.irgStepSavedAt || irgProgress.savedAt || irgProgress.updatedAt || null;
               
               // Validate step index
               if (typeof irgStep === 'number' && irgStep >= 0 && irgStep < GUIDE.length) {
                 // Check if midnight has passed
-                if (!hasMidnightPassed(irgStepDate)) {
+                if (!hasMidnightPassed(irgStepDate, irgStepSavedAt)) {
                   // Valid progress from today - cache locally and return it
                   setLS(LS_KEYS.IRG_STEP, irgStep);
                   setLS(LS_KEYS.IRG_STEP_DATE, irgStepDate);
+                  if (irgStepSavedAt) {
+                    setLS(LS_KEYS.IRG_STEP_SAVED_AT, irgStepSavedAt);
+                  } else {
+                    setLS(LS_KEYS.IRG_STEP_SAVED_AT, null);
+                  }
                   remoteStatus = 'fresh';
                   return irgStep;
                 }
@@ -1292,16 +1345,17 @@ async function loadIRGProgress() {
   // Fallback to localStorage
   const savedStep = getLS(LS_KEYS.IRG_STEP, 0);
   const savedDate = getLS(LS_KEYS.IRG_STEP_DATE, null);
+  const savedAt = getLS(LS_KEYS.IRG_STEP_SAVED_AT, null);
   
   // Check if midnight has passed
-  if (hasMidnightPassed(savedDate)) {
+  if (hasMidnightPassed(savedDate, savedAt)) {
     return 0; // New day, reset to beginning
   }
   
   // Validate step index
   if (typeof savedStep === 'number' && savedStep >= 0 && savedStep < GUIDE.length) {
     if (authenticatedUser && (remoteStatus === 'missing' || remoteStatus === 'stale')) {
-      syncIRGProgressToFirebase(savedStep, savedDate).catch(() => {
+      syncIRGProgressToFirebase(savedStep, savedDate, savedAt).catch(() => {
         // Ignore sync errors - localStorage remains the fallback
       });
     }

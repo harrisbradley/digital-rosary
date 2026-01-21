@@ -158,7 +158,8 @@ async function migrateLocalStorageData(userId) {
       },
       irgProgress: {
         irgStep: getLS('irg_step_v1', 0),
-        irgStepDate: getLS('irg_step_date_v1', null)
+        irgStepDate: getLS('irg_step_date_v1', null),
+        irgStepSavedAt: getLS('irg_step_saved_at_v1', null)
       },
       prayerLog: getLS('rosary_log_v1', [])
     };
@@ -201,6 +202,7 @@ async function migrateLocalStorageData(userId) {
         irgProgress: {
           irgStep: migrationData.irgProgress.irgStep,
           irgStepDate: migrationData.irgProgress.irgStepDate,
+          irgStepSavedAt: migrationData.irgProgress.irgStepSavedAt || null,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         },
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
