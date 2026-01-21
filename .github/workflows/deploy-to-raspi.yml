@@ -2,7 +2,7 @@ name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [ "cursor/irg-step-global-sync" ]
+    branches: [ "main" ]
 
 jobs:
   deploy:
