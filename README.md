@@ -22,7 +22,7 @@ An interactive web application designed to help you learn and pray the Holy Rosa
   - Jump to decades button for quick navigation
   - Restart button to begin again anytime
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices with touch-optimized controls
-- **Prayer Reference**: Quick access to common prayers and all mysteries in an accordion-style interface
+- **Prayer Reference**: Quick access to prayer section and all mysteries in an accordion-style interface
 
 ## Technology Stack
 

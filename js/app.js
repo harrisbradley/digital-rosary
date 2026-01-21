@@ -490,7 +490,7 @@ function renderMysteryAccordion() {
   });
 }
 
-// 📚 Dynamically build the Common Prayers section
+// 📚 Dynamically build the Prayer Section
 // This creates the expandable details elements for each prayer
 function renderCommonPrayers() {
   const commonPrayersEl = document.getElementById('common-prayers');
@@ -503,7 +503,7 @@ function renderCommonPrayers() {
     commonPrayersEl.appendChild(existingH2);
   } else {
     const h2 = document.createElement('h2');
-    h2.textContent = 'Common Prayers';
+    h2.textContent = 'Prayer Section';
     commonPrayersEl.appendChild(h2);
   }
   
@@ -766,7 +766,7 @@ async function hydrateUI() {
   mysteryBadgeEl.textContent = TODAY_SET + ' Mysteries';
   // Build and display the mysteries accordion
   renderMysteryAccordion();
-  // Build and display the common prayers section
+  // Build and display the prayer section
   renderCommonPrayers();
   
   // Restore IRG progress before showing the step

@@ -1235,7 +1235,7 @@ footer {
   }
 }
 
-/* Common Prayers section details on mobile */
+/* Prayer Section details on mobile */
 @media (max-width: 768px) {
   details {
     padding: 14px 16px;
