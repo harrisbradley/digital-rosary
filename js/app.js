@@ -1160,6 +1160,22 @@ function hasMidnightPassed(lastDateStr) {
   return lastDateStr !== today;
 }
 
+// Normalize IRG progress data from Firestore.
+// Supports both nested and legacy root fields.
+function normalizeIRGProgress(userData) {
+  if (!userData) return null;
+  if (userData.irgProgress && typeof userData.irgProgress === 'object') {
+    return userData.irgProgress;
+  }
+  if (typeof userData.irgStep === 'number') {
+    return {
+      irgStep: userData.irgStep,
+      irgStepDate: userData.irgStepDate
+    };
+  }
+  return null;
+}
+
 // 🔄 Sync IRG progress to Firebase/Firestore (if available and user is authenticated)
 // Gracefully falls back to localStorage-only if Firebase is unavailable
 async function syncIRGProgressToFirebase(stepIndex, dateStr) {
@@ -1198,19 +1214,19 @@ async function syncIRGProgressToFirebase(stepIndex, dateStr) {
     }
     
     // Save to Firestore
-    const userData = {
+    const irgProgress = {
       irgStep: stepIndex,
       irgStepDate: dateStr,
       updatedAt: new Date().toISOString()
     };
     
     if (firestoreService.updateUserData) {
-      await firestoreService.updateUserData(currentUser.uid, userData);
+      await firestoreService.updateUserData(currentUser.uid, { irgProgress });
     } else if (firestoreService.collection) {
       // Direct Firestore access pattern
       await firestoreService.collection('users')
         .doc(currentUser.uid)
-        .set({ irgProgress: userData }, { merge: true });
+        .set({ irgProgress }, { merge: true });
     }
   } catch (error) {
     // Silently fail - localStorage will be used as fallback
@@ -1236,6 +1252,8 @@ function saveIRGProgress() {
 // 📖 Load IRG progress (Firebase first if available, then localStorage)
 // Returns the step index to restore, or 0 if no progress or new day
 async function loadIRGProgress() {
+  let remoteStatus = 'unavailable';
+  let authenticatedUser = null;
   try {
     // First, try to load from Firebase if available and user is authenticated
     const firestoreService = window.firestoreService || 
@@ -1257,11 +1275,17 @@ async function loadIRGProgress() {
       }
       
       if (currentUser && currentUser.uid) {
+        authenticatedUser = currentUser;
         // Try to load from Firestore
         try {
           let userData = null;
           if (firestoreService.getUserData) {
-            userData = await firestoreService.getUserData(currentUser.uid);
+            const result = await firestoreService.getUserData(currentUser.uid);
+            if (result && result.success) {
+              userData = result.data || null;
+            } else {
+              remoteStatus = 'error';
+            }
           } else if (firestoreService.collection) {
             const doc = await firestoreService.collection('users')
               .doc(currentUser.uid)
@@ -1271,21 +1295,30 @@ async function loadIRGProgress() {
             }
           }
           
-          if (userData && userData.irgProgress) {
-            const { irgStep, irgStepDate } = userData.irgProgress;
-            
-            // Validate step index
-            if (typeof irgStep === 'number' && irgStep >= 0 && irgStep < GUIDE.length) {
-              // Check if midnight has passed
-              if (!hasMidnightPassed(irgStepDate)) {
-                // Valid progress from today - return it
-                return irgStep;
+          if (remoteStatus !== 'error') {
+            remoteStatus = 'missing';
+            const irgProgress = normalizeIRGProgress(userData);
+            if (irgProgress) {
+              const { irgStep, irgStepDate } = irgProgress;
+              
+              // Validate step index
+              if (typeof irgStep === 'number' && irgStep >= 0 && irgStep < GUIDE.length) {
+                // Check if midnight has passed
+                if (!hasMidnightPassed(irgStepDate)) {
+                  // Valid progress from today - cache locally and return it
+                  setLS(LS_KEYS.IRG_STEP, irgStep);
+                  setLS(LS_KEYS.IRG_STEP_DATE, irgStepDate);
+                  remoteStatus = 'fresh';
+                  return irgStep;
+                }
+                // New day - will fall through to localStorage
+                remoteStatus = 'stale';
               }
-              // New day - will fall through to return 0
             }
           }
         } catch (error) {
           // Firebase load failed, fall back to localStorage
+          remoteStatus = 'error';
           console.debug('Firebase load failed, using localStorage:', error);
         }
       }
@@ -1306,6 +1339,11 @@ async function loadIRGProgress() {
   
   // Validate step index
   if (typeof savedStep === 'number' && savedStep >= 0 && savedStep < GUIDE.length) {
+    if (authenticatedUser && (remoteStatus === 'missing' || remoteStatus === 'stale')) {
+      syncIRGProgressToFirebase(savedStep, savedDate).catch(() => {
+        // Ignore sync errors - localStorage remains the fallback
+      });
+    }
     return savedStep;
   }
   
@@ -1798,6 +1836,23 @@ if (document.readyState === 'loading') {
     await initializeApp();
     hydrateUI();
   })();
+}
+
+// Refresh IRG progress after auth state is known
+async function refreshIRGProgressFromAuth() {
+  const savedStep = await loadIRGProgress();
+  if (typeof savedStep === 'number' && savedStep !== stepIndex) {
+    stepIndex = savedStep;
+    renderStep();
+  }
+}
+
+if (window.authService && authService.onAuthStateChanged) {
+  authService.onAuthStateChanged((user) => {
+    if (user) {
+      refreshIRGProgressFromAuth();
+    }
+  });
 }
 
 // Set up restore link event listener after DOM is ready

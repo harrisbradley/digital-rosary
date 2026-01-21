@@ -156,6 +156,10 @@ async function migrateLocalStorageData(userId) {
         oneClickHailMarys: getLS('one_click_hail_marys_v1', false),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
       },
+      irgProgress: {
+        irgStep: getLS('irg_step_v1', 0),
+        irgStepDate: getLS('irg_step_date_v1', null)
+      },
       prayerLog: getLS('rosary_log_v1', [])
     };
     
@@ -190,6 +194,18 @@ async function migrateLocalStorageData(userId) {
       ...migrationData.settings,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+    
+    // Save IRG progress if available
+    if (migrationData.irgProgress.irgStepDate) {
+      await userRef.set({
+        irgProgress: {
+          irgStep: migrationData.irgProgress.irgStep,
+          irgStepDate: migrationData.irgProgress.irgStepDate,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
     
     // Save prayer log entries
     if (migrationData.prayerLog && migrationData.prayerLog.length > 0) {

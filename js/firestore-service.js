@@ -6,6 +6,57 @@ function getUserRef(userId) {
   return firebaseDb.collection('users').doc(userId);
 }
 
+// ========== USER DATA ==========
+// Get full user document data
+async function getUserData(userId) {
+  try {
+    const userDoc = await getUserRef(userId).get();
+    if (userDoc.exists) {
+      const data = userDoc.data();
+      const cacheKey = `user_data_${userId}`;
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+      return { success: true, data };
+    }
+    return { success: true, data: null };
+  } catch (error) {
+    // Try to get from cache
+    const cacheKey = `user_data_${userId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      return { success: true, data: JSON.parse(cached) };
+    }
+    return { success: false, error: error.message };
+  }
+}
+
+// Update user document data (merge)
+async function updateUserData(userId, data) {
+  try {
+    await getUserRef(userId).set({
+      ...data,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    // Update localStorage cache
+    const cacheKey = `user_data_${userId}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const merged = { ...JSON.parse(cached), ...data };
+        localStorage.setItem(cacheKey, JSON.stringify(merged));
+      } else {
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      }
+    } catch {
+      // Ignore cache errors
+    }
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ========== USER PROFILE ==========
 
 // Get user profile
@@ -267,6 +318,8 @@ function listenToStats(userId, callback) {
 
 // Export functions
 window.firestoreService = {
+  getUserData,
+  updateUserData,
   getUserProfile,
   updateUserProfile,
   getUserSettings,
