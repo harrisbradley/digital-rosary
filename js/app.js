@@ -85,6 +85,48 @@ const localDateStr = (date = new Date()) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+// 🌍 Default timezone fallback
+const defaultTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+// 🧭 Normalize timezone values and fall back safely
+function normalizeTimeZone(timeZone) {
+  if (timeZone) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone }).format(new Date());
+      return timeZone;
+    } catch {
+      // Fall through to default
+    }
+  }
+  const fallback = defaultTimeZone();
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: fallback }).format(new Date());
+    return fallback;
+  } catch {
+    return 'UTC';
+  }
+}
+// 🗓️ Format a date as YYYY-MM-DD in a specific timezone
+function dateStrInTimeZone(date, timeZone) {
+  const tz = normalizeTimeZone(timeZone);
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+    const values = {};
+    parts.forEach(part => {
+      if (part.type !== 'literal') values[part.type] = part.value;
+    });
+    if (values.year && values.month && values.day) {
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+  } catch {
+    // Fall back to local
+  }
+  return localDateStr(date);
+}
 
 // 💾 LocalStorage keys for persistence
 // localStorage is browser storage that saves data between visits
@@ -97,8 +139,9 @@ const LS_KEYS = {
   HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
   ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1', // 1-click Hail Marys toggle preference
   IRG_STEP: 'irg_step_v1',       // Current IRG step index (0-based)
-  IRG_STEP_DATE: 'irg_step_date_v1', // Date when IRG progress was last saved (YYYY-MM-DD)
-  IRG_STEP_SAVED_AT: 'irg_step_saved_at_v1' // Timestamp when IRG progress was saved
+  IRG_STEP_DATE: 'irg_step_date_v1', // Date when IRG progress was last saved (YYYY-MM-DD, user timezone)
+  IRG_STEP_SAVED_AT: 'irg_step_saved_at_v1', // Timestamp when IRG progress was saved
+  TIMEZONE: 'user_timezone_v1'   // User timezone preference (IANA name)
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -1121,6 +1164,52 @@ async function setLSAsync(k, v) {
 // 📿 Track user progress through the Interactive Rosary Guide (IRG)
 // Supports localStorage (always) and Firebase sync (when authenticated)
 
+// 🕰️ Resolve user's timezone for midnight checks
+function getCachedTimeZone() {
+  const cached = getLS(LS_KEYS.TIMEZONE, null);
+  if (cached) return cached;
+  
+  const user = window.authService ? window.authService.getCurrentUser() : null;
+  if (user) {
+    try {
+      const settingsCache = localStorage.getItem(`user_settings_${user.uid}`);
+      if (settingsCache) {
+        const settings = JSON.parse(settingsCache);
+        if (settings && settings.timezone) return settings.timezone;
+      }
+    } catch {
+      // Ignore cache parsing errors
+    }
+  }
+  
+  return null;
+}
+
+async function resolveUserTimeZone() {
+  const cached = getCachedTimeZone();
+  if (cached) return normalizeTimeZone(cached);
+  
+  const user = window.authService ? window.authService.getCurrentUser() : null;
+  const settingsService = window.firestoreService || null;
+  if (user && settingsService) {
+    try {
+      const settings = await settingsService.getUserSettings(user.uid);
+      if (settings.success && settings.data && settings.data.timezone) {
+        setLS(LS_KEYS.TIMEZONE, settings.data.timezone);
+        return normalizeTimeZone(settings.data.timezone);
+      }
+    } catch {
+      // Ignore settings fetch errors
+    }
+  }
+  
+  return normalizeTimeZone(null);
+}
+
+function getEffectiveTimeZone() {
+  return normalizeTimeZone(getCachedTimeZone());
+}
+
 // 🔍 Parse a stored timestamp into a Date (supports Firestore Timestamp)
 function parseSavedAt(value) {
   if (!value) return null;
@@ -1136,31 +1225,32 @@ function parseSavedAt(value) {
   return null;
 }
 
-// 🔍 Convert a legacy UTC date string (YYYY-MM-DD) to local date string
-function legacyUTCDateToLocal(dateStr) {
+// 🔍 Convert a legacy UTC date string (YYYY-MM-DD) to a timezone date string
+function legacyUTCDateToTimeZone(dateStr, timeZone) {
   if (typeof dateStr !== 'string') return null;
   const parts = dateStr.split('-').map(Number);
   if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
   const [year, month, day] = parts;
   const utcDate = new Date(Date.UTC(year, month - 1, day));
-  return Number.isNaN(utcDate.getTime()) ? null : localDateStr(utcDate);
+  if (Number.isNaN(utcDate.getTime())) return null;
+  return dateStrInTimeZone(utcDate, timeZone);
 }
 
-// 🔍 Resolve last saved date to local-day string for midnight checks
-function resolveIRGLocalDate(dateStr, savedAt) {
+// 🔍 Resolve last saved date to a timezone day string for midnight checks
+function resolveIRGDateInTimeZone(dateStr, savedAt, timeZone) {
   const savedAtDate = parseSavedAt(savedAt);
-  if (savedAtDate) return localDateStr(savedAtDate);
+  if (savedAtDate) return dateStrInTimeZone(savedAtDate, timeZone);
   if (!dateStr) return null;
-  return legacyUTCDateToLocal(dateStr) || dateStr;
+  return legacyUTCDateToTimeZone(dateStr, timeZone) || dateStr;
 }
 
-// 🔍 Check if midnight has passed since last save (local day)
-// Returns true if the local day is different from today's local day
-function hasMidnightPassed(lastDateStr, savedAt) {
-  const lastLocalDate = resolveIRGLocalDate(lastDateStr, savedAt);
-  if (!lastLocalDate) return true; // No date means treat as new day
-  const today = localDateStr();
-  return lastLocalDate !== today;
+// 🔍 Check if midnight has passed since last save (user timezone)
+// Returns true if the timezone day is different from today's day
+function hasMidnightPassed(lastDateStr, savedAt, timeZone) {
+  const lastDate = resolveIRGDateInTimeZone(lastDateStr, savedAt, timeZone);
+  if (!lastDate) return true; // No date means treat as new day
+  const today = dateStrInTimeZone(new Date(), timeZone);
+  return lastDate !== today;
 }
 
 // Normalize IRG progress data from Firestore.
@@ -1243,7 +1333,8 @@ async function syncIRGProgressToFirebase(stepIndex, dateStr, savedAt = null) {
 // 💾 Save IRG progress (localStorage + optional Firebase sync)
 // Always saves to localStorage, also syncs to Firebase if user is authenticated
 function saveIRGProgress() {
-  const dateStr = localDateStr();
+  const timeZone = getEffectiveTimeZone();
+  const dateStr = dateStrInTimeZone(new Date(), timeZone);
   const savedAt = new Date().toISOString();
   
   // Always save to localStorage (works offline)
@@ -1260,6 +1351,7 @@ function saveIRGProgress() {
 // 📖 Load IRG progress (Firebase first if available, then localStorage)
 // Returns the step index to restore, or 0 if no progress or new day
 async function loadIRGProgress() {
+  const timeZone = await resolveUserTimeZone();
   let remoteStatus = 'unavailable';
   let authenticatedUser = null;
   try {
@@ -1313,7 +1405,7 @@ async function loadIRGProgress() {
               // Validate step index
               if (typeof irgStep === 'number' && irgStep >= 0 && irgStep < GUIDE.length) {
                 // Check if midnight has passed
-                if (!hasMidnightPassed(irgStepDate, irgStepSavedAt)) {
+                if (!hasMidnightPassed(irgStepDate, irgStepSavedAt, timeZone)) {
                   // Valid progress from today - cache locally and return it
                   setLS(LS_KEYS.IRG_STEP, irgStep);
                   setLS(LS_KEYS.IRG_STEP_DATE, irgStepDate);
@@ -1348,7 +1440,7 @@ async function loadIRGProgress() {
   const savedAt = getLS(LS_KEYS.IRG_STEP_SAVED_AT, null);
   
   // Check if midnight has passed
-  if (hasMidnightPassed(savedDate, savedAt)) {
+  if (hasMidnightPassed(savedDate, savedAt, timeZone)) {
     return 0; // New day, reset to beginning
   }
   
@@ -1764,6 +1856,9 @@ async function initializeApp() {
             const toggleEl = document.getElementById('oneClickHailMarysToggle');
             if (toggleEl) toggleEl.checked = settings.data.oneClickHailMarys;
           }
+          if (settings.data.timezone) {
+            setLS(LS_KEYS.TIMEZONE, settings.data.timezone);
+          }
         }
         
         // Set up real-time listeners for stats updates
@@ -1802,6 +1897,9 @@ async function initializeApp() {
               setLS(LS_KEYS.ONE_CLICK_HAIL_MARYS, result.data.oneClickHailMarys);
               const toggleEl = document.getElementById('oneClickHailMarysToggle');
               if (toggleEl) toggleEl.checked = result.data.oneClickHailMarys;
+            }
+            if (result.data.timezone) {
+              setLS(LS_KEYS.TIMEZONE, result.data.timezone);
             }
           }
         });
