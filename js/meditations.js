@@ -8,7 +8,7 @@ const MEDITATIONS = {
     'The Annunciation': [
       'The Eternal Father decrees that His Son shall become Man.',  
       'Mary is chosen to be His Mother.',  
-      'The Angle Gabriel is sent to her.',  
+      'The Angel Gabriel is sent to her.',  
       'He salutes her, "Hail, full of grace!"',  
       'He tells her she is to be the Mother of our Lord.',  
       'Mary answers, "How shall this be?"',  
@@ -75,7 +75,7 @@ const MEDITATIONS = {
       'He prays prostrate on the ground.',
       'He resigns His Will to the Will of His Father.',
       'He finds His Apostles fast asleep.  Their spirit is willing but their flesh is weak.',
-      'He is bathed ina sweat of blood.',
+      'He is bathed in a sweat of blood.',
       'An Angel strenthens Him.',
       'Jesus teaches us to seek help in prayer and patience in sufferings.'
     ], 
@@ -83,7 +83,7 @@ const MEDITATIONS = {
       'The Jews clamor for the death of our Lord.',
       'Pilate condemns Him to be scourged.',
       'He is given up to the Roman soldiery.',
-      'The strip Him of His garments',
+      'They strip Him of His garments',
       'They tie Him to a column.',
       'They violently scourge Him.',
       'His Flesh in bruised and torn.',
@@ -105,7 +105,7 @@ const MEDITATIONS = {
     ],
     'The Carrying of the Cross': [
       'Pilate condemns our Lord to death.',
-      'The Cross is lead upon our Lord.',
+      'The Cross is laid upon our Lord.',
       'He receives it with joy.',
       'He sets forth on His way to Calvary.',
       'He falls several times under the Cross.',
@@ -117,7 +117,7 @@ const MEDITATIONS = {
     ],
     'The Crucifixion': [
       'Our Lord is nailed to the Cross.',
-      'He is place between two thieves.',
+      'He is placed between two thieves.',
       'He is mocked by His enemies.',
       'He prays for them.',
       'He forgives the penitent thief.',
