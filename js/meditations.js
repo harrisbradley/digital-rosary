@@ -19,7 +19,7 @@ const MEDITATIONS = {
     ],
     'The Visitation': [
       'Our Lord inspires His Mother to visit her cousin Elizabeth.',  
-      'She goes promply to fulfill His will.',  
+      'She goes promptly to fulfill His will.',  
       'She crosses the hill-country in haste.',  
       'She greets her cousin Elizabeth.',  
       'St. Elizabeth is filled with the Holy Spirit.',  
@@ -57,12 +57,12 @@ const MEDITATIONS = {
       'Jesus goes with Mary and Joseph to Jerusalem.',  
       'When they return after the Feast, Jesus remains.',  
       'He stays in the Temple.',  
-      'Mary and Joseph returns seeking Him.',  
+      'Mary and Joseph return seeking Him.',  
       'They seek Him three days.',  
       'Joseph and Mary are profoundly saddened.',  
       'They find Him in the Temple.',  
       'Their hearts are full of joy and happiness!',  
-      'He is seated amonst the Doctors',  
+      'He is seated among the Doctors',  
       'Jesus teaches us to love the service of God.'  
     ]
   },
@@ -76,7 +76,7 @@ const MEDITATIONS = {
       'He resigns His Will to the Will of His Father.',
       'He finds His Apostles fast asleep.  Their spirit is willing but their flesh is weak.',
       'He is bathed in a sweat of blood.',
-      'An Angel strenthens Him.',
+      'An Angel strengthens Him.',
       'Jesus teaches us to seek help in prayer and patience in sufferings.'
     ], 
     'The Scourging at the Pillar': [
@@ -86,15 +86,15 @@ const MEDITATIONS = {
       'They strip Him of His garments',
       'They tie Him to a column.',
       'They violently scourge Him.',
-      'His Flesh in bruised and torn.',
+      'His Flesh is bruised and torn.',
       'His Blood flows in torrents to the ground.',
       'His whole Body is one great wound.',
       'He teaches us to mortify our sinful bodies.'
     ],
     'The Crowning with Thorns': [
-      'The soliders plait a crown of thorns.',
-      'They place in on our Lord\'s head.',
-      'His Head is peirced with the thorns.',
+      'The soldiers plait a crown of thorns.',
+      'They place it on our Lord\'s head.',
+      'His Head is pierced with the thorns.',
       'They clothe Him with a purple robe.',
       'A reed is placed in His Hand.',
       'They kneel in mockery before Him.',
@@ -123,7 +123,7 @@ const MEDITATIONS = {
       'He forgives the penitent thief.',
       'Mary and John and the holy women stand by the Cross.',
       'Jesus gives us Mary to be our Mother',
-      'He commends His Soul to His father\s hands.',
+      'He commends His Soul to His Father\'s hands.',
       'He dies for our salvation.',
       'He teaches us to sacrifice ourselves generously for His sake.'
     ]
@@ -157,7 +157,7 @@ const MEDITATIONS = {
       'Mary and the Apostles prepare for the coming of the Holy Spirit.',
       'Jesus sends the Holy Spirit on the day of Pentecost.',
       'A mighty wind fills the house.',
-      'Fiery tougues rest on Mary and the Apostles.',
+      'Fiery tongues rest on Mary and the Apostles.',
       'They are all filled with the Holy Spirit.',
       'They speak with divers tongues.',
       'Men of all nations are gathered to hear them.',
@@ -175,7 +175,7 @@ const MEDITATIONS = {
       'The Son welcomes His Mother to His kingdom.',
       'The Holy Spirit receives His spouse.',
       'She is exalted to the highest place in heaven.',
-      'She is the Mother and Advocate of of Christians.'
+      'She is the Mother and Advocate of Christians.'
     ],
     'The Coronation of Mary': [
       'God gives to Mary the rewards of her holy life.',
@@ -186,7 +186,7 @@ const MEDITATIONS = {
       'She is crowned for her deep humility.',
       'She is crowned for her boundless charity',
       'She is crowned for her patience.',
-      'She is crowned for her perserverance.',
+      'She is crowned for her perseverance.',
       'She is the Mediatrix of all Graces.'
     ]
   },
@@ -229,7 +229,7 @@ const MEDITATIONS = {
     ],
     'The Transfiguration': [
       'Jesus took Peter, James and John up a high mountain to pray.',
-      'Mesus was transfigured before them.',
+      'Jesus was transfigured before them.',
       '“His face became as dazzling as the sun, his clothes as radiant as light.”',
       'This was to fortify their faith to withstand the coming tragedy of the Passion.',
       'Jesus foresaw the ‘scandal of the cross,’ and prepared them for it by this manifestation of His glory.',
