@@ -92,21 +92,31 @@
 }
 
 /* Step guide — collapsible steps */
+.step-guide {
+  background: #e9f3ff;
+  border-color: #bcd6ff;
+}
+
+.dark-mode .step-guide {
+  background: #1c2c45;
+  border-color: #2f4463;
+}
+
 .step-guide h2 {
   margin-bottom: 16px;
 }
 
-.step-accordion {
-  border: 1px solid #eee7d9;
+.step-guide .step-accordion {
+  border: 1px solid #c9dcf7;
   border-radius: 12px;
   padding: 0;
-  background: #fffcf6;
+  background: #f7fbff;
   margin-top: 12px;
 }
 
-.dark-mode .step-accordion {
-  border-color: #404040;
-  background: #252525;
+.dark-mode .step-guide .step-accordion {
+  border-color: #2f4463;
+  background: #233550;
 }
 
 .step-accordion summary {
