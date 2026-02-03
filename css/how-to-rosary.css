@@ -1,0 +1,366 @@
+/* ==========================================
+   How to Pray the Rosary — Page-specific styles
+   Simple, calm, anxiety-reducing design
+   ========================================== */
+
+/* Responsive width: narrow on mobile, fills screen more on desktop */
+.how-to-main {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 40px;
+}
+
+@media (min-width: 1024px) {
+  .how-to-main {
+    max-width: 860px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .how-to-main {
+    max-width: 1000px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .how-to-main {
+    max-width: 1100px;
+  }
+}
+
+/* Hero section — reassurance front and center */
+.hero-section h1 {
+  margin-bottom: 8px;
+}
+
+.hero-subhead {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.reassurance-bullets {
+  margin: 0 0 0 18px;
+  padding: 0;
+  line-height: 1.7;
+}
+
+.reassurance-bullets li {
+  margin: 6px 0;
+}
+
+/* Icon row — What You Need */
+.icon-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.icon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.dark-mode .icon-item {
+  background: #374151;
+  color: var(--ink);
+}
+
+/* Flow list — Basic Flow of the Rosary */
+.flow-list {
+  margin: 0 0 12px 18px;
+  padding: 0;
+  line-height: 1.7;
+}
+
+.flow-list li {
+  margin: 8px 0;
+}
+
+.flow-reassurance {
+  margin: 12px 0 0 !important;
+  font-style: italic;
+}
+
+/* Step guide — collapsible steps */
+.step-guide h2 {
+  margin-bottom: 16px;
+}
+
+.step-accordion {
+  border: 1px solid #eee7d9;
+  border-radius: 12px;
+  padding: 0;
+  background: #fffcf6;
+  margin-top: 12px;
+}
+
+.dark-mode .step-accordion {
+  border-color: #404040;
+  background: #252525;
+}
+
+.step-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.step-accordion summary::after {
+  content: '▼';
+  font-size: 12px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.step-accordion[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.step-content {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode .step-content {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.step-content ul {
+  margin: 12px 0 12px 18px;
+  padding: 0;
+}
+
+.step-content li {
+  margin: 6px 0;
+}
+
+/* Prayer accordions — nested, default collapsed */
+.prayer-accordion {
+  border: 1px dashed #e8e2d6;
+  border-radius: 8px;
+  margin-top: 10px;
+  background: #fff;
+}
+
+.dark-mode .prayer-accordion {
+  border-color: #404040;
+  background: #1a1a1a;
+}
+
+.prayer-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.prayer-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.prayer-accordion summary::before {
+  content: '+ ';
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.prayer-accordion[open] summary::before {
+  content: '− ';
+}
+
+.prayer-accordion .prayer-text {
+  padding: 0 12px 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Prayer block (inline in step content) */
+.prayer-block {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+.dark-mode .prayer-block {
+  background: #374151;
+}
+
+.prayer-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 6px !important;
+}
+
+.prayer-block .prayer-text {
+  margin: 0 !important;
+  line-height: 1.6;
+}
+
+/* Hold note — where to hold the rosary (with beads) */
+.hold-note {
+  margin: 0 0 12px !important;
+  padding: 10px 12px;
+  background: #fef3e2;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.dark-mode .hold-note {
+  background: #3d3220;
+}
+
+/* Wander note — reassurance */
+.wander-note {
+  margin: 14px 0 !important;
+  padding: 10px 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  font-style: italic;
+  color: var(--primary);
+}
+
+.dark-mode .wander-note {
+  background: #1e3a5f;
+}
+
+/* FAQ section */
+.faq-section h2 {
+  margin-bottom: 16px;
+}
+
+.faq-accordion {
+  border: 1px solid #eee7d9;
+  border-radius: 12px;
+  margin-top: 10px;
+  background: #fffcf6;
+}
+
+.dark-mode .faq-accordion {
+  border-color: #404040;
+  background: #252525;
+}
+
+.faq-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+.faq-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-accordion summary::after {
+  content: '▼';
+  font-size: 12px;
+  color: var(--muted);
+  float: right;
+  transition: transform 0.2s ease;
+}
+
+.faq-accordion[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.faq-accordion p {
+  padding: 12px 16px 14px;
+  margin: 0 !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode .faq-accordion p {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Next steps */
+.next-steps h2 {
+  margin-bottom: 8px;
+}
+
+.next-steps .muted {
+  margin-bottom: 16px !important;
+}
+
+.next-steps-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.next-steps-buttons .button {
+  text-decoration: none;
+}
+
+/* Footer quote — powerful reminder */
+.footer-quote {
+  text-align: center;
+  font-style: italic;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 24px 0 32px;
+  padding: 0;
+  border: none;
+}
+
+.dark-mode .footer-quote {
+  color: #a0a0a0;
+}
+
+/* Section spacing */
+.how-to-main .card {
+  margin-bottom: 18px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .how-to-main {
+    padding: 0 16px 40px;
+  }
+
+  .step-accordion summary,
+  .faq-accordion summary {
+    padding: 16px;
+    font-size: 18px;
+  }
+
+  .step-content {
+    padding: 0 16px 20px;
+  }
+
+  .icon-row {
+    flex-direction: column;
+  }
+
+  .icon-item {
+    justify-content: center;
+    font-size: 16px;
+  }
+}
