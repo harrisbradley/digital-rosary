@@ -153,7 +153,7 @@ async function getUserStats(userId) {
       return { success: true, data };
     }
     // Return defaults
-    const defaults = { total: 0, streak: 0, lastDate: null };
+    const defaults = { total: 0, streak: 0, longestStreak: 0, lastDate: null };
     return { success: true, data: defaults };
   } catch (error) {
     // Try to get from cache

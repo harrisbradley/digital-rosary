@@ -56,6 +56,11 @@
           <span class="muted">Days</span>
         </div>
         <div class="kpi" style="margin-top: 0;">
+          <span class="muted">Longest Streak</span>
+          <strong id="longestStreakDays">0</strong>
+          <span class="muted">Days</span>
+        </div>
+        <div class="kpi" style="margin-top: 0;">
           <span class="muted">Total Rosaries</span>
           <strong id="totalRosaries">0</strong>
         </div>
@@ -190,7 +195,9 @@
         // Load stats
         const stats = await firestoreService.getUserStats(user.uid);
         if (stats.success) {
+          const longestStreak = Math.max(stats.data.longestStreak || 0, stats.data.streak || 0);
           document.getElementById('streakDays').textContent = stats.data.streak || 0;
+          document.getElementById('longestStreakDays').textContent = longestStreak;
           document.getElementById('totalRosaries').textContent = stats.data.total || 0;
         }
 
@@ -232,7 +239,9 @@
 
         statsUnsubscribe = firestoreService.listenToStats(user.uid, (result) => {
           if (result.success) {
+            const longestStreak = Math.max(result.data.longestStreak || 0, result.data.streak || 0);
             document.getElementById('streakDays').textContent = result.data.streak || 0;
+            document.getElementById('longestStreakDays').textContent = longestStreak;
             document.getElementById('totalRosaries').textContent = result.data.total || 0;
           }
         });

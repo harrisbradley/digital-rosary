@@ -50,7 +50,7 @@
   <script src="js/dark-mode.js"></script>
   
   <script>
-    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LOG:'rosary_log_v1' };
+    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LONGEST_STREAK:'rosary_longest_streak_v1', LOG:'rosary_log_v1' };
     function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
     function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
     const todayStr = () => new Date().toISOString().slice(0,10);
@@ -150,10 +150,13 @@
         } else {
           streak = 1;
         }
+        const currentLongest = Math.max(currentStats.longestStreak || 0, currentStats.streak || 0);
+        const newLongest = streak > currentLongest ? streak : currentLongest;
         
         await firestoreService.updateUserStats(currentUserId, {
           total: (currentStats.total || 0) + 1,
           streak: streak,
+          longestStreak: newLongest,
           lastDate: date
         });
       } else {
@@ -164,9 +167,6 @@
         
         // Also update totals
         const total = getLS(LS_KEYS.TOTAL, 0);
-        setLS(LS_KEYS.TOTAL, total + 1);
-        setLS(LS_KEYS.LAST_DATE, date);
-        
         const last = getLS(LS_KEYS.LAST_DATE, null);
         let streak = getLS(LS_KEYS.STREAK, 0);
         if (last) {
@@ -177,7 +177,13 @@
         } else {
           streak = 1;
         }
+        const previousLongest = Math.max(getLS(LS_KEYS.LONGEST_STREAK, 0), getLS(LS_KEYS.STREAK, 0));
+        const newLongest = streak > previousLongest ? streak : previousLongest;
+        
+        setLS(LS_KEYS.TOTAL, total + 1);
         setLS(LS_KEYS.STREAK, streak);
+        setLS(LS_KEYS.LONGEST_STREAK, newLongest);
+        setLS(LS_KEYS.LAST_DATE, date);
       }
       
       renderLog();

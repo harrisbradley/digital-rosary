@@ -219,6 +219,8 @@
           <!-- 🔥 Current Streak - how many days in a row you've prayed -->
           <div class="kpi"><span class="muted">Current Streak</span><strong id="streakDays">0</strong><span
               class="muted">Days</span></div>
+          <div class="kpi" style="margin-top:0"><span class="muted">Longest Streak</span><strong
+              id="longestStreakDays">0</strong><span class="muted">Days</span></div>
           <!-- 📊 Total Rosaries - total count of all rosaries prayed -->
           <div class="kpi" style="margin-top:0"><span class="muted">Total Rosaries</span><strong
               id="totalRosaries">0</strong></div>
@@ -331,10 +333,13 @@
               // Update display elements immediately
               const totalEl = document.getElementById('totalRosaries');
               const streakEl = document.getElementById('streakDays');
+              const longestEl = document.getElementById('longestStreakDays');
               const progressEl = document.getElementById('progressBar');
+              const longestStreak = Math.max(stats.data.longestStreak || 0, stats.data.streak || 0);
 
               if (totalEl) totalEl.textContent = stats.data.total || 0;
               if (streakEl) streakEl.textContent = stats.data.streak || 0;
+              if (longestEl) longestEl.textContent = longestStreak;
               if (progressEl) {
                 const total = stats.data.total || 0;
                 progressEl.style.width = Math.min(100, (total % 50) * 2) + '%';
@@ -360,8 +365,11 @@
               // Update display elements
               const totalEl = document.getElementById('totalRosaries');
               const streakEl = document.getElementById('streakDays');
+              const longestEl = document.getElementById('longestStreakDays');
+              const longestStreak = Math.max(result.data.longestStreak || 0, result.data.streak || 0);
               if (totalEl) totalEl.textContent = result.data.total || 0;
               if (streakEl) streakEl.textContent = result.data.streak || 0;
+              if (longestEl) longestEl.textContent = longestStreak;
               // Update progress bar
               const progressEl = document.getElementById('progressBar');
               if (progressEl) {

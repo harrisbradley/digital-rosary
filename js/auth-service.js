@@ -145,10 +145,13 @@ async function migrateLocalStorageData(userId) {
     };
     
     // Collect all localStorage data
+    const localStreak = getLS('rosary_streak_v1', 0);
+    const localLongestStreak = getLS('rosary_longest_streak_v1', localStreak);
     const migrationData = {
       stats: {
         total: getLS('rosary_total_v1', 0),
-        streak: getLS('rosary_streak_v1', 0),
+        streak: localStreak,
+        longestStreak: Math.max(localLongestStreak || 0, localStreak || 0),
         lastDate: getLS('rosary_last_date_v1', null)
       },
       settings: {
@@ -172,10 +175,11 @@ async function migrateLocalStorageData(userId) {
     }, { merge: true });
     
     // Save stats - only if we have data to migrate, otherwise don't overwrite
-    if (migrationData.stats.total > 0 || migrationData.stats.streak > 0 || migrationData.stats.lastDate) {
+    if (migrationData.stats.total > 0 || migrationData.stats.streak > 0 || migrationData.stats.longestStreak > 0 || migrationData.stats.lastDate) {
       await userRef.collection('stats').doc('current').set({
         total: migrationData.stats.total,
         streak: migrationData.stats.streak,
+        longestStreak: migrationData.stats.longestStreak,
         lastDate: migrationData.stats.lastDate,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
@@ -184,6 +188,7 @@ async function migrateLocalStorageData(userId) {
       if (window.setLS) {
         window.setLS('rosary_total_v1', migrationData.stats.total);
         window.setLS('rosary_streak_v1', migrationData.stats.streak);
+        window.setLS('rosary_longest_streak_v1', migrationData.stats.longestStreak);
         if (migrationData.stats.lastDate) {
           window.setLS('rosary_last_date_v1', migrationData.stats.lastDate);
         }

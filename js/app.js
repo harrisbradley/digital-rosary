@@ -135,6 +135,7 @@ const LS_KEYS = {
   TOTAL: 'rosary_total_v1',      // Total count of rosaries prayed
   LAST_DATE: 'rosary_last_date_v1', // Date of last rosary
   STREAK: 'rosary_streak_v1',    // Current streak count
+  LONGEST_STREAK: 'rosary_longest_streak_v1', // Longest streak achieved
   DARK_MODE: 'dark_mode_v1',      // Dark mode preference
   HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
   ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1', // 1-click Hail Marys toggle preference
@@ -450,6 +451,7 @@ const mysteryBadgeEl = document.getElementById('mysteryBadge');     // Badge sho
 const accordionEl = document.getElementById('mysteryAccordion');   // Where mysteries list goes
 const totalEl = document.getElementById('totalRosaries');            // Total count display
 const streakEl = document.getElementById('streakDays');              // Streak count display
+const longestStreakEl = document.getElementById('longestStreakDays'); // Longest streak display
 const progressEl = document.getElementById('progressBar');           // Progress bar element
 const stepTitleEl = document.getElementById('stepTitle');            // Current step title
 const prayerTextEl = document.getElementById('prayerText');          // Prayer text display
@@ -1042,12 +1044,13 @@ async function getLSAsync(k, f) {
       const userId = user.uid;
       
       // Map localStorage keys to Firestore paths
-      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE || k === LS_KEYS.LONGEST_STREAK) {
         const stats = await firestoreService.getUserStats(userId);
         if (stats.success) {
           if (k === LS_KEYS.TOTAL) return stats.data.total ?? f;
           if (k === LS_KEYS.STREAK) return stats.data.streak ?? f;
           if (k === LS_KEYS.LAST_DATE) return stats.data.lastDate ?? f;
+          if (k === LS_KEYS.LONGEST_STREAK) return stats.data.longestStreak ?? stats.data.streak ?? f;
         }
       } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
         const settings = await firestoreService.getUserSettings(userId);
@@ -1086,7 +1089,7 @@ function getLS(k, f) {
     }
     
     // Map to Firestore cache keys
-    if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+    if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE || k === LS_KEYS.LONGEST_STREAK) {
       const statsCache = localStorage.getItem(`user_stats_${userId}`);
       if (statsCache) {
         try {
@@ -1094,6 +1097,7 @@ function getLS(k, f) {
           if (k === LS_KEYS.TOTAL) return stats.total ?? f;
           if (k === LS_KEYS.STREAK) return stats.streak ?? f;
           if (k === LS_KEYS.LAST_DATE) return stats.lastDate ?? f;
+          if (k === LS_KEYS.LONGEST_STREAK) return stats.longestStreak ?? stats.streak ?? f;
         } catch {}
       }
     } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
@@ -1127,13 +1131,18 @@ async function setLSAsync(k, v) {
     try {
       const userId = user.uid;
       
-      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+      if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE || k === LS_KEYS.LONGEST_STREAK) {
         const stats = await firestoreService.getUserStats(userId);
         const currentStats = stats.success ? stats.data : {};
+        const resolvedLongest = Math.max(currentStats.longestStreak || 0, currentStats.streak || 0);
+        const nextLongest = k === LS_KEYS.LONGEST_STREAK
+          ? v
+          : (k === LS_KEYS.STREAK ? Math.max(resolvedLongest, v || 0) : resolvedLongest);
         const updatedStats = {
           ...currentStats,
           total: k === LS_KEYS.TOTAL ? v : currentStats.total,
           streak: k === LS_KEYS.STREAK ? v : currentStats.streak,
+          longestStreak: nextLongest,
           lastDate: k === LS_KEYS.LAST_DATE ? v : currentStats.lastDate
         };
         await firestoreService.updateUserStats(userId, updatedStats);
@@ -1477,8 +1486,13 @@ function setLS(k, v) {
 function syncStats() { 
   const total = getLS(LS_KEYS.TOTAL, 0);      // Get total count (default 0)
   const streak = getLS(LS_KEYS.STREAK, 0);     // Get streak (default 0)
+  const storedLongest = getLS(LS_KEYS.LONGEST_STREAK, 0);
+  const longestStreak = Math.max(storedLongest || 0, streak || 0);
   totalEl.textContent = total;                 // Update total display
   streakEl.textContent = streak;               // Update streak display
+  if (longestStreakEl) {
+    longestStreakEl.textContent = longestStreak;
+  }
   // Progress bar: fills up every 50 rosaries (2% per rosary, max 100%)
   progressEl.style.width = Math.min(100, (total % 50) * 2) + '%'; 
 }
@@ -1544,7 +1558,7 @@ async function logRosary(showCelebration = false) {
   
   // Check if already logged today - check both stats and prayer log
   let alreadyLogged = false;
-  let currentStats = { total: 0, streak: 0, lastDate: null };
+  let currentStats = { total: 0, streak: 0, longestStreak: 0, lastDate: null };
   
   if (user && window.firestoreService) {
     // For authenticated users, check Firestore prayer log first
@@ -1565,7 +1579,10 @@ async function logRosary(showCelebration = false) {
       // Get current stats from Firestore
       const stats = await firestoreService.getUserStats(user.uid);
       if (stats.success) {
-        currentStats = stats.data;
+        currentStats = {
+          ...stats.data,
+          longestStreak: Math.max(stats.data.longestStreak || 0, stats.data.streak || 0)
+        };
         // Also check if lastDate matches today
         if (currentStats.lastDate === today) {
           alreadyLogged = true;
@@ -1581,6 +1598,7 @@ async function logRosary(showCelebration = false) {
       currentStats = {
         total: getLS(LS_KEYS.TOTAL, 0),
         streak: getLS(LS_KEYS.STREAK, 0),
+        longestStreak: getLS(LS_KEYS.LONGEST_STREAK, getLS(LS_KEYS.STREAK, 0)),
         lastDate: last
       };
     }
@@ -1593,6 +1611,7 @@ async function logRosary(showCelebration = false) {
     currentStats = {
       total: getLS(LS_KEYS.TOTAL, 0),
       streak: getLS(LS_KEYS.STREAK, 0),
+      longestStreak: getLS(LS_KEYS.LONGEST_STREAK, getLS(LS_KEYS.STREAK, 0)),
       lastDate: last
     };
   }
@@ -1616,12 +1635,15 @@ async function logRosary(showCelebration = false) {
     // If last log was not yesterday, streak resets to 1
   }
   
+  const currentLongest = Math.max(currentStats.longestStreak || 0, currentStats.streak || 0);
+  const newLongest = newStreak > currentLongest ? newStreak : currentLongest;
   const newTotal = (currentStats.total || 0) + 1;
   
   // Save updated stats to localStorage and Firestore
   setLS(LS_KEYS.LAST_DATE, today);      // Update last date
   setLS(LS_KEYS.TOTAL, newTotal);      // Increment total
   setLS(LS_KEYS.STREAK, newStreak);     // Update streak
+  setLS(LS_KEYS.LONGEST_STREAK, newLongest); // Update longest streak
   
   // Update Firestore if authenticated
   if (user && window.firestoreService) {
@@ -1644,6 +1666,7 @@ async function logRosary(showCelebration = false) {
       await firestoreService.updateUserStats(user.uid, {
         total: newTotal,
         streak: newStreak,
+        longestStreak: newLongest,
         lastDate: today
       });
     } catch (error) {
@@ -1821,10 +1844,12 @@ async function initializeApp() {
           // Update localStorage cache with Firestore data (this is the source of truth)
           const firestoreTotal = stats.data.total || 0;
           const firestoreStreak = stats.data.streak || 0;
+          const firestoreLongest = Math.max(stats.data.longestStreak || 0, firestoreStreak);
           const firestoreLastDate = stats.data.lastDate || null;
           
           setLS(LS_KEYS.TOTAL, firestoreTotal);
           setLS(LS_KEYS.STREAK, firestoreStreak);
+          setLS(LS_KEYS.LONGEST_STREAK, firestoreLongest);
           setLS(LS_KEYS.LAST_DATE, firestoreLastDate);
           
           // Update display
@@ -1870,6 +1895,10 @@ async function initializeApp() {
             }
             if (result.data.streak !== undefined) {
               setLS(LS_KEYS.STREAK, result.data.streak);
+              syncStats();
+            }
+            if (result.data.longestStreak !== undefined) {
+              setLS(LS_KEYS.LONGEST_STREAK, result.data.longestStreak);
               syncStats();
             }
             if (result.data.lastDate !== undefined) {
