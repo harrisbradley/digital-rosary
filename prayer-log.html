@@ -109,76 +109,45 @@
     document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
       const date = todayStr();
       
-      // Check if already logged today
-      let log = [];
-      if (currentUserId && window.firestoreService) {
-        const result = await firestoreService.getPrayerLog(currentUserId);
-        if (result.success) {
-          log = result.data.map(e => e.createdAt?.toDate ? e.createdAt.toDate().toISOString().slice(0, 10) : e.date);
-        }
-      } else {
-        log = getLS(LS_KEYS.LOG, []).map(e => e.date);
-      }
-      
-      if (log.includes(date)) {
-        alert("You've already added today's entry.");
-        return;
-      }
-      
       const notes = prompt('Optional: add a note for today', '');
       
       if (currentUserId && window.firestoreService) {
-        // Save to Firestore
-        await firestoreService.addPrayerLogEntry(currentUserId, {
+        // Save to Firestore (Cloud Function updates stats)
+        const result = await firestoreService.addPrayerLogEntry(currentUserId, {
           date: date,
           notes: (notes||'').trim()
         });
-        
-        // Update stats
-        const stats = await firestoreService.getUserStats(currentUserId);
-        const currentStats = stats.success ? stats.data : {};
-        const last = currentStats.lastDate;
-        let streak = currentStats.streak || 0;
-        if (last) {
-          const y = new Date();
-          y.setDate(y.getDate() - 1);
-          if (y.toISOString().slice(0, 10) === last) {
-            streak = streak + 1;
-          } else {
-            streak = 1;
-          }
-        } else {
-          streak = 1;
+        if (!result.success) {
+          alert(result.error);
+          return;
         }
-        const currentLongest = Math.max(currentStats.longestStreak || 0, currentStats.streak || 0);
-        const newLongest = streak > currentLongest ? streak : currentLongest;
-        
-        await firestoreService.updateUserStats(currentUserId, {
-          total: (currentStats.total || 0) + 1,
-          streak: streak,
-          longestStreak: newLongest,
-          lastDate: date
-        });
       } else {
+        // Check if already logged today (local only)
+        const existingLogDates = getLS(LS_KEYS.LOG, []).map(e => e.date);
+        if (existingLogDates.includes(date)) {
+          alert("You've already added today's entry.");
+          return;
+        }
+        
         // Save to localStorage
-        const log = getLS(LS_KEYS.LOG, []);
-        log.push({ date, notes: (notes||'').trim() });
-        setLS(LS_KEYS.LOG, log);
+        const logEntries = getLS(LS_KEYS.LOG, []);
+        logEntries.push({ date, notes: (notes||'').trim() });
+        setLS(LS_KEYS.LOG, logEntries);
         
         // Also update totals
         const total = getLS(LS_KEYS.TOTAL, 0);
         const last = getLS(LS_KEYS.LAST_DATE, null);
-        let streak = getLS(LS_KEYS.STREAK, 0);
+        let streak = 0;
         if (last) {
           const y = new Date();
           y.setDate(y.getDate() - 1);
-          if (y.toISOString().slice(0, 10) === last) streak = streak + 1;
-          else streak = 1;
-        } else {
-          streak = 1;
+          if (y.toISOString().slice(0, 10) === last) {
+            const prevStreak = getLS(LS_KEYS.STREAK, 0);
+            streak = prevStreak >= 2 ? prevStreak + 1 : 2;
+          }
         }
-        const previousLongest = Math.max(getLS(LS_KEYS.LONGEST_STREAK, 0), getLS(LS_KEYS.STREAK, 0));
-        const newLongest = streak > previousLongest ? streak : previousLongest;
+        const previousLongest = getLS(LS_KEYS.LONGEST_STREAK, 0) >= 2 ? getLS(LS_KEYS.LONGEST_STREAK, 0) : 0;
+        const newLongest = streak >= 2 ? Math.max(streak, previousLongest) : previousLongest;
         
         setLS(LS_KEYS.TOTAL, total + 1);
         setLS(LS_KEYS.STREAK, streak);

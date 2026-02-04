@@ -145,6 +145,10 @@ const LS_KEYS = {
   TIMEZONE: 'user_timezone_v1'   // User timezone preference (IANA name)
 };
 
+const STATS_KEYS = new Set([LS_KEYS.TOTAL, LS_KEYS.LAST_DATE, LS_KEYS.STREAK, LS_KEYS.LONGEST_STREAK]);
+// Cloud Function manages stats; avoid client-side writes.
+const DISABLE_STATS_SYNC = true;
+
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
 // 📿 This defines all four mystery sets and when they're typically prayed
 // Each mystery has specific days of the week it's typically prayed
@@ -1467,17 +1471,25 @@ async function loadIRGProgress() {
   return 0;
 }
 
-// Synchronous version for backwards compatibility (saves to localStorage, Firestore sync happens async)
-function setLS(k, v) {
-  // Save to localStorage immediately
+function setLSLocal(k, v) {
   try { 
     localStorage.setItem(k, JSON.stringify(v));
   } catch { 
     // If error, silently fail
   }
+}
+
+function shouldSyncToFirestore(k) {
+  if (STATS_KEYS.has(k)) return !DISABLE_STATS_SYNC;
+  return true;
+}
+
+// Synchronous version for backwards compatibility (saves to localStorage, Firestore sync happens async)
+function setLS(k, v) {
+  setLSLocal(k, v);
   
   // Sync to Firestore asynchronously if authenticated
-  if (authService && window.firestoreService) {
+  if (authService && window.firestoreService && shouldSyncToFirestore(k)) {
     setLSAsync(k, v).catch(err => console.warn('Async Firestore sync failed:', err));
   }
 }
@@ -1485,9 +1497,11 @@ function setLS(k, v) {
 // This reads from localStorage and updates what's shown on screen
 function syncStats() { 
   const total = getLS(LS_KEYS.TOTAL, 0);      // Get total count (default 0)
-  const streak = getLS(LS_KEYS.STREAK, 0);     // Get streak (default 0)
+  const rawStreak = getLS(LS_KEYS.STREAK, 0);     // Get streak (default 0)
+  const streak = rawStreak >= 2 ? rawStreak : 0;
   const storedLongest = getLS(LS_KEYS.LONGEST_STREAK, 0);
-  const longestStreak = Math.max(storedLongest || 0, streak || 0);
+  const normalizedLongest = storedLongest >= 2 ? storedLongest : 0;
+  const longestStreak = Math.max(normalizedLongest, streak);
   totalEl.textContent = total;                 // Update total display
   streakEl.textContent = streak;               // Update streak display
   if (longestStreakEl) {
@@ -1556,122 +1570,63 @@ async function logRosary(showCelebration = false) {
   const today = todayStr();                        // Today's date string
   const user = authService ? authService.getCurrentUser() : null;
   
-  // Check if already logged today - check both stats and prayer log
-  let alreadyLogged = false;
-  let currentStats = { total: 0, streak: 0, longestStreak: 0, lastDate: null };
-  
-  if (user && window.firestoreService) {
-    // For authenticated users, check Firestore prayer log first
-    try {
-      const prayerLog = await firestoreService.getPrayerLog(user.uid);
-      if (prayerLog.success) {
-        // Check if there's already an entry for today
-        const todayEntries = prayerLog.data.filter(entry => {
-          // Prefer entry.date, fallback to parsing createdAt
-          const entryDate = entry.date || (entry.createdAt?.toDate ? entry.createdAt.toDate().toISOString().slice(0, 10) : null);
-          return entryDate === today;
-        });
-        if (todayEntries.length > 0) {
-          alreadyLogged = true;
-        }
-      }
-      
-      // Get current stats from Firestore
-      const stats = await firestoreService.getUserStats(user.uid);
-      if (stats.success) {
-        currentStats = {
-          ...stats.data,
-          longestStreak: Math.max(stats.data.longestStreak || 0, stats.data.streak || 0)
-        };
-        // Also check if lastDate matches today
-        if (currentStats.lastDate === today) {
-          alreadyLogged = true;
-        }
-      }
-    } catch (error) {
-      console.warn('Error checking Firestore data:', error);
-      // Fall back to localStorage check
-      const last = getLS(LS_KEYS.LAST_DATE, null);
-      if (last === today) {
-        alreadyLogged = true;
-      }
-      currentStats = {
-        total: getLS(LS_KEYS.TOTAL, 0),
-        streak: getLS(LS_KEYS.STREAK, 0),
-        longestStreak: getLS(LS_KEYS.LONGEST_STREAK, getLS(LS_KEYS.STREAK, 0)),
-        lastDate: last
-      };
-    }
-  } else {
-    // For non-authenticated users, check localStorage
-    const last = getLS(LS_KEYS.LAST_DATE, null);
-    if (last === today) {
-      alreadyLogged = true;
-    }
-    currentStats = {
-      total: getLS(LS_KEYS.TOTAL, 0),
-      streak: getLS(LS_KEYS.STREAK, 0),
-      longestStreak: getLS(LS_KEYS.LONGEST_STREAK, getLS(LS_KEYS.STREAK, 0)),
-      lastDate: last
-    };
-  }
-  
-  if (alreadyLogged) {
-    if (showCelebration) {
-      alert('You already logged today 🙌');
-    }
-    return false;  // Don't log again
-  }
-  
-  // Calculate new streak
-  let newStreak = 1;  // Default to 1 if no previous log
-  if (currentStats.lastDate) { 
-    // Check if last log was yesterday (to continue streak)
-    const y = new Date(); 
-    y.setDate(y.getDate() - 1);  // Yesterday's date
-    if (y.toISOString().slice(0, 10) === currentStats.lastDate) {
-      newStreak = (currentStats.streak || 0) + 1;  // Continue streak
-    }
-    // If last log was not yesterday, streak resets to 1
-  }
-  
-  const currentLongest = Math.max(currentStats.longestStreak || 0, currentStats.streak || 0);
-  const newLongest = newStreak > currentLongest ? newStreak : currentLongest;
-  const newTotal = (currentStats.total || 0) + 1;
-  
-  // Save updated stats to localStorage and Firestore
-  setLS(LS_KEYS.LAST_DATE, today);      // Update last date
-  setLS(LS_KEYS.TOTAL, newTotal);      // Increment total
-  setLS(LS_KEYS.STREAK, newStreak);     // Update streak
-  setLS(LS_KEYS.LONGEST_STREAK, newLongest); // Update longest streak
-  
-  // Update Firestore if authenticated
   if (user && window.firestoreService) {
     try {
-      // Add to prayer log first (this checks for duplicates)
+      // Add to prayer log (Cloud Function will update stats)
       const logResult = await firestoreService.addPrayerLogEntry(user.uid, {
         date: today,
         notes: 'Rosary prayed'
       });
       
-      // If entry already exists, don't proceed with logging
-      if (!logResult.success && logResult.error === 'Entry already exists for this date') {
-        if (showCelebration) {
+      if (!logResult.success) {
+        if (logResult.error === 'Entry already exists for this date' && showCelebration) {
           alert('You already logged today 🙌');
         }
         return false;
       }
-      
-      // Update stats in Firestore
-      await firestoreService.updateUserStats(user.uid, {
-        total: newTotal,
-        streak: newStreak,
-        longestStreak: newLongest,
-        lastDate: today
-      });
     } catch (error) {
-      console.warn('Failed to update Firestore:', error);
+      console.warn('Failed to log rosary:', error);
+      if (showCelebration) {
+        alert('Unable to log today. Please try again.');
+      }
+      return false;
     }
+  } else {
+    // For non-authenticated users, check localStorage
+    const last = getLS(LS_KEYS.LAST_DATE, null);
+    if (last === today) {
+      if (showCelebration) {
+        alert('You already logged today 🙌');
+      }
+      return false;
+    }
+    
+    const currentStats = {
+      total: getLS(LS_KEYS.TOTAL, 0),
+      streak: getLS(LS_KEYS.STREAK, 0),
+      longestStreak: getLS(LS_KEYS.LONGEST_STREAK, getLS(LS_KEYS.STREAK, 0)),
+      lastDate: last
+    };
+    
+    // Calculate new streak (streak starts at 2)
+    let newStreak = 0;
+    if (currentStats.lastDate) { 
+      const y = new Date(); 
+      y.setDate(y.getDate() - 1);  // Yesterday's date
+      if (y.toISOString().slice(0, 10) === currentStats.lastDate) {
+        newStreak = currentStats.streak >= 2 ? (currentStats.streak + 1) : 2;
+      }
+    }
+    
+    const currentLongest = currentStats.longestStreak >= 2 ? currentStats.longestStreak : 0;
+    const newLongest = newStreak >= 2 ? Math.max(newStreak, currentLongest) : currentLongest;
+    const newTotal = (currentStats.total || 0) + 1;
+    
+    // Save updated stats to localStorage
+    setLS(LS_KEYS.LAST_DATE, today);      // Update last date
+    setLS(LS_KEYS.TOTAL, newTotal);      // Increment total
+    setLS(LS_KEYS.STREAK, newStreak);     // Update streak
+    setLS(LS_KEYS.LONGEST_STREAK, newLongest); // Update longest streak
   }
   
   // Update the display
@@ -1843,14 +1798,17 @@ async function initializeApp() {
         if (stats.success && stats.data) {
           // Update localStorage cache with Firestore data (this is the source of truth)
           const firestoreTotal = stats.data.total || 0;
-          const firestoreStreak = stats.data.streak || 0;
-          const firestoreLongest = Math.max(stats.data.longestStreak || 0, firestoreStreak);
+          const rawStreak = stats.data.streak || 0;
+          const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+          const rawLongest = stats.data.longestStreak || 0;
+          const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
+          const firestoreLongest = Math.max(normalizedLongest, currentStreak);
           const firestoreLastDate = stats.data.lastDate || null;
           
-          setLS(LS_KEYS.TOTAL, firestoreTotal);
-          setLS(LS_KEYS.STREAK, firestoreStreak);
-          setLS(LS_KEYS.LONGEST_STREAK, firestoreLongest);
-          setLS(LS_KEYS.LAST_DATE, firestoreLastDate);
+          setLSLocal(LS_KEYS.TOTAL, firestoreTotal);
+          setLSLocal(LS_KEYS.STREAK, currentStreak);
+          setLSLocal(LS_KEYS.LONGEST_STREAK, firestoreLongest);
+          setLSLocal(LS_KEYS.LAST_DATE, firestoreLastDate);
           
           // Update display
           syncStats();
@@ -1889,20 +1847,27 @@ async function initializeApp() {
         // Set up real-time listeners for stats updates
         firestoreService.listenToStats(user.uid, (result) => {
           if (result.success) {
+            const rawTotal = result.data.total !== undefined ? result.data.total : getLS(LS_KEYS.TOTAL, 0);
+            const rawStreak = result.data.streak !== undefined ? result.data.streak : getLS(LS_KEYS.STREAK, 0);
+            const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+            const rawLongest = result.data.longestStreak !== undefined ? result.data.longestStreak : getLS(LS_KEYS.LONGEST_STREAK, 0);
+            const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
+            const computedLongest = Math.max(normalizedLongest, currentStreak);
+            
             if (result.data.total !== undefined) {
-              setLS(LS_KEYS.TOTAL, result.data.total);
-              syncStats();
+              setLSLocal(LS_KEYS.TOTAL, rawTotal);
             }
             if (result.data.streak !== undefined) {
-              setLS(LS_KEYS.STREAK, result.data.streak);
-              syncStats();
+              setLSLocal(LS_KEYS.STREAK, currentStreak);
             }
-            if (result.data.longestStreak !== undefined) {
-              setLS(LS_KEYS.LONGEST_STREAK, result.data.longestStreak);
-              syncStats();
+            if (result.data.longestStreak !== undefined || result.data.streak !== undefined) {
+              setLSLocal(LS_KEYS.LONGEST_STREAK, computedLongest);
             }
             if (result.data.lastDate !== undefined) {
-              setLS(LS_KEYS.LAST_DATE, result.data.lastDate);
+              setLSLocal(LS_KEYS.LAST_DATE, result.data.lastDate);
+            }
+            if (result.data.total !== undefined || result.data.streak !== undefined || result.data.longestStreak !== undefined) {
+              syncStats();
             }
           }
         });

@@ -145,15 +145,7 @@ async function migrateLocalStorageData(userId) {
     };
     
     // Collect all localStorage data
-    const localStreak = getLS('rosary_streak_v1', 0);
-    const localLongestStreak = getLS('rosary_longest_streak_v1', localStreak);
     const migrationData = {
-      stats: {
-        total: getLS('rosary_total_v1', 0),
-        streak: localStreak,
-        longestStreak: Math.max(localLongestStreak || 0, localStreak || 0),
-        lastDate: getLS('rosary_last_date_v1', null)
-      },
       settings: {
         darkMode: getLS('dark_mode_v1', false),
         oneClickHailMarys: getLS('one_click_hail_marys_v1', false),
@@ -173,27 +165,6 @@ async function migrateLocalStorageData(userId) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    
-    // Save stats - only if we have data to migrate, otherwise don't overwrite
-    if (migrationData.stats.total > 0 || migrationData.stats.streak > 0 || migrationData.stats.longestStreak > 0 || migrationData.stats.lastDate) {
-      await userRef.collection('stats').doc('current').set({
-        total: migrationData.stats.total,
-        streak: migrationData.stats.streak,
-        longestStreak: migrationData.stats.longestStreak,
-        lastDate: migrationData.stats.lastDate,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      
-      // Also update localStorage cache to match Firestore
-      if (window.setLS) {
-        window.setLS('rosary_total_v1', migrationData.stats.total);
-        window.setLS('rosary_streak_v1', migrationData.stats.streak);
-        window.setLS('rosary_longest_streak_v1', migrationData.stats.longestStreak);
-        if (migrationData.stats.lastDate) {
-          window.setLS('rosary_last_date_v1', migrationData.stats.lastDate);
-        }
-      }
-    }
     
     // Save settings
     await userRef.collection('settings').doc('preferences').set({
@@ -216,17 +187,32 @@ async function migrateLocalStorageData(userId) {
     
     // Save prayer log entries
     if (migrationData.prayerLog && migrationData.prayerLog.length > 0) {
-      const batch = firebaseDb.batch();
+      const deduped = new Map();
       migrationData.prayerLog.forEach(entry => {
-        const logRef = userRef.collection('prayerLog').doc();
-        batch.set(logRef, {
-          date: entry.date,
-          notes: entry.notes || '',
-          createdAt: firebase.firestore.Timestamp.fromDate(new Date(entry.date)),
-          migrated: true
-        });
+        if (entry && entry.date) {
+          deduped.set(entry.date, entry);
+        }
       });
-      await batch.commit();
+      const entries = Array.from(deduped.values()).sort((a, b) => a.date.localeCompare(b.date));
+      for (const entry of entries) {
+        const parsedDate = new Date(entry.date);
+        if (Number.isNaN(parsedDate.valueOf())) {
+          continue;
+        }
+        const logRef = userRef.collection('prayerLog').doc(entry.date);
+        try {
+          await logRef.set({
+            date: entry.date,
+            notes: entry.notes || '',
+            createdAt: firebase.firestore.Timestamp.fromDate(parsedDate),
+            migrated: true
+          });
+        } catch (error) {
+          if (error.code !== 'permission-denied') {
+            console.warn('Error migrating log entry:', error);
+          }
+        }
+      }
     }
     
     console.log('Data migration completed successfully');

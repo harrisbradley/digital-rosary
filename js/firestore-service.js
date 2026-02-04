@@ -189,7 +189,7 @@ async function updateUserStats(userId, stats) {
 // Get prayer log entries
 async function getPrayerLog(userId, limit = null) {
   try {
-    let query = getUserRef(userId).collection('prayerLog').orderBy('createdAt', 'desc');
+    let query = getUserRef(userId).collection('prayerLog').orderBy('date', 'desc');
     if (limit) {
       query = query.limit(limit);
     }
@@ -217,25 +217,18 @@ async function getPrayerLog(userId, limit = null) {
 
 // Add prayer log entry
 async function addPrayerLogEntry(userId, entry) {
+  const dateStr = entry.date;
+  if (!dateStr) {
+    return { success: false, error: 'Entry date is required' };
+  }
+  
   try {
-    // Check if entry already exists for this date
-    const existingLog = await getPrayerLog(userId);
-    if (existingLog.success) {
-      const dateStr = entry.date;
-      const exists = existingLog.data.some(e => {
-        const eDate = e.date || (e.createdAt?.toDate ? e.createdAt.toDate().toISOString().slice(0, 10) : null);
-        return eDate === dateStr;
-      });
-      if (exists) {
-        return { success: false, error: 'Entry already exists for this date' };
-      }
-    }
-    
-    const logRef = getUserRef(userId).collection('prayerLog').doc();
+    const logRef = getUserRef(userId).collection('prayerLog').doc(dateStr);
     // Use server timestamp for createdAt, but store the date string separately
     await logRef.set({
-      date: entry.date,
+      date: dateStr,
       notes: entry.notes || '',
+      timezone: entry.timezone || null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
@@ -245,6 +238,16 @@ async function addPrayerLogEntry(userId, entry) {
     
     return { success: true, id: logRef.id };
   } catch (error) {
+    if (error.code === 'permission-denied') {
+      try {
+        const existing = await getUserRef(userId).collection('prayerLog').doc(dateStr).get();
+        if (existing.exists) {
+          return { success: false, error: 'Entry already exists for this date' };
+        }
+      } catch {
+        // Ignore and fall through to generic error
+      }
+    }
     return { success: false, error: error.message };
   }
 }

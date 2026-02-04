@@ -325,9 +325,14 @@
           try {
             const stats = await firestoreService.getUserStats(user.uid);
             if (stats.success && stats.data) {
+              const rawStreak = stats.data.streak || 0;
+              const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+              const rawLongest = stats.data.longestStreak || 0;
+              const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
+              const longestStreak = Math.max(normalizedLongest, currentStreak);
               // Update localStorage cache
               localStorage.setItem('digital-rosary-total', stats.data.total || 0);
-              localStorage.setItem('digital-rosary-streak', stats.data.streak || 0);
+              localStorage.setItem('digital-rosary-streak', currentStreak);
               localStorage.setItem('digital-rosary-last-date', stats.data.lastDate || null);
 
               // Update display elements immediately
@@ -335,10 +340,9 @@
               const streakEl = document.getElementById('streakDays');
               const longestEl = document.getElementById('longestStreakDays');
               const progressEl = document.getElementById('progressBar');
-              const longestStreak = Math.max(stats.data.longestStreak || 0, stats.data.streak || 0);
 
               if (totalEl) totalEl.textContent = stats.data.total || 0;
-              if (streakEl) streakEl.textContent = stats.data.streak || 0;
+              if (streakEl) streakEl.textContent = currentStreak;
               if (longestEl) longestEl.textContent = longestStreak;
               if (progressEl) {
                 const total = stats.data.total || 0;
@@ -352,12 +356,17 @@
           // Set up real-time stats listener for authenticated users
           firestoreService.listenToStats(user.uid, (result) => {
             if (result.success) {
+              const rawStreak = result.data.streak || 0;
+              const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+              const rawLongest = result.data.longestStreak || 0;
+              const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
+              const longestStreak = Math.max(normalizedLongest, currentStreak);
               // Update localStorage and sync display
               if (result.data.total !== undefined) {
                 localStorage.setItem('digital-rosary-total', result.data.total);
               }
               if (result.data.streak !== undefined) {
-                localStorage.setItem('digital-rosary-streak', result.data.streak);
+                localStorage.setItem('digital-rosary-streak', currentStreak);
               }
               if (result.data.lastDate !== undefined) {
                 localStorage.setItem('digital-rosary-last-date', result.data.lastDate);
@@ -366,9 +375,8 @@
               const totalEl = document.getElementById('totalRosaries');
               const streakEl = document.getElementById('streakDays');
               const longestEl = document.getElementById('longestStreakDays');
-              const longestStreak = Math.max(result.data.longestStreak || 0, result.data.streak || 0);
               if (totalEl) totalEl.textContent = result.data.total || 0;
-              if (streakEl) streakEl.textContent = result.data.streak || 0;
+              if (streakEl) streakEl.textContent = currentStreak;
               if (longestEl) longestEl.textContent = longestStreak;
               // Update progress bar
               const progressEl = document.getElementById('progressBar');
