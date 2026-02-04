@@ -98,14 +98,21 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
-      // Stats subcollection
+      // Stats subcollection (server-managed)
       match /stats/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
       }
       
-      // Prayer log subcollection
-      match /prayerLog/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Prayer log subcollection (create/delete only)
+      match /prayerLog/{dateId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && dateId == request.resource.data.date
+          && request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$');
+        allow delete: if request.auth != null && request.auth.uid == userId;
+        allow update: if false;
       }
     }
   }
@@ -161,6 +168,20 @@ service firebase.storage {
    - Data appears in Firestore Database
    - Profile picture uploads appear in Storage
 
+## Step 10: Deploy Cloud Functions (Stats From Prayer Log)
+
+Stats are computed by a Cloud Function whenever a prayer log entry is created or deleted.
+
+1. Install Firebase CLI (if you haven't):
+   - `npm install -g firebase-tools`
+2. Log in and select your project:
+   - `firebase login`
+   - `firebase use --add`
+3. Deploy the functions:
+   - `firebase deploy --only functions`
+
+This will enable server-managed stats (`total`, `streak`, `longestStreak`, `lastDate`).
+
 ## Troubleshooting
 
 ### "Firebase SDK not loaded" error
@@ -185,9 +206,10 @@ service firebase.storage {
 ## Data Migration
 
 When users sign up or sign in for the first time, their existing localStorage data will be automatically migrated to Firestore. This includes:
-- Prayer stats (total, streak, last date)
 - Prayer log entries
 - Settings (dark mode, 1-click Hail Marys)
+
+Stats are now derived from the prayer log by a Cloud Function, so they are no longer migrated directly.
 
 The migration happens automatically and users don't need to do anything.
 
