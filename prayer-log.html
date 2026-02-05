@@ -50,10 +50,68 @@
   <script src="js/dark-mode.js"></script>
   
   <script>
-    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LONGEST_STREAK:'rosary_longest_streak_v1', LOG:'rosary_log_v1' };
+    const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LONGEST_STREAK:'rosary_longest_streak_v1', LOG:'rosary_log_v1', TIMEZONE:'user_timezone_v1' };
     function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
     function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
-    const todayStr = () => new Date().toISOString().slice(0,10);
+    const defaultTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    function normalizeTimeZone(timeZone) {
+      if (timeZone) {
+        try {
+          new Intl.DateTimeFormat('en-US', { timeZone }).format(new Date());
+          return timeZone;
+        } catch {}
+      }
+      const fallback = defaultTimeZone();
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: fallback }).format(new Date());
+        return fallback;
+      } catch {
+        return 'UTC';
+      }
+    }
+    function dateStrInTimeZone(date, timeZone) {
+      const tz = normalizeTimeZone(timeZone);
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(date);
+        const values = {};
+        parts.forEach(part => {
+          if (part.type !== 'literal') values[part.type] = part.value;
+        });
+        if (values.year && values.month && values.day) {
+          return `${values.year}-${values.month}-${values.day}`;
+        }
+      } catch {}
+      return date.toISOString().slice(0, 10);
+    }
+    function shiftDateStr(dateStr, deltaDays) {
+      const parts = dateStr.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return dateStr;
+      const [year, month, day] = parts;
+      const utcMs = Date.UTC(year, month - 1, day + deltaDays);
+      return new Date(utcMs).toISOString().slice(0, 10);
+    }
+    function getCachedTimeZone() {
+      const cached = getLS(LS_KEYS.TIMEZONE, null);
+      if (cached) return cached;
+      if (currentUserId) {
+        try {
+          const settingsCache = localStorage.getItem(`user_settings_${currentUserId}`);
+          if (settingsCache) {
+            const settings = JSON.parse(settingsCache);
+            if (settings && settings.timezone) return settings.timezone;
+          }
+        } catch {}
+      }
+      return null;
+    }
+    function getEffectiveTimeZone() {
+      return normalizeTimeZone(getCachedTimeZone());
+    }
 
     const listEl = document.getElementById('logList');
     const emptyEl = document.getElementById('emptyState');
@@ -107,7 +165,8 @@
     }
 
     document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
-      const date = todayStr();
+      const timeZone = getEffectiveTimeZone();
+      const date = dateStrInTimeZone(new Date(), timeZone);
       
       const notes = prompt('Optional: add a note for today', '');
       
@@ -115,7 +174,8 @@
         // Save to Firestore (Cloud Function updates stats)
         const result = await firestoreService.addPrayerLogEntry(currentUserId, {
           date: date,
-          notes: (notes||'').trim()
+          notes: (notes||'').trim(),
+          timezone: timeZone
         });
         if (!result.success) {
           alert(result.error);
@@ -139,9 +199,8 @@
         const last = getLS(LS_KEYS.LAST_DATE, null);
         let streak = 0;
         if (last) {
-          const y = new Date();
-          y.setDate(y.getDate() - 1);
-          if (y.toISOString().slice(0, 10) === last) {
+          const yesterday = shiftDateStr(date, -1);
+          if (yesterday === last) {
             const prevStreak = getLS(LS_KEYS.STREAK, 0);
             streak = prevStreak >= 2 ? prevStreak + 1 : 2;
           }

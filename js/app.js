@@ -128,6 +128,16 @@ function dateStrInTimeZone(date, timeZone) {
   return localDateStr(date);
 }
 
+function shiftDateStr(dateStr, deltaDays) {
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) {
+    return dateStr;
+  }
+  const [year, month, day] = parts;
+  const utcMs = Date.UTC(year, month - 1, day + deltaDays);
+  return new Date(utcMs).toISOString().slice(0, 10);
+}
+
 // 💾 LocalStorage keys for persistence
 // localStorage is browser storage that saves data between visits
 // These are the "keys" (like variable names) we use to store/retrieve data
@@ -1567,7 +1577,8 @@ function celebrate() {
 // Tracks streaks (consecutive days) and total count
 // showCelebration: whether to show the celebration popup
 async function logRosary(showCelebration = false) {
-  const today = todayStr();                        // Today's date string
+  const timeZone = getEffectiveTimeZone();
+  const today = dateStrInTimeZone(new Date(), timeZone); // Today's date string
   const user = authService ? authService.getCurrentUser() : null;
   
   if (user && window.firestoreService) {
@@ -1575,7 +1586,8 @@ async function logRosary(showCelebration = false) {
       // Add to prayer log (Cloud Function will update stats)
       const logResult = await firestoreService.addPrayerLogEntry(user.uid, {
         date: today,
-        notes: 'Rosary prayed'
+        notes: 'Rosary prayed',
+        timezone: timeZone
       });
       
       if (!logResult.success) {
@@ -1611,9 +1623,8 @@ async function logRosary(showCelebration = false) {
     // Calculate new streak (streak starts at 2)
     let newStreak = 0;
     if (currentStats.lastDate) { 
-      const y = new Date(); 
-      y.setDate(y.getDate() - 1);  // Yesterday's date
-      if (y.toISOString().slice(0, 10) === currentStats.lastDate) {
+      const yesterday = shiftDateStr(today, -1);
+      if (yesterday === currentStats.lastDate) {
         newStreak = currentStats.streak >= 2 ? (currentStats.streak + 1) : 2;
       }
     }
