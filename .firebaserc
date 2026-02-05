@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "prod": "digital-rosary-db"
+  },
+  "targets": {},
+  "etags": {}
+}
