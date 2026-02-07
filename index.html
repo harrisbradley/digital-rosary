@@ -325,11 +325,9 @@
           try {
             const stats = await firestoreService.getUserStats(user.uid);
             if (stats.success && stats.data) {
-              const rawStreak = stats.data.streak || 0;
-              const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+              const currentStreak = stats.data.streak || 0;
               const rawLongest = stats.data.longestStreak || 0;
-              const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-              const longestStreak = Math.max(normalizedLongest, currentStreak);
+              const longestStreak = Math.max(rawLongest || 0, currentStreak);
               // Update localStorage cache
               localStorage.setItem('digital-rosary-total', stats.data.total || 0);
               localStorage.setItem('digital-rosary-streak', currentStreak);
@@ -356,11 +354,9 @@
           // Set up real-time stats listener for authenticated users
           firestoreService.listenToStats(user.uid, (result) => {
             if (result.success) {
-              const rawStreak = result.data.streak || 0;
-              const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+              const currentStreak = result.data.streak || 0;
               const rawLongest = result.data.longestStreak || 0;
-              const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-              const longestStreak = Math.max(normalizedLongest, currentStreak);
+              const longestStreak = Math.max(rawLongest || 0, currentStreak);
               // Update localStorage and sync display
               if (result.data.total !== undefined) {
                 localStorage.setItem('digital-rosary-total', result.data.total);

@@ -195,11 +195,9 @@
         // Load stats
         const stats = await firestoreService.getUserStats(user.uid);
         if (stats.success) {
-          const rawStreak = stats.data.streak || 0;
-          const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+          const currentStreak = stats.data.streak || 0;
           const rawLongest = stats.data.longestStreak || 0;
-          const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-          const longestStreak = Math.max(normalizedLongest, currentStreak);
+          const longestStreak = Math.max(rawLongest || 0, currentStreak);
           document.getElementById('streakDays').textContent = currentStreak;
           document.getElementById('longestStreakDays').textContent = longestStreak;
           document.getElementById('totalRosaries').textContent = stats.data.total || 0;
@@ -243,11 +241,9 @@
 
         statsUnsubscribe = firestoreService.listenToStats(user.uid, (result) => {
           if (result.success) {
-            const rawStreak = result.data.streak || 0;
-            const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+            const currentStreak = result.data.streak || 0;
             const rawLongest = result.data.longestStreak || 0;
-            const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-            const longestStreak = Math.max(normalizedLongest, currentStreak);
+            const longestStreak = Math.max(rawLongest || 0, currentStreak);
             document.getElementById('streakDays').textContent = currentStreak;
             document.getElementById('longestStreakDays').textContent = longestStreak;
             document.getElementById('totalRosaries').textContent = result.data.total || 0;

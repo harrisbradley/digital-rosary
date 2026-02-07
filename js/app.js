@@ -1507,11 +1507,9 @@ function setLS(k, v) {
 // This reads from localStorage and updates what's shown on screen
 function syncStats() { 
   const total = getLS(LS_KEYS.TOTAL, 0);      // Get total count (default 0)
-  const rawStreak = getLS(LS_KEYS.STREAK, 0);     // Get streak (default 0)
-  const streak = rawStreak >= 2 ? rawStreak : 0;
+  const streak = getLS(LS_KEYS.STREAK, 0);     // Get streak (default 0)
   const storedLongest = getLS(LS_KEYS.LONGEST_STREAK, 0);
-  const normalizedLongest = storedLongest >= 2 ? storedLongest : 0;
-  const longestStreak = Math.max(normalizedLongest, streak);
+  const longestStreak = Math.max(storedLongest || 0, streak || 0);
   totalEl.textContent = total;                 // Update total display
   streakEl.textContent = streak;               // Update streak display
   if (longestStreakEl) {
@@ -1620,17 +1618,19 @@ async function logRosary(showCelebration = false) {
       lastDate: last
     };
     
-    // Calculate new streak (streak starts at 2)
-    let newStreak = 0;
+    // Calculate new streak
+    let newStreak = 1;
     if (currentStats.lastDate) { 
       const yesterday = shiftDateStr(today, -1);
       if (yesterday === currentStats.lastDate) {
-        newStreak = currentStats.streak >= 2 ? (currentStats.streak + 1) : 2;
+        newStreak = Math.max((currentStats.streak || 0) + 1, 2);
+      } else {
+        newStreak = 1;
       }
     }
     
-    const currentLongest = currentStats.longestStreak >= 2 ? currentStats.longestStreak : 0;
-    const newLongest = newStreak >= 2 ? Math.max(newStreak, currentLongest) : currentLongest;
+    const currentLongest = currentStats.longestStreak || 0;
+    const newLongest = Math.max(newStreak, currentLongest);
     const newTotal = (currentStats.total || 0) + 1;
     
     // Save updated stats to localStorage
@@ -1809,11 +1809,9 @@ async function initializeApp() {
         if (stats.success && stats.data) {
           // Update localStorage cache with Firestore data (this is the source of truth)
           const firestoreTotal = stats.data.total || 0;
-          const rawStreak = stats.data.streak || 0;
-          const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+          const currentStreak = stats.data.streak || 0;
           const rawLongest = stats.data.longestStreak || 0;
-          const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-          const firestoreLongest = Math.max(normalizedLongest, currentStreak);
+          const firestoreLongest = Math.max(rawLongest || 0, currentStreak);
           const firestoreLastDate = stats.data.lastDate || null;
           
           setLSLocal(LS_KEYS.TOTAL, firestoreTotal);
@@ -1859,11 +1857,9 @@ async function initializeApp() {
         firestoreService.listenToStats(user.uid, (result) => {
           if (result.success) {
             const rawTotal = result.data.total !== undefined ? result.data.total : getLS(LS_KEYS.TOTAL, 0);
-            const rawStreak = result.data.streak !== undefined ? result.data.streak : getLS(LS_KEYS.STREAK, 0);
-            const currentStreak = rawStreak >= 2 ? rawStreak : 0;
+            const currentStreak = result.data.streak !== undefined ? result.data.streak : getLS(LS_KEYS.STREAK, 0);
             const rawLongest = result.data.longestStreak !== undefined ? result.data.longestStreak : getLS(LS_KEYS.LONGEST_STREAK, 0);
-            const normalizedLongest = rawLongest >= 2 ? rawLongest : 0;
-            const computedLongest = Math.max(normalizedLongest, currentStreak);
+            const computedLongest = Math.max(rawLongest || 0, currentStreak || 0);
             
             if (result.data.total !== undefined) {
               setLSLocal(LS_KEYS.TOTAL, rawTotal);

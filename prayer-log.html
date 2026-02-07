@@ -197,16 +197,18 @@
         // Also update totals
         const total = getLS(LS_KEYS.TOTAL, 0);
         const last = getLS(LS_KEYS.LAST_DATE, null);
-        let streak = 0;
+        let streak = 1;
         if (last) {
           const yesterday = shiftDateStr(date, -1);
           if (yesterday === last) {
             const prevStreak = getLS(LS_KEYS.STREAK, 0);
-            streak = prevStreak >= 2 ? prevStreak + 1 : 2;
+            streak = Math.max(prevStreak + 1, 2);
+          } else {
+            streak = 1;
           }
         }
-        const previousLongest = getLS(LS_KEYS.LONGEST_STREAK, 0) >= 2 ? getLS(LS_KEYS.LONGEST_STREAK, 0) : 0;
-        const newLongest = streak >= 2 ? Math.max(streak, previousLongest) : previousLongest;
+        const previousLongest = getLS(LS_KEYS.LONGEST_STREAK, 0) || 0;
+        const newLongest = Math.max(streak, previousLongest);
         
         setLS(LS_KEYS.TOTAL, total + 1);
         setLS(LS_KEYS.STREAK, streak);

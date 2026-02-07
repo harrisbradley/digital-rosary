@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const db = admin.firestore();
-const MIN_STREAK = 2;
+const STATS_VERSION = 2;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -63,14 +63,15 @@ async function computeStatsFromLogs(userId) {
   longestRun = Math.max(longestRun, currentRun);
 
   const lastDate = sorted[sorted.length - 1];
-  const streak = currentRun >= MIN_STREAK ? currentRun : 0;
-  const longestStreak = longestRun >= MIN_STREAK ? longestRun : 0;
+  const streak = currentRun;
+  const longestStreak = longestRun;
 
   return {
     total: sorted.length,
     streak,
     longestStreak,
-    lastDate
+    lastDate,
+    version: STATS_VERSION
   };
 }
 
@@ -101,7 +102,7 @@ exports.onPrayerLogCreated = onDocumentCreated(
     const statsSnap = await statsRef.get();
     const stats = statsSnap.exists ? statsSnap.data() : null;
 
-    if (!stats || !stats.lastDate) {
+    if (!stats || !stats.lastDate || stats.version !== STATS_VERSION) {
       const recomputed = await computeStatsFromLogs(userId);
       await writeStats(userId, recomputed);
       return;
@@ -121,22 +122,22 @@ exports.onPrayerLogCreated = onDocumentCreated(
       .doc(yesterday)
       .get();
 
-    let newStreak = 0;
+    let newStreak = 1;
     if (yesterdaySnap.exists) {
       const prevStreak = stats.streak || 0;
-      newStreak = prevStreak >= MIN_STREAK ? prevStreak + 1 : MIN_STREAK;
+      newStreak = Math.max(prevStreak + 1, 2);
     }
 
     const prevLongest = stats.longestStreak || 0;
-    const normalizedPrevLongest = prevLongest >= MIN_STREAK ? prevLongest : 0;
-    const newLongest = newStreak >= MIN_STREAK ? Math.max(normalizedPrevLongest, newStreak) : normalizedPrevLongest;
+    const newLongest = Math.max(prevLongest, newStreak);
     const newTotal = (stats.total || 0) + 1;
 
     await writeStats(userId, {
       total: newTotal,
       streak: newStreak,
       longestStreak: newLongest,
-      lastDate: dateStr
+      lastDate: dateStr,
+      version: STATS_VERSION
     });
   }
 );
