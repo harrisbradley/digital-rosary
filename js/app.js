@@ -75,9 +75,6 @@ const MYSTERY_IMAGES = {
 // When testing locally, adds ?t=timestamp to image URLs to force fresh load
 const CACHE_BUST = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? ('?t=' + Date.now()) : '';
 
-// 📅 Helper function: Get today's date in YYYY-MM-DD format (UTC)
-// Returns a string like "2024-01-15"
-const todayStr = () => new Date().toISOString().slice(0, 10);
 // 📅 Helper for local-day comparisons (resets at local midnight)
 const localDateStr = (date = new Date()) => {
   const year = date.getFullYear();
@@ -85,6 +82,9 @@ const localDateStr = (date = new Date()) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+// 📅 Helper function: Get today's date in local YYYY-MM-DD format
+// Returns a string like "2024-01-15"
+const todayStr = () => localDateStr(new Date());
 // 🌍 Default timezone fallback
 const defaultTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 // 🧭 Normalize timezone values and fall back safely
@@ -126,6 +126,40 @@ function dateStrInTimeZone(date, timeZone) {
     // Fall back to local
   }
   return localDateStr(date);
+}
+
+// 📅 Convert date-like values to local YYYY-MM-DD safely
+function toLocalDateStr(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return localDateStr(date);
+}
+
+// 📝 Resolve prayer-log entry date consistently
+// Prefer explicit entry.date; fall back to createdAt in local time
+function getPrayerEntryDate(entry) {
+  if (!entry) return null;
+  if (typeof entry.date === 'string' && entry.date) return entry.date;
+  if (entry.createdAt?.toDate) return toLocalDateStr(entry.createdAt.toDate());
+  return toLocalDateStr(entry.createdAt);
+}
+
+// 🔢 Count consecutive logged days ending on referenceDate
+function calculateStreakFromDates(dateStrings, referenceDate) {
+  const uniqueDates = new Set((dateStrings || []).filter(Boolean));
+  let streak = 0;
+  let cursor = referenceDate;
+
+  while (cursor && uniqueDates.has(cursor)) {
+    streak += 1;
+    const [year, month, day] = cursor.split('-').map(Number);
+    const previousDay = new Date(year, month - 1, day);
+    previousDay.setDate(previousDay.getDate() - 1);
+    cursor = localDateStr(previousDay);
+  }
+
+  return streak;
 }
 
 // 💾 LocalStorage keys for persistence
@@ -1545,19 +1579,17 @@ async function logRosary(showCelebration = false) {
   // Check if already logged today - check both stats and prayer log
   let alreadyLogged = false;
   let currentStats = { total: 0, streak: 0, lastDate: null };
+  let knownLogDates = [];
+  let knownLogCount = null;
   
   if (user && window.firestoreService) {
     // For authenticated users, check Firestore prayer log first
     try {
       const prayerLog = await firestoreService.getPrayerLog(user.uid);
       if (prayerLog.success) {
-        // Check if there's already an entry for today
-        const todayEntries = prayerLog.data.filter(entry => {
-          // Prefer entry.date, fallback to parsing createdAt
-          const entryDate = entry.date || (entry.createdAt?.toDate ? entry.createdAt.toDate().toISOString().slice(0, 10) : null);
-          return entryDate === today;
-        });
-        if (todayEntries.length > 0) {
+        knownLogCount = prayerLog.data.length;
+        knownLogDates = prayerLog.data.map(getPrayerEntryDate).filter(Boolean);
+        if (knownLogDates.includes(today)) {
           alreadyLogged = true;
         }
       }
@@ -1575,6 +1607,9 @@ async function logRosary(showCelebration = false) {
       console.warn('Error checking Firestore data:', error);
       // Fall back to localStorage check
       const last = getLS(LS_KEYS.LAST_DATE, null);
+      const fallbackLog = getLS(LS_KEYS.LOG, []);
+      knownLogDates = fallbackLog.map(entry => entry?.date).filter(Boolean);
+      knownLogCount = fallbackLog.length;
       if (last === today) {
         alreadyLogged = true;
       }
@@ -1586,8 +1621,11 @@ async function logRosary(showCelebration = false) {
     }
   } else {
     // For non-authenticated users, check localStorage
+    const log = getLS(LS_KEYS.LOG, []);
+    knownLogDates = log.map(entry => entry?.date).filter(Boolean);
+    knownLogCount = log.length;
     const last = getLS(LS_KEYS.LAST_DATE, null);
-    if (last === today) {
+    if (last === today || knownLogDates.includes(today)) {
       alreadyLogged = true;
     }
     currentStats = {
@@ -1605,18 +1643,27 @@ async function logRosary(showCelebration = false) {
   }
   
   // Calculate new streak
-  let newStreak = 1;  // Default to 1 if no previous log
-  if (currentStats.lastDate) { 
+  let newStreak = calculateStreakFromDates(knownLogDates.concat(today), today);
+
+  // Fallback if prayer-log dates are unavailable
+  if (newStreak === 0 && currentStats.lastDate) {
+    newStreak = 1;  // Default to 1 if no previous log
     // Check if last log was yesterday (to continue streak)
     const y = new Date(); 
     y.setDate(y.getDate() - 1);  // Yesterday's date
-    if (y.toISOString().slice(0, 10) === currentStats.lastDate) {
+    if (localDateStr(y) === currentStats.lastDate) {
       newStreak = (currentStats.streak || 0) + 1;  // Continue streak
     }
     // If last log was not yesterday, streak resets to 1
   }
+  if (newStreak === 0) {
+    newStreak = 1;
+  }
   
-  const newTotal = (currentStats.total || 0) + 1;
+  let newTotal = (currentStats.total || 0) + 1;
+  if (typeof knownLogCount === 'number') {
+    newTotal = Math.max(newTotal, knownLogCount + 1);
+  }
   
   // Save updated stats to localStorage and Firestore
   setLS(LS_KEYS.LAST_DATE, today);      // Update last date
