@@ -1643,7 +1643,10 @@ async function logRosary(showCelebration = false) {
   }
   
   // Calculate new streak
-  let newStreak = calculateStreakFromDates(knownLogDates.concat(today), today);
+  let newStreak = 0;
+  if (knownLogDates.length > 0) {
+    newStreak = calculateStreakFromDates(knownLogDates.concat(today), today);
+  }
 
   // Fallback if prayer-log dates are unavailable
   if (newStreak === 0 && currentStats.lastDate) {
