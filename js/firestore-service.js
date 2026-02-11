@@ -7,25 +7,25 @@ function getUserRef(userId) {
 }
 
 // Format a Date as local YYYY-MM-DD (not UTC)
-function localDateStr(date = new Date()) {
+function firestoreLocalDateStr(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
-function toLocalDateStr(value) {
+function toFirestoreLocalDateStr(value) {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return localDateStr(date);
+  return firestoreLocalDateStr(date);
 }
 
-function getEntryDate(entry) {
+function getFirestoreEntryDate(entry) {
   if (!entry) return null;
   if (typeof entry.date === 'string' && entry.date) return entry.date;
-  if (entry.createdAt?.toDate) return toLocalDateStr(entry.createdAt.toDate());
-  return toLocalDateStr(entry.createdAt);
+  if (entry.createdAt?.toDate) return toFirestoreLocalDateStr(entry.createdAt.toDate());
+  return toFirestoreLocalDateStr(entry.createdAt);
 }
 
 // ========== USER DATA ==========
@@ -245,7 +245,7 @@ async function addPrayerLogEntry(userId, entry) {
     if (existingLog.success) {
       const dateStr = entry.date;
       const exists = existingLog.data.some(e => {
-        const eDate = getEntryDate(e);
+        const eDate = getFirestoreEntryDate(e);
         return eDate === dateStr;
       });
       if (exists) {
