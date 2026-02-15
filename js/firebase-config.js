@@ -17,7 +17,7 @@ const firebaseConfig = {
 // Set this to your Firebase Cloud Messaging Web Push certificate key pair (public key)
 // Firebase Console → Project Settings → Cloud Messaging → Web configuration
 window.firebaseWebPushConfig = {
-  vapidKey: ""
+  vapidKey: "BA5EiAa-RTuDIiR4pyZSB2G1ib8of9rCq6iOAx4en4XhG6aw_VSl6F5CtLPJgj9APxCtqDHTUqhwv8p9c-ugtHU"
 };
 
 // Initialize Firebase (only if not already initialized)
