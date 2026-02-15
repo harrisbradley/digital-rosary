@@ -154,7 +154,16 @@ async function migrateLocalStorageData(userId) {
       settings: {
         darkMode: getLS('dark_mode_v1', false),
         oneClickHailMarys: getLS('one_click_hail_marys_v1', false),
-        timezone: getLS('user_timezone_v1', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+        timezone: getLS('user_timezone_v1', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'),
+        notifications: {
+          enabled: false,
+          dailyPrayerEnabled: true,
+          dailyPrayerTime: '19:30',
+          streakProtectionEnabled: true,
+          streakProtectionTime: '21:00',
+          lastDailyPrayerSentDate: null,
+          lastStreakProtectionSentDate: null
+        }
       },
       irgProgress: {
         irgStep: getLS('irg_step_v1', 0),
