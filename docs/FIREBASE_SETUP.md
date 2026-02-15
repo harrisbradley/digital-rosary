@@ -107,6 +107,11 @@ service cloud.firestore {
       match /prayerLog/{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Notification tokens subcollection
+      match /notificationTokens/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }
@@ -197,3 +202,4 @@ The migration happens automatically and users don't need to do anything.
 - Set up Firebase Hosting for production deployment
 - Configure custom domain (if using Firebase Hosting)
 - Set up monitoring and analytics (optional)
+- Configure push reminders via `docs/NOTIFICATIONS_SETUP.md`

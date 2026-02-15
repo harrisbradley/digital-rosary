@@ -13,6 +13,13 @@ const firebaseConfig = {
     measurementId: "G-YRYFS073NT"
   };
 
+// Web Push configuration
+// Set this to your Firebase Cloud Messaging Web Push certificate key pair (public key)
+// Firebase Console → Project Settings → Cloud Messaging → Web configuration
+window.firebaseWebPushConfig = {
+  vapidKey: ""
+};
+
 // Initialize Firebase (only if not already initialized)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);

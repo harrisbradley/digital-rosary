@@ -114,30 +114,57 @@ async function updateUserProfile(userId, profileData) {
 
 // ========== SETTINGS ==========
 
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  enabled: false,
+  dailyPrayerEnabled: true,
+  dailyPrayerTime: '19:30',
+  streakProtectionEnabled: true,
+  streakProtectionTime: '21:00',
+  lastDailyPrayerSentDate: null,
+  lastStreakProtectionSentDate: null
+};
+
+function defaultUserSettings() {
+  return {
+    darkMode: false,
+    oneClickHailMarys: false,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    notifications: { ...DEFAULT_NOTIFICATION_SETTINGS }
+  };
+}
+
+function normalizeUserSettings(settings = {}) {
+  const defaults = defaultUserSettings();
+  return {
+    ...defaults,
+    ...settings,
+    notifications: {
+      ...defaults.notifications,
+      ...(settings.notifications || {})
+    }
+  };
+}
+
 // Get user settings
 async function getUserSettings(userId) {
   try {
     const settingsDoc = await getUserRef(userId).collection('settings').doc('preferences').get();
     if (settingsDoc.exists) {
-      const data = settingsDoc.data();
+      const data = normalizeUserSettings(settingsDoc.data() || {});
       // Cache in localStorage
       const cacheKey = `user_settings_${userId}`;
       localStorage.setItem(cacheKey, JSON.stringify(data));
       return { success: true, data };
     }
     // Return defaults if no settings exist
-    const defaults = {
-      darkMode: false,
-      oneClickHailMarys: false,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-    };
+    const defaults = defaultUserSettings();
     return { success: true, data: defaults };
   } catch (error) {
     // Try to get from cache
     const cacheKey = `user_settings_${userId}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      return { success: true, data: JSON.parse(cached) };
+      return { success: true, data: normalizeUserSettings(JSON.parse(cached)) };
     }
     return { success: false, error: error.message };
   }
@@ -146,14 +173,15 @@ async function getUserSettings(userId) {
 // Update user settings
 async function updateUserSettings(userId, settings) {
   try {
+    const normalized = normalizeUserSettings(settings);
     await getUserRef(userId).collection('settings').doc('preferences').set({
-      ...settings,
+      ...normalized,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
     // Update localStorage cache
     const cacheKey = `user_settings_${userId}`;
-    localStorage.setItem(cacheKey, JSON.stringify(settings));
+    localStorage.setItem(cacheKey, JSON.stringify(normalized));
     
     return { success: true };
   } catch (error) {
@@ -306,6 +334,73 @@ async function clearPrayerLog(userId) {
   }
 }
 
+// ========== NOTIFICATION TOKENS ==========
+
+// Save or update a notification token for this user/device
+async function saveNotificationToken(userId, tokenData) {
+  try {
+    if (!tokenData || !tokenData.token) {
+      return { success: false, error: 'Token is required' };
+    }
+
+    const tokensRef = getUserRef(userId).collection('notificationTokens');
+    const existing = await tokensRef.where('token', '==', tokenData.token).limit(1).get();
+    const payload = {
+      token: tokenData.token,
+      platform: tokenData.platform || 'web',
+      userAgent: tokenData.userAgent || '',
+      language: tokenData.language || 'en',
+      enabled: tokenData.enabled !== false,
+      lastSeenAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (existing.empty) {
+      const docRef = await tokensRef.add({
+        ...payload,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true, id: docRef.id };
+    }
+
+    await existing.docs[0].ref.set(payload, { merge: true });
+    return { success: true, id: existing.docs[0].id };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Remove token from this user (called when disabling notifications on a device)
+async function deleteNotificationToken(userId, token) {
+  try {
+    if (!token) {
+      return { success: false, error: 'Token is required' };
+    }
+
+    const tokensRef = getUserRef(userId).collection('notificationTokens');
+    const snapshot = await tokensRef.where('token', '==', token).get();
+    if (!snapshot.empty) {
+      const batch = firebaseDb.batch();
+      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// List all notification tokens for a user
+async function getNotificationTokens(userId) {
+  try {
+    const snapshot = await getUserRef(userId).collection('notificationTokens').get();
+    const tokens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return { success: true, data: tokens };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // ========== REAL-TIME LISTENERS ==========
 
 // Listen to settings changes
@@ -313,7 +408,7 @@ function listenToSettings(userId, callback) {
   return getUserRef(userId).collection('settings').doc('preferences')
     .onSnapshot((doc) => {
       if (doc.exists) {
-        const data = doc.data();
+        const data = normalizeUserSettings(doc.data() || {});
         const cacheKey = `user_settings_${userId}`;
         localStorage.setItem(cacheKey, JSON.stringify(data));
         callback({ success: true, data });
@@ -352,6 +447,9 @@ window.firestoreService = {
   addPrayerLogEntry,
   deletePrayerLogEntry,
   clearPrayerLog,
+  saveNotificationToken,
+  deleteNotificationToken,
+  getNotificationTokens,
   listenToSettings,
   listenToStats
 };

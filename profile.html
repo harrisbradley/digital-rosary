@@ -3,8 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1862A8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Digital Rosary" />
   <title>Profile | Digital Rosary</title>
   <link rel="icon" type="image/png" href="images/logo/plain_logo_v0.1.png">
+  <link rel="apple-touch-icon" href="images/logo/plain_logo.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -96,6 +102,52 @@
             <!-- Timezones will be populated by JavaScript -->
           </select>
         </div>
+
+        <div style="border-top: 1px solid var(--muted); padding-top: 16px; margin-top: 16px;">
+          <h4 style="margin: 0 0 8px 0;">Prayer Reminders</h4>
+          <p class="muted" style="margin: 0 0 12px 0; font-size: 14px;">
+            Enable notifications on this device, then choose the reminders you want.
+          </p>
+
+          <div id="notificationSupportText" class="muted" style="margin-bottom: 12px; font-size: 13px;">
+            Checking notification support...
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            <button id="enableNotificationsBtn" class="button" type="button">Enable on This Device</button>
+            <button id="disableNotificationsBtn" class="button" type="button">Disable on This Device</button>
+            <button id="testNotificationBtn" class="button" type="button">Send Test Notification</button>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label class="toggle-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>Enable Reminder Notifications</span>
+              <input type="checkbox" id="notificationsEnabledSetting" aria-label="Enable reminder notifications">
+            </label>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label class="toggle-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>Daily Prayer Reminder</span>
+              <input type="checkbox" id="dailyPrayerReminderSetting" aria-label="Daily prayer reminder">
+            </label>
+            <label for="dailyPrayerReminderTime" style="display: block; margin: 8px 0 6px; font-size: 13px;" class="muted">Daily reminder time</label>
+            <input type="time" id="dailyPrayerReminderTime" style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+          </div>
+
+          <div>
+            <label class="toggle-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>Streak Protection Reminder</span>
+              <input type="checkbox" id="streakReminderSetting" aria-label="Streak protection reminder">
+            </label>
+            <label for="streakReminderTime" style="display: block; margin: 8px 0 6px; font-size: 13px;" class="muted">Streak reminder time</label>
+            <input type="time" id="streakReminderTime" style="width: 100%; padding: 10px; border: 1px solid var(--muted); border-radius: 8px; font-size: 16px;">
+          </div>
+
+          <div style="margin-top: 12px;">
+            <a href="reminder-debug.html" class="muted" style="font-size: 13px; text-decoration: none;">Open reminder debug page →</a>
+          </div>
+        </div>
       </section>
 
       <!-- Password Change -->
@@ -138,17 +190,95 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
   
   <script src="js/firebase-config.js"></script>
   <script src="js/auth-service.js"></script>
   <script src="js/firestore-service.js"></script>
   <script src="js/storage-service.js"></script>
+  <script src="js/notification-service.js"></script>
   <script src="js/dark-mode.js"></script>
   
   <script>
     let currentUserId = null;
     let settingsUnsubscribe = null;
     let statsUnsubscribe = null;
+    const PROFILE_DEFAULT_NOTIFICATION_SETTINGS = {
+      enabled: false,
+      dailyPrayerEnabled: true,
+      dailyPrayerTime: '19:30',
+      streakProtectionEnabled: true,
+      streakProtectionTime: '21:00'
+    };
+
+    function getNotificationSettings(settingsData) {
+      const raw = (settingsData && settingsData.notifications) || {};
+      return { ...PROFILE_DEFAULT_NOTIFICATION_SETTINGS, ...raw };
+    }
+
+    function updateNotificationControls(settingsData) {
+      const notifications = getNotificationSettings(settingsData);
+      document.getElementById('notificationsEnabledSetting').checked = !!notifications.enabled;
+      document.getElementById('dailyPrayerReminderSetting').checked = !!notifications.dailyPrayerEnabled;
+      document.getElementById('dailyPrayerReminderTime').value = notifications.dailyPrayerTime || PROFILE_DEFAULT_NOTIFICATION_SETTINGS.dailyPrayerTime;
+      document.getElementById('streakReminderSetting').checked = !!notifications.streakProtectionEnabled;
+      document.getElementById('streakReminderTime').value = notifications.streakProtectionTime || PROFILE_DEFAULT_NOTIFICATION_SETTINGS.streakProtectionTime;
+    }
+
+    function updateNotificationSupportText(message, isError = false) {
+      const el = document.getElementById('notificationSupportText');
+      el.textContent = message;
+      el.className = isError ? 'error-message' : 'muted';
+      el.style.display = 'block';
+      el.style.marginBottom = '12px';
+      el.style.fontSize = '13px';
+    }
+
+    async function saveSettingsPatch(patch) {
+      if (!currentUserId) return;
+      const settings = await firestoreService.getUserSettings(currentUserId);
+      if (!settings.success) return;
+      await firestoreService.updateUserSettings(currentUserId, {
+        ...settings.data,
+        ...patch
+      });
+    }
+
+    async function saveNotificationSettingsPatch(notificationPatch) {
+      if (!currentUserId) return;
+      const settings = await firestoreService.getUserSettings(currentUserId);
+      if (!settings.success) return;
+      const currentNotifications = getNotificationSettings(settings.data);
+      await firestoreService.updateUserSettings(currentUserId, {
+        ...settings.data,
+        notifications: {
+          ...currentNotifications,
+          ...notificationPatch
+        }
+      });
+    }
+
+    async function refreshNotificationDeviceStatus() {
+      if (!window.notificationService) {
+        updateNotificationSupportText('Notification service is not available on this page.', true);
+        return;
+      }
+
+      const support = await notificationService.isMessagingSupported();
+      if (!support.supported) {
+        updateNotificationSupportText(`Not supported here: ${support.reason}`, true);
+        return;
+      }
+
+      const permission = notificationService.getPermissionState();
+      if (permission === 'granted') {
+        updateNotificationSupportText('Notifications are enabled in this browser for Digital Rosary.');
+      } else if (permission === 'denied') {
+        updateNotificationSupportText('Notifications are blocked for this site. Enable them in browser settings.', true);
+      } else {
+        updateNotificationSupportText('Notifications are supported. Tap "Enable on This Device" to subscribe.');
+      }
+    }
 
     // Redirect if not logged in
     authService.onAuthStateChanged(async (user) => {
@@ -202,7 +332,10 @@
             let dateStr = entry.date;
             if (!dateStr && entry.createdAt) {
               const date = entry.createdAt?.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt);
-              dateStr = date.toISOString().slice(0, 10);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              dateStr = `${year}-${month}-${day}`;
             }
             // Format date consistently with prayer-log page (YYYY-MM-DD format)
             return `<div style="margin: 8px 0; padding: 8px; background: var(--bg); border-radius: 8px;">
@@ -220,6 +353,11 @@
           
           // Populate timezone dropdown
           populateTimezones(settings.data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+          updateNotificationControls(settings.data);
+          await refreshNotificationDeviceStatus();
+          if (window.notificationService) {
+            await notificationService.ensureForegroundMessageHandler();
+          }
         }
 
         // Set up real-time listeners
@@ -227,6 +365,11 @@
           if (result.success) {
             document.getElementById('darkModeSetting').checked = result.data.darkMode || false;
             document.getElementById('oneClickSetting').checked = result.data.oneClickHailMarys || false;
+            const timezoneSelect = document.getElementById('timezone');
+            if (timezoneSelect && result.data.timezone && timezoneSelect.value !== result.data.timezone) {
+              timezoneSelect.value = result.data.timezone;
+            }
+            updateNotificationControls(result.data);
           }
         });
 
@@ -282,33 +425,90 @@
 
     // Settings updates
     document.getElementById('darkModeSetting').addEventListener('change', async (e) => {
-      const settings = await firestoreService.getUserSettings(currentUserId);
-      if (settings.success) {
-        await firestoreService.updateUserSettings(currentUserId, {
-          ...settings.data,
-          darkMode: e.target.checked
-        });
-      }
+      await saveSettingsPatch({ darkMode: e.target.checked });
     });
 
     document.getElementById('oneClickSetting').addEventListener('change', async (e) => {
-      const settings = await firestoreService.getUserSettings(currentUserId);
-      if (settings.success) {
-        await firestoreService.updateUserSettings(currentUserId, {
-          ...settings.data,
-          oneClickHailMarys: e.target.checked
-        });
-      }
+      await saveSettingsPatch({ oneClickHailMarys: e.target.checked });
     });
 
     document.getElementById('timezone').addEventListener('change', async (e) => {
-      const settings = await firestoreService.getUserSettings(currentUserId);
-      if (settings.success) {
-        await firestoreService.updateUserSettings(currentUserId, {
-          ...settings.data,
-          timezone: e.target.value
-        });
+      await saveSettingsPatch({ timezone: e.target.value });
+    });
+
+    document.getElementById('notificationsEnabledSetting').addEventListener('change', async (e) => {
+      await saveNotificationSettingsPatch({ enabled: e.target.checked });
+    });
+
+    document.getElementById('dailyPrayerReminderSetting').addEventListener('change', async (e) => {
+      await saveNotificationSettingsPatch({ dailyPrayerEnabled: e.target.checked });
+    });
+
+    document.getElementById('dailyPrayerReminderTime').addEventListener('change', async (e) => {
+      await saveNotificationSettingsPatch({ dailyPrayerTime: e.target.value || PROFILE_DEFAULT_NOTIFICATION_SETTINGS.dailyPrayerTime });
+    });
+
+    document.getElementById('streakReminderSetting').addEventListener('change', async (e) => {
+      await saveNotificationSettingsPatch({ streakProtectionEnabled: e.target.checked });
+    });
+
+    document.getElementById('streakReminderTime').addEventListener('change', async (e) => {
+      await saveNotificationSettingsPatch({ streakProtectionTime: e.target.value || PROFILE_DEFAULT_NOTIFICATION_SETTINGS.streakProtectionTime });
+    });
+
+    document.getElementById('enableNotificationsBtn').addEventListener('click', async () => {
+      if (!window.notificationService) {
+        updateNotificationSupportText('Notification service is unavailable.', true);
+        return;
       }
+      if (!currentUserId) {
+        updateNotificationSupportText('Please sign in again to enable notifications.', true);
+        return;
+      }
+
+      updateNotificationSupportText('Enabling notifications on this device...');
+      const result = await notificationService.subscribeCurrentDevice(currentUserId);
+      if (!result.success) {
+        updateNotificationSupportText(result.error || 'Unable to enable notifications.', true);
+        return;
+      }
+
+      await saveNotificationSettingsPatch({ enabled: true });
+      updateNotificationSupportText('Notifications are enabled on this device.');
+    });
+
+    document.getElementById('disableNotificationsBtn').addEventListener('click', async () => {
+      if (!window.notificationService) {
+        updateNotificationSupportText('Notification service is unavailable.', true);
+        return;
+      }
+      if (!currentUserId) {
+        updateNotificationSupportText('Please sign in again to disable notifications.', true);
+        return;
+      }
+
+      const result = await notificationService.unsubscribeCurrentDevice(currentUserId);
+      if (!result.success) {
+        updateNotificationSupportText(result.error || 'Unable to disable notifications on this device.', true);
+        return;
+      }
+
+      updateNotificationSupportText('Notifications are disabled on this device.');
+    });
+
+    document.getElementById('testNotificationBtn').addEventListener('click', async () => {
+      if (!window.notificationService) {
+        updateNotificationSupportText('Notification service is unavailable.', true);
+        return;
+      }
+
+      const result = await notificationService.sendTestNotification();
+      if (!result.success) {
+        updateNotificationSupportText(result.error || 'Unable to send test notification.', true);
+        return;
+      }
+
+      updateNotificationSupportText('Test notification sent.');
     });
 
     // Password change
