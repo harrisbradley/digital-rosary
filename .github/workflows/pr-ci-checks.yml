@@ -1,0 +1,49 @@
+name: PR CI Checks
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          js_files="$(git ls-files '*.js')"
+          if [ -z "$js_files" ]; then
+            echo "No JavaScript files found."
+            exit 0
+          fi
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "Checking syntax: $file"
+            node --check "$file"
+          done <<< "$js_files"
+
+      - name: Validate web manifest JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "manifest.webmanifest" ]; then
+            echo "manifest.webmanifest not found; skipping validation."
+            exit 0
+          fi
+
+          node -e "const fs=require('fs'); JSON.parse(fs.readFileSync('manifest.webmanifest','utf8')); console.log('manifest.webmanifest is valid JSON');"
