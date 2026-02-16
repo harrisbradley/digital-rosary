@@ -1213,15 +1213,13 @@ async function setLSAsync(k, v) {
       const userId = user.uid;
       
       if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
-        const stats = await firestoreService.getUserStats(userId);
-        const currentStats = stats.success ? stats.data : {};
-        const updatedStats = {
-          ...currentStats,
-          total: k === LS_KEYS.TOTAL ? v : currentStats.total,
-          streak: k === LS_KEYS.STREAK ? v : currentStats.streak,
-          lastDate: k === LS_KEYS.LAST_DATE ? v : currentStats.lastDate
-        };
-        await firestoreService.updateUserStats(userId, updatedStats);
+        // Write only the changed stats field to avoid race-condition overwrites
+        // when multiple setLS calls happen close together (e.g. total/streak/lastDate).
+        const statsPatch = {};
+        if (k === LS_KEYS.TOTAL) statsPatch.total = v;
+        if (k === LS_KEYS.STREAK) statsPatch.streak = v;
+        if (k === LS_KEYS.LAST_DATE) statsPatch.lastDate = v;
+        await firestoreService.updateUserStats(userId, statsPatch);
       } else if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS) {
         const settings = await firestoreService.getUserSettings(userId);
         const currentSettings = settings.success ? settings.data : {};
