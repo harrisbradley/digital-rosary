@@ -224,9 +224,19 @@ async function updateUserStats(userId, stats) {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
-    // Update localStorage cache
+    // Update localStorage cache (merge to preserve untouched fields)
     const cacheKey = `user_stats_${userId}`;
-    localStorage.setItem(cacheKey, JSON.stringify(stats));
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const merged = { ...JSON.parse(cached), ...stats };
+        localStorage.setItem(cacheKey, JSON.stringify(merged));
+      } else {
+        localStorage.setItem(cacheKey, JSON.stringify(stats));
+      }
+    } catch {
+      localStorage.setItem(cacheKey, JSON.stringify(stats));
+    }
     
     return { success: true };
   } catch (error) {
