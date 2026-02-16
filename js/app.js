@@ -1084,6 +1084,15 @@ function getLS(k, f) {
         return JSON.parse(cached);
       } catch {}
     }
+
+    // Prefer the canonical local key next (setLS writes this immediately)
+    // This avoids stale Firestore cache values right after local updates.
+    const directLocal = localStorage.getItem(k);
+    if (directLocal !== null) {
+      try {
+        return JSON.parse(directLocal);
+      } catch {}
+    }
     
     // Map to Firestore cache keys
     if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
@@ -1115,6 +1124,48 @@ function getLS(k, f) {
   } catch { 
     return f;
   } 
+}
+
+// Keep per-user cache mirrors aligned with local writes.
+function syncAuthCachesForKey(userId, k, v) {
+  if (!userId) return;
+
+  // Granular cache key
+  try {
+    localStorage.setItem(`user_${k}_${userId}`, JSON.stringify(v));
+  } catch {
+    // Ignore cache write errors
+  }
+
+  // Stats aggregate cache
+  if (k === LS_KEYS.TOTAL || k === LS_KEYS.STREAK || k === LS_KEYS.LAST_DATE) {
+    try {
+      const statsCacheKey = `user_stats_${userId}`;
+      const existing = localStorage.getItem(statsCacheKey);
+      const stats = existing ? JSON.parse(existing) : {};
+      if (k === LS_KEYS.TOTAL) stats.total = v;
+      if (k === LS_KEYS.STREAK) stats.streak = v;
+      if (k === LS_KEYS.LAST_DATE) stats.lastDate = v;
+      localStorage.setItem(statsCacheKey, JSON.stringify(stats));
+    } catch {
+      // Ignore cache write errors
+    }
+  }
+
+  // Settings aggregate cache
+  if (k === LS_KEYS.DARK_MODE || k === LS_KEYS.ONE_CLICK_HAIL_MARYS || k === LS_KEYS.TIMEZONE) {
+    try {
+      const settingsCacheKey = `user_settings_${userId}`;
+      const existing = localStorage.getItem(settingsCacheKey);
+      const settings = existing ? JSON.parse(existing) : {};
+      if (k === LS_KEYS.DARK_MODE) settings.darkMode = v;
+      if (k === LS_KEYS.ONE_CLICK_HAIL_MARYS) settings.oneClickHailMarys = v;
+      if (k === LS_KEYS.TIMEZONE) settings.timezone = v;
+      localStorage.setItem(settingsCacheKey, JSON.stringify(settings));
+    } catch {
+      // Ignore cache write errors
+    }
+  }
 }
 
 // 💾 Helper function to write to localStorage and Firestore
@@ -1158,6 +1209,10 @@ async function setLSAsync(k, v) {
   } catch { 
     // If error, silently fail (localStorage might be disabled)
   } 
+
+  if (user) {
+    syncAuthCachesForKey(user.uid, k, v);
+  }
 }
 
 // ========== IRG PROGRESS TRACKING ==========
@@ -1465,6 +1520,11 @@ function setLS(k, v) {
     localStorage.setItem(k, JSON.stringify(v));
   } catch { 
     // If error, silently fail
+  }
+
+  const user = authService ? authService.getCurrentUser() : null;
+  if (user) {
+    syncAuthCachesForKey(user.uid, k, v);
   }
   
   // Sync to Firestore asynchronously if authenticated
