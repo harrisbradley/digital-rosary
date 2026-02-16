@@ -1726,12 +1726,8 @@ async function logRosary(showCelebration = false) {
     newTotal = Math.max(newTotal, knownLogCount + 1);
   }
   
-  // Save updated stats to localStorage and Firestore
-  setLS(LS_KEYS.LAST_DATE, today);      // Update last date
-  setLS(LS_KEYS.TOTAL, newTotal);      // Increment total
-  setLS(LS_KEYS.STREAK, newStreak);     // Update streak
-  
-  // Update Firestore if authenticated
+  // Update Firestore first for authenticated users.
+  // This prevents optimistic UI updates that later revert if remote writes fail.
   if (user && window.firestoreService) {
     try {
       // Add to prayer log first (this checks for duplicates)
@@ -1747,17 +1743,42 @@ async function logRosary(showCelebration = false) {
         }
         return false;
       }
+
+      if (!logResult.success) {
+        console.warn('Failed to add prayer log entry:', logResult.error);
+        if (showCelebration) {
+          alert(`Could not save prayer log entry: ${logResult.error || 'unknown error'}`);
+        }
+        return false;
+      }
       
       // Update stats in Firestore
-      await firestoreService.updateUserStats(user.uid, {
+      const statsResult = await firestoreService.updateUserStats(user.uid, {
         total: newTotal,
         streak: newStreak,
         lastDate: today
       });
+
+      if (!statsResult.success) {
+        console.warn('Failed to update stats:', statsResult.error);
+        if (showCelebration) {
+          alert(`Could not update stats: ${statsResult.error || 'unknown error'}`);
+        }
+        return false;
+      }
     } catch (error) {
       console.warn('Failed to update Firestore:', error);
+      if (showCelebration) {
+        alert(`Could not save to Firebase: ${error.message || error}`);
+      }
+      return false;
     }
   }
+
+  // Save updated stats to local cache after successful remote sync (or for local-only users)
+  setLS(LS_KEYS.LAST_DATE, today);      // Update last date
+  setLS(LS_KEYS.TOTAL, newTotal);       // Increment total
+  setLS(LS_KEYS.STREAK, newStreak);     // Update streak
   
   // Update the display
   syncStats();
