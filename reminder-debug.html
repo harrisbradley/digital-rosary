@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1862A8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Rosary Debug" />
+  <title>Reminder Debug | Digital Rosary</title>
+  <link rel="icon" type="image/png" href="images/logo/plain_logo_v0.1.png">
+  <link rel="apple-touch-icon" href="images/logo/plain_logo.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=1.5" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="images/logo/plain_logo_v0.1.png" alt="Digital Rosary" style="width: 50px; height: 50px; object-fit: contain;">
+        <span>Digital Rosary</span>
+      </a>
+      <div class="nav-links">
+        <label class="dark-mode-toggle-label" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode">
+        </label>
+        <a href="profile.html" class="button">Back to Profile</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="margin-top: 18px;">
+    <section class="card pad" style="margin-bottom: 18px;">
+      <h1 style="margin: 0 0 10px 0;">Reminder Debug</h1>
+      <p class="muted" style="margin: 0 0 8px 0;">
+        Lightweight diagnostics for notification reminders on the currently signed-in account.
+      </p>
+      <p class="muted" style="margin: 0;">
+        This page is intentionally scoped to your own user data (settings, tokens, prayer log status).
+      </p>
+      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="refreshBtn" class="button">Refresh Diagnostics</button>
+        <button id="enableDeviceBtn" class="button">Enable This Device</button>
+        <button id="disableDeviceBtn" class="button">Disable This Device</button>
+        <button id="testNotificationBtn" class="button">Send Test Notification</button>
+      </div>
+      <div id="statusMessage" class="muted" style="margin-top: 12px;">Loading...</div>
+    </section>
+
+    <section class="card pad" style="margin-bottom: 18px;">
+      <h3 style="margin-top: 0;">Summary</h3>
+      <div class="kpi" style="margin-bottom: 8px;">
+        <span class="muted">Current User</span>
+        <strong id="summaryUser">-</strong>
+      </div>
+      <div class="kpi" style="margin-bottom: 8px;">
+        <span class="muted">Permission</span>
+        <strong id="summaryPermission">-</strong>
+      </div>
+      <div class="kpi" style="margin-bottom: 8px;">
+        <span class="muted">Push Support</span>
+        <strong id="summarySupport">-</strong>
+      </div>
+      <div class="kpi" style="margin-bottom: 8px;">
+        <span class="muted">Saved Tokens</span>
+        <strong id="summaryTokens">-</strong>
+      </div>
+      <div class="kpi" style="margin-bottom: 8px;">
+        <span class="muted">Daily Reminder Due Now</span>
+        <strong id="summaryDailyDue">-</strong>
+      </div>
+      <div class="kpi" style="margin-top: 0;">
+        <span class="muted">Streak Reminder Due Now</span>
+        <strong id="summaryStreakDue">-</strong>
+      </div>
+    </section>
+
+    <section class="card pad" style="margin-bottom: 18px;">
+      <h3 style="margin-top: 0;">Device Tokens</h3>
+      <div id="tokensList" class="muted">No device tokens found.</div>
+    </section>
+
+    <section class="card pad" style="margin-bottom: 18px;">
+      <h3 style="margin-top: 0;">Computed Reminder State</h3>
+      <pre id="computedState" style="overflow:auto; white-space:pre-wrap; font-size: 12px; margin: 0;">{}</pre>
+    </section>
+
+    <section class="card pad">
+      <h3 style="margin-top: 0;">Raw Settings Snapshot</h3>
+      <pre id="settingsState" style="overflow:auto; white-space:pre-wrap; font-size: 12px; margin: 0;">{}</pre>
+    </section>
+  </main>
+
+  <footer>Made with ❤️ to help you pray.</footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-service.js"></script>
+  <script src="js/firestore-service.js"></script>
+  <script src="js/notification-service.js"></script>
+  <script src="js/dark-mode.js"></script>
+
+  <script>
+    const ADMIN_EMAIL_ALLOWLIST = [];
+    const REMINDER_WINDOW_MINUTES = 20;
+    const DEFAULT_NOTIFICATIONS = {
+      enabled: false,
+      dailyPrayerEnabled: true,
+      dailyPrayerTime: '19:30',
+      streakProtectionEnabled: true,
+      streakProtectionTime: '21:00',
+      lastDailyPrayerSentDate: null,
+      lastStreakProtectionSentDate: null
+    };
+
+    let currentUser = null;
+    let latestTokenRows = [];
+
+    function setStatus(message, isError = false) {
+      const el = document.getElementById('statusMessage');
+      el.textContent = message;
+      el.className = isError ? 'error-message' : 'muted';
+    }
+
+    function normalizeTimeZone(tz) {
+      if (!tz) return 'UTC';
+      try {
+        new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date());
+        return tz;
+      } catch {
+        return 'UTC';
+      }
+    }
+
+    function localDateStr(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function dateStrInTimeZone(date, timeZone) {
+      const tz = normalizeTimeZone(timeZone);
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).formatToParts(date);
+      const values = {};
+      parts.forEach((part) => {
+        if (part.type !== 'literal') values[part.type] = part.value;
+      });
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+
+    function minutesInTimeZone(date, timeZone) {
+      const tz = normalizeTimeZone(timeZone);
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).formatToParts(date);
+      const values = {};
+      parts.forEach((part) => {
+        if (part.type !== 'literal') values[part.type] = part.value;
+      });
+      return (Number(values.hour) * 60) + Number(values.minute);
+    }
+
+    function parseTimeToMinutes(timeStr, fallback) {
+      if (typeof timeStr !== 'string') return fallback;
+      const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) return fallback;
+      const h = Number(match[1]);
+      const m = Number(match[2]);
+      if (h < 0 || h > 23 || m < 0 || m > 59) return fallback;
+      return (h * 60) + m;
+    }
+
+    function isDueNow(currentMinutes, targetMinutes) {
+      return currentMinutes >= targetMinutes && currentMinutes < targetMinutes + REMINDER_WINDOW_MINUTES;
+    }
+
+    function entryDate(entry) {
+      if (!entry) return null;
+      if (entry.date) return entry.date;
+      if (entry.createdAt?.toDate) return localDateStr(entry.createdAt.toDate());
+      if (entry.createdAt) {
+        const d = new Date(entry.createdAt);
+        if (!Number.isNaN(d.getTime())) return localDateStr(d);
+      }
+      return null;
+    }
+
+    function normalizedNotificationSettings(settings) {
+      return { ...DEFAULT_NOTIFICATIONS, ...((settings && settings.notifications) || {}) };
+    }
+
+    async function setGlobalNotificationsEnabled(enabled) {
+      if (!currentUser) throw new Error('No authenticated user found.');
+      const settingsResult = await firestoreService.getUserSettings(currentUser.uid);
+      if (!settingsResult.success) {
+        throw new Error(settingsResult.error || 'Could not read settings.');
+      }
+      const currentSettings = settingsResult.data || {};
+      const currentNotifications = normalizedNotificationSettings(currentSettings);
+      const updateResult = await firestoreService.updateUserSettings(currentUser.uid, {
+        ...currentSettings,
+        notifications: {
+          ...currentNotifications,
+          enabled
+        }
+      });
+      if (!updateResult.success) {
+        throw new Error(updateResult.error || 'Could not update settings.');
+      }
+    }
+
+    function renderTokens(tokens) {
+      const list = document.getElementById('tokensList');
+      if (!tokens.length) {
+        list.className = 'muted';
+        list.textContent = 'No device tokens found.';
+        return;
+      }
+
+      list.className = '';
+      list.innerHTML = tokens.map((tokenDoc, idx) => {
+        const token = tokenDoc.token || '';
+        const shortToken = token.length > 18 ? `${token.slice(0, 10)}...${token.slice(-8)}` : token;
+        const platform = tokenDoc.platform || 'web';
+        const enabled = tokenDoc.enabled !== false;
+        return `
+          <div style="border: 1px solid var(--muted); border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <strong>${platform}</strong>
+              <button class="button" data-token-index="${idx}" type="button">Remove</button>
+            </div>
+            <div class="muted" style="font-size: 12px; margin-top: 6px;">${shortToken}</div>
+            <div class="muted" style="font-size: 12px; margin-top: 4px;">enabled: ${enabled}</div>
+          </div>
+        `;
+      }).join('');
+
+      list.querySelectorAll('button[data-token-index]').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-token-index'));
+          const tokenRow = latestTokenRows[idx];
+          if (!tokenRow || !tokenRow.token || !currentUser) return;
+          const result = await firestoreService.deleteNotificationToken(currentUser.uid, tokenRow.token);
+          if (!result.success) {
+            setStatus(result.error || 'Failed to remove token.', true);
+            return;
+          }
+          setStatus('Token removed.');
+          await loadDiagnostics();
+        });
+      });
+    }
+
+    async function loadDiagnostics() {
+      if (!currentUser) return;
+      setStatus('Refreshing diagnostics...');
+
+      try {
+        const support = window.notificationService
+          ? await notificationService.isMessagingSupported()
+          : { supported: false, reason: 'notificationService not loaded' };
+        const permission = window.notificationService ? notificationService.getPermissionState() : 'unknown';
+
+        const settingsRes = await firestoreService.getUserSettings(currentUser.uid);
+        const statsRes = await firestoreService.getUserStats(currentUser.uid);
+        const tokensRes = await firestoreService.getNotificationTokens(currentUser.uid);
+        const prayerRes = await firestoreService.getPrayerLog(currentUser.uid, 120);
+
+        const settings = settingsRes.success ? settingsRes.data : {};
+        const stats = statsRes.success ? statsRes.data : {};
+        const tokenRows = tokensRes.success ? tokensRes.data : [];
+        latestTokenRows = tokenRows;
+        const notifications = normalizedNotificationSettings(settings);
+
+        const timezone = normalizeTimeZone(settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+        const now = new Date();
+        const todayInTz = dateStrInTimeZone(now, timezone);
+        const nowMinutesInTz = minutesInTimeZone(now, timezone);
+        const dailyTarget = parseTimeToMinutes(notifications.dailyPrayerTime, 19 * 60 + 30);
+        const streakTarget = parseTimeToMinutes(notifications.streakProtectionTime, 21 * 60);
+
+        const prayerDates = prayerRes.success ? prayerRes.data.map(entryDate).filter(Boolean) : [];
+        const prayedToday = prayerDates.includes(todayInTz);
+
+        const dailyDue = notifications.enabled &&
+          notifications.dailyPrayerEnabled &&
+          notifications.lastDailyPrayerSentDate !== todayInTz &&
+          isDueNow(nowMinutesInTz, dailyTarget);
+
+        const streakDue = notifications.enabled &&
+          notifications.streakProtectionEnabled &&
+          notifications.lastStreakProtectionSentDate !== todayInTz &&
+          !prayedToday &&
+          isDueNow(nowMinutesInTz, streakTarget);
+
+        document.getElementById('summaryUser').textContent = currentUser.email || currentUser.uid;
+        document.getElementById('summaryPermission').textContent = permission;
+        document.getElementById('summarySupport').textContent = support.supported ? 'supported' : `unsupported (${support.reason})`;
+        document.getElementById('summaryTokens').textContent = String(tokenRows.length);
+        document.getElementById('summaryDailyDue').textContent = String(!!dailyDue);
+        document.getElementById('summaryStreakDue').textContent = String(!!streakDue);
+
+        renderTokens(tokenRows);
+
+        document.getElementById('computedState').textContent = JSON.stringify({
+          timezone,
+          todayInTz,
+          nowMinutesInTz,
+          notifications,
+          prayedToday,
+          lastDate: stats.lastDate || null,
+          streak: stats.streak || 0,
+          dailyTargetMinutes: dailyTarget,
+          streakTargetMinutes: streakTarget,
+          dailyDueNow: dailyDue,
+          streakDueNow: streakDue,
+          reminderWindowMinutes: REMINDER_WINDOW_MINUTES,
+          recentPrayerDates: prayerDates.slice(0, 20)
+        }, null, 2);
+
+        document.getElementById('settingsState').textContent = JSON.stringify(settings, null, 2);
+
+        setStatus('Diagnostics refreshed.');
+      } catch (error) {
+        console.error(error);
+        setStatus(error.message || 'Failed to load diagnostics.', true);
+      }
+    }
+
+    function ensureAdminAccess(user) {
+      if (!ADMIN_EMAIL_ALLOWLIST.length) return true;
+      const email = (user.email || '').toLowerCase();
+      return ADMIN_EMAIL_ALLOWLIST.map(e => e.toLowerCase()).includes(email);
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadDiagnostics);
+
+    document.getElementById('enableDeviceBtn').addEventListener('click', async () => {
+      if (!currentUser || !window.notificationService) return;
+      setStatus('Enabling notifications for this device...');
+      const result = await notificationService.subscribeCurrentDevice(currentUser.uid);
+      if (!result.success) {
+        setStatus(result.error || 'Could not enable notifications.', true);
+        return;
+      }
+      try {
+        await setGlobalNotificationsEnabled(true);
+        setStatus('Notifications enabled on this device.');
+        await loadDiagnostics();
+      } catch (error) {
+        setStatus(error.message || 'Device enabled, but failed to update reminder settings.', true);
+      }
+    });
+
+    document.getElementById('disableDeviceBtn').addEventListener('click', async () => {
+      if (!currentUser || !window.notificationService) return;
+      const result = await notificationService.unsubscribeCurrentDevice(currentUser.uid);
+      if (!result.success) {
+        setStatus(result.error || 'Could not disable notifications.', true);
+        return;
+      }
+      setStatus('Notifications disabled on this device.');
+      await loadDiagnostics();
+    });
+
+    document.getElementById('testNotificationBtn').addEventListener('click', async () => {
+      if (!window.notificationService) return;
+      const result = await notificationService.sendTestNotification();
+      if (!result.success) {
+        setStatus(result.error || 'Could not send test notification.', true);
+        return;
+      }
+      setStatus('Test notification sent.');
+    });
+
+    authService.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      if (!ensureAdminAccess(user)) {
+        setStatus('Access denied: your account is not in ADMIN_EMAIL_ALLOWLIST.', true);
+        return;
+      }
+      currentUser = user;
+      await loadDiagnostics();
+    });
+  </script>
+</body>
+</html>

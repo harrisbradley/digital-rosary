@@ -53,7 +53,37 @@
     const LS_KEYS = { TOTAL:'rosary_total_v1', LAST_DATE:'rosary_last_date_v1', STREAK:'rosary_streak_v1', LOG:'rosary_log_v1' };
     function getLS(k,f){ try{ const v=localStorage.getItem(k); return v===null?f:JSON.parse(v);}catch{return f;} }
     function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
-    const todayStr = () => new Date().toISOString().slice(0,10);
+    const localDateStr = (date = new Date()) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const todayStr = () => localDateStr(new Date());
+    function getEntryDate(entry) {
+      if (!entry) return null;
+      if (typeof entry.date === 'string' && entry.date) return entry.date;
+      const rawDate = entry.createdAt?.toDate ? entry.createdAt.toDate() : entry.createdAt;
+      if (!rawDate) return null;
+      const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
+      if (Number.isNaN(date.getTime())) return null;
+      return localDateStr(date);
+    }
+    function calculateStreak(dateStrings, referenceDate) {
+      const uniqueDates = new Set((dateStrings || []).filter(Boolean));
+      let streak = 0;
+      let cursor = referenceDate;
+
+      while (cursor && uniqueDates.has(cursor)) {
+        streak += 1;
+        const [year, month, day] = cursor.split('-').map(Number);
+        const previousDay = new Date(year, month - 1, day);
+        previousDay.setDate(previousDay.getDate() - 1);
+        cursor = localDateStr(previousDay);
+      }
+
+      return streak;
+    }
 
     const listEl = document.getElementById('logList');
     const emptyEl = document.getElementById('emptyState');
@@ -76,11 +106,7 @@
         if (result.success) {
           log = result.data.map(entry => {
             // Get date consistently - prefer entry.date, fallback to createdAt
-            let dateStr = entry.date;
-            if (!dateStr && entry.createdAt) {
-              const date = entry.createdAt?.toDate ? entry.createdAt.toDate() : new Date(entry.createdAt);
-              dateStr = date.toISOString().slice(0, 10);
-            }
+            const dateStr = getEntryDate(entry);
             return {
               date: dateStr,
               notes: entry.notes || ''
@@ -91,6 +117,7 @@
         // Load from localStorage
         log = getLS(LS_KEYS.LOG, []);
       }
+      log = log.filter(entry => entry && entry.date);
       
       if (log.length === 0){
         emptyEl.style.display='block';
@@ -110,17 +137,21 @@
       const date = todayStr();
       
       // Check if already logged today
-      let log = [];
+      let logDates = [];
+      let knownLogCount = 0;
       if (currentUserId && window.firestoreService) {
         const result = await firestoreService.getPrayerLog(currentUserId);
         if (result.success) {
-          log = result.data.map(e => e.createdAt?.toDate ? e.createdAt.toDate().toISOString().slice(0, 10) : e.date);
+          knownLogCount = result.data.length;
+          logDates = result.data.map(getEntryDate).filter(Boolean);
         }
       } else {
-        log = getLS(LS_KEYS.LOG, []).map(e => e.date);
+        const localLog = getLS(LS_KEYS.LOG, []);
+        knownLogCount = localLog.length;
+        logDates = localLog.map(getEntryDate).filter(Boolean);
       }
       
-      if (log.includes(date)) {
+      if (logDates.includes(date)) {
         alert("You've already added today's entry.");
         return;
       }
@@ -129,54 +160,41 @@
       
       if (currentUserId && window.firestoreService) {
         // Save to Firestore
-        await firestoreService.addPrayerLogEntry(currentUserId, {
+        const addResult = await firestoreService.addPrayerLogEntry(currentUserId, {
           date: date,
           notes: (notes||'').trim()
         });
+        if (!addResult.success && addResult.error === 'Entry already exists for this date') {
+          alert("You've already added today's entry.");
+          return;
+        }
+        if (!addResult.success) {
+          alert(`Failed to add entry: ${addResult.error || 'Unknown error'}`);
+          return;
+        }
         
         // Update stats
         const stats = await firestoreService.getUserStats(currentUserId);
         const currentStats = stats.success ? stats.data : {};
-        const last = currentStats.lastDate;
-        let streak = currentStats.streak || 0;
-        if (last) {
-          const y = new Date();
-          y.setDate(y.getDate() - 1);
-          if (y.toISOString().slice(0, 10) === last) {
-            streak = streak + 1;
-          } else {
-            streak = 1;
-          }
-        } else {
-          streak = 1;
-        }
+        const streak = calculateStreak(logDates.concat(date), date) || 1;
+        const total = Math.max((currentStats.total || 0) + 1, knownLogCount + 1);
         
         await firestoreService.updateUserStats(currentUserId, {
-          total: (currentStats.total || 0) + 1,
+          total: total,
           streak: streak,
           lastDate: date
         });
       } else {
         // Save to localStorage
-        const log = getLS(LS_KEYS.LOG, []);
-        log.push({ date, notes: (notes||'').trim() });
-        setLS(LS_KEYS.LOG, log);
+        const localLog = getLS(LS_KEYS.LOG, []);
+        localLog.push({ date, notes: (notes||'').trim() });
+        setLS(LS_KEYS.LOG, localLog);
         
         // Also update totals
         const total = getLS(LS_KEYS.TOTAL, 0);
-        setLS(LS_KEYS.TOTAL, total + 1);
+        const streak = calculateStreak(logDates.concat(date), date) || 1;
+        setLS(LS_KEYS.TOTAL, Math.max(total + 1, localLog.length));
         setLS(LS_KEYS.LAST_DATE, date);
-        
-        const last = getLS(LS_KEYS.LAST_DATE, null);
-        let streak = getLS(LS_KEYS.STREAK, 0);
-        if (last) {
-          const y = new Date();
-          y.setDate(y.getDate() - 1);
-          if (y.toISOString().slice(0, 10) === last) streak = streak + 1;
-          else streak = 1;
-        } else {
-          streak = 1;
-        }
         setLS(LS_KEYS.STREAK, streak);
       }
       

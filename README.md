@@ -14,6 +14,7 @@ An interactive web application designed to help you learn and pray the Holy Rosa
 - **Meditation Guide** 💭: Thoughtful meditations provided for each Hail Mary to deepen your prayer experience
 - **All Four Mystery Sets**: Support for Joyful, Sorrowful, Glorious, and Luminous mysteries with automatic daily selection based on traditional prayer schedule
 - **Prayer Tracking** 📊: Track your prayer journey with streak counters and total rosaries prayed, stored locally in your browser
+- **Prayer Reminders** 🔔: Optional push reminders (daily prayer + streak protection) with per-user time settings across devices
 - **New to the Rosary?** 🙏: Welcoming section for newcomers with helpful resources and encouragement
 - **Dark Mode**: Comfortable viewing in light or dark themes with preference saved automatically
 - **Multiple Navigation Options**: 
