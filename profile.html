@@ -317,17 +317,31 @@
           document.getElementById('userEmail').textContent = user.email || '';
         }
 
-        // Load stats
-        const stats = await firestoreService.getUserStats(user.uid);
-        if (stats.success) {
-          document.getElementById('streakDays').textContent = stats.data.streak || 0;
-          document.getElementById('totalRosaries').textContent = stats.data.total || 0;
+        // Load stats and full prayer log (prayer log is source of truth for total count)
+        const [stats, prayerLogResult] = await Promise.all([
+          firestoreService.getUserStats(user.uid),
+          firestoreService.getPrayerLog(user.uid)
+        ]);
+
+        // Reconcile total with actual prayer log count to fix drift from failed writes
+        let totalToShow = stats.success ? (stats.data.total || 0) : 0;
+        if (prayerLogResult.success && Array.isArray(prayerLogResult.data)) {
+          const strictTotal = prayerLogResult.data.length;
+          totalToShow = strictTotal;
+          if (stats.success && stats.data && stats.data.total !== strictTotal) {
+            await firestoreService.updateUserStats(user.uid, { total: strictTotal });
+          }
         }
 
-        // Load recent prayers
-        const recentPrayers = await firestoreService.getPrayerLog(user.uid, 5);
+        document.getElementById('totalRosaries').textContent = totalToShow;
+        if (stats.success) {
+          document.getElementById('streakDays').textContent = stats.data.streak || 0;
+        }
+
+        // Load recent prayers (use first 5 from full log we already fetched)
+        const recentPrayers = prayerLogResult;
         if (recentPrayers.success && recentPrayers.data.length > 0) {
-          const html = recentPrayers.data.map(entry => {
+          const html = recentPrayers.data.slice(0, 5).map(entry => {
             // Get date consistently - prefer entry.date, fallback to createdAt
             let dateStr = entry.date;
             if (!dateStr && entry.createdAt) {
