@@ -244,6 +244,25 @@ async function updateUserStats(userId, stats) {
   }
 }
 
+// Reconcile stats.total with actual prayer log count (source of truth).
+// Returns the correct total to display. Call this when loading profile/stats
+// to self-heal drift from failed writes or legacy bugs.
+async function reconcileTotalFromPrayerLog(userId) {
+  try {
+    const prayerLog = await getPrayerLog(userId);
+    if (!prayerLog.success || !Array.isArray(prayerLog.data)) return null;
+    const strictTotal = prayerLog.data.length;
+    const stats = await getUserStats(userId);
+    if (stats.success && stats.data && stats.data.total !== strictTotal) {
+      await updateUserStats(userId, { total: strictTotal });
+    }
+    return strictTotal;
+  } catch (error) {
+    console.warn('Failed to reconcile total from prayer log:', error);
+    return null;
+  }
+}
+
 // ========== PRAYER LOG ==========
 
 // Get prayer log entries
@@ -453,6 +472,7 @@ window.firestoreService = {
   updateUserSettings,
   getUserStats,
   updateUserStats,
+  reconcileTotalFromPrayerLog,
   getPrayerLog,
   addPrayerLogEntry,
   deletePrayerLogEntry,

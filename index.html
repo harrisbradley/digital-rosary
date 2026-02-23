@@ -328,9 +328,12 @@
         if (window.firestoreService) {
           try {
             const stats = await firestoreService.getUserStats(user.uid);
+            // Reconcile total with prayer log count (source of truth) to fix drift
+            const reconciledTotal = await firestoreService.reconcileTotalFromPrayerLog(user.uid);
+            const total = reconciledTotal !== null ? reconciledTotal : (stats.success && stats.data ? (stats.data.total || 0) : 0);
             if (stats.success && stats.data) {
               // Update localStorage cache
-              localStorage.setItem('digital-rosary-total', stats.data.total || 0);
+              localStorage.setItem('digital-rosary-total', total);
               localStorage.setItem('digital-rosary-streak', stats.data.streak || 0);
               localStorage.setItem('digital-rosary-last-date', stats.data.lastDate || null);
 
@@ -339,10 +342,9 @@
               const streakEl = document.getElementById('streakDays');
               const progressEl = document.getElementById('progressBar');
 
-              if (totalEl) totalEl.textContent = stats.data.total || 0;
+              if (totalEl) totalEl.textContent = total;
               if (streakEl) streakEl.textContent = stats.data.streak || 0;
               if (progressEl) {
-                const total = stats.data.total || 0;
                 progressEl.style.width = Math.min(100, (total % 50) * 2) + '%';
               }
             }
