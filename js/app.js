@@ -169,6 +169,7 @@ const LS_KEYS = {
   TOTAL: 'rosary_total_v1',      // Total count of rosaries prayed
   LAST_DATE: 'rosary_last_date_v1', // Date of last rosary
   STREAK: 'rosary_streak_v1',    // Current streak count
+  LOG: 'rosary_log_v1',          // Prayer log entries (local fallback)
   DARK_MODE: 'dark_mode_v1',      // Dark mode preference
   HIDE_NEW_TO_ROSARY: 'hide_new_to_rosary_v1', // Hide "New to the Rosary?" section
   ONE_CLICK_HAIL_MARYS: 'one_click_hail_marys_v1', // 1-click Hail Marys toggle preference
@@ -1575,6 +1576,34 @@ function syncStats() {
   progressEl.style.width = Math.min(100, (total % 50) * 2) + '%'; 
 }
 
+// Ensure total prayer count strictly matches prayer log entry count.
+// This self-heals historical drift if stats updates previously failed.
+async function reconcileTotalWithPrayerLog(userId, knownStatsTotal = null) {
+  if (!userId || !window.firestoreService) return;
+
+  try {
+    const prayerLog = await firestoreService.getPrayerLog(userId);
+    if (!prayerLog.success || !Array.isArray(prayerLog.data)) return;
+
+    const strictTotal = prayerLog.data.length;
+    const localTotal = getLS(LS_KEYS.TOTAL, 0);
+    if (localTotal !== strictTotal) {
+      setLS(LS_KEYS.TOTAL, strictTotal);
+      syncStats();
+    }
+
+    const statsTotal = Number.isFinite(knownStatsTotal) ? knownStatsTotal : getLS(LS_KEYS.TOTAL, 0);
+    if (statsTotal !== strictTotal) {
+      const result = await firestoreService.updateUserStats(userId, { total: strictTotal });
+      if (!result.success) {
+        console.warn('Failed to reconcile strict total with prayer log:', result.error);
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to reconcile strict total from prayer log:', error);
+  }
+}
+
 // 🎉 Celebration animation and message
 // This shows a nice popup when you complete the rosary!
 function celebrate() {
@@ -1946,6 +1975,9 @@ async function initializeApp() {
       try {
         // Load and sync stats from Firestore
         const stats = await firestoreService.getUserStats(user.uid);
+        const knownStatsTotal = (stats.success && stats.data && Number.isFinite(stats.data.total))
+          ? stats.data.total
+          : null;
         if (stats.success && stats.data) {
           // Update localStorage cache with Firestore data (this is the source of truth)
           const firestoreTotal = stats.data.total || 0;
@@ -1962,6 +1994,9 @@ async function initializeApp() {
           // No stats in Firestore yet, use localStorage
           syncStats();
         }
+
+        // Self-heal any historical total drift by counting real prayer-log entries.
+        await reconcileTotalWithPrayerLog(user.uid, knownStatsTotal);
         
         // Load and sync settings
         const settings = await firestoreService.getUserSettings(user.uid);
