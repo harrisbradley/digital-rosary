@@ -21,16 +21,20 @@
   <main class="wrap">
     <section class="card pad">
       <h1>Prayer Log</h1>
-      <p class="muted">Track your rosary prayers over time. Entries are stored locally on your device.</p>
+      <p class="muted">Track your rosary prayers over time. You can log today or add a missed day from the past. Signed-in users sync to the cloud.</p>
 
-      <div style="margin-top:12px" class="toolbar">
-        <button id="addEntryBtn" class="button primary">Add Today's Entry</button>
-        <button id="clearLogBtn" class="button">Clear Log</button>
+      <div class="toolbar" style="margin-top:12px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:160px">
+          <label for="entryDate" class="muted" style="font-size:13px">Prayer date</label>
+          <input type="date" id="entryDate" style="padding:10px;border:1px solid var(--muted);border-radius:8px;font-size:16px;font-family:inherit;background:var(--bg);color:inherit">
+        </div>
+        <button type="button" id="addEntryBtn" class="button primary">Add entry</button>
+        <button type="button" id="clearLogBtn" class="button">Clear Log</button>
       </div>
 
       <div style="margin-top:16px">
         <h2 style="margin:0 0 8px">Entries</h2>
-        <div id="emptyState" class="muted">No entries yet. Click "Add Today's Entry" to create one.</div>
+        <div id="emptyState" class="muted">No entries yet. Pick a date and click &quot;Add entry&quot;.</div>
         <ul id="logList" class="list" style="margin-top:8px"></ul>
       </div>
     </section>
@@ -85,6 +89,20 @@
       return streak;
     }
 
+    // Latest prayer day in YYYY-MM-DD order
+    function maxDateStr(dates) {
+      const sorted = [...dates].filter(Boolean).sort();
+      return sorted.length ? sorted[sorted.length - 1] : null;
+    }
+
+    function initEntryDateInput() {
+      const el = document.getElementById('entryDate');
+      if (!el) return;
+      const t = todayStr();
+      el.max = t;
+      if (!el.value || el.value > t) el.value = t;
+    }
+
     const listEl = document.getElementById('logList');
     const emptyEl = document.getElementById('emptyState');
     let currentUserId = null;
@@ -92,6 +110,7 @@
     // Check auth state
     authService.onAuthStateChanged((user) => {
       currentUserId = user ? user.uid : null;
+      initEntryDateInput();
       renderLog();
     });
 
@@ -134,9 +153,19 @@
     }
 
     document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
-      const date = todayStr();
-      
-      // Check if already logged today
+      const dateInput = document.getElementById('entryDate');
+      const raw = dateInput && dateInput.value;
+      if (!raw) {
+        alert('Choose a prayer date.');
+        return;
+      }
+      const date = raw;
+      const today = todayStr();
+      if (date > today) {
+        alert('You cannot add a future date.');
+        return;
+      }
+
       let logDates = [];
       let knownLogCount = 0;
       if (currentUserId && window.firestoreService) {
@@ -150,54 +179,52 @@
         knownLogCount = localLog.length;
         logDates = localLog.map(getEntryDate).filter(Boolean);
       }
-      
+
       if (logDates.includes(date)) {
-        alert("You've already added today's entry.");
+        alert('You already have an entry for this date.');
         return;
       }
-      
-      const notes = prompt('Optional: add a note for today', '');
-      
+
+      const notes = prompt(`Optional note for ${date}`, '');
+
+      const allUniqueDates = [...new Set([...logDates, date])];
+      // Same rule as the main app: consecutive days ending today (fills gaps when you backfill).
+      const streak = calculateStreak(allUniqueDates, today);
+      const lastDate = maxDateStr(allUniqueDates);
+
       if (currentUserId && window.firestoreService) {
-        // Save to Firestore
         const addResult = await firestoreService.addPrayerLogEntry(currentUserId, {
           date: date,
-          notes: (notes||'').trim()
+          notes: (notes || '').trim()
         });
         if (!addResult.success && addResult.error === 'Entry already exists for this date') {
-          alert("You've already added today's entry.");
+          alert('You already have an entry for this date.');
           return;
         }
         if (!addResult.success) {
           alert(`Failed to add entry: ${addResult.error || 'Unknown error'}`);
           return;
         }
-        
-        // Update stats
+
         const stats = await firestoreService.getUserStats(currentUserId);
         const currentStats = stats.success ? stats.data : {};
-        const streak = calculateStreak(logDates.concat(date), date) || 1;
         const total = Math.max((currentStats.total || 0) + 1, knownLogCount + 1);
-        
+
         await firestoreService.updateUserStats(currentUserId, {
           total: total,
           streak: streak,
-          lastDate: date
+          lastDate: lastDate
         });
       } else {
-        // Save to localStorage
         const localLog = getLS(LS_KEYS.LOG, []);
-        localLog.push({ date, notes: (notes||'').trim() });
+        localLog.push({ date, notes: (notes || '').trim() });
         setLS(LS_KEYS.LOG, localLog);
-        
-        // Also update totals
-        const total = getLS(LS_KEYS.TOTAL, 0);
-        const streak = calculateStreak(logDates.concat(date), date) || 1;
-        setLS(LS_KEYS.TOTAL, Math.max(total + 1, localLog.length));
-        setLS(LS_KEYS.LAST_DATE, date);
+        setLS(LS_KEYS.TOTAL, Math.max(getLS(LS_KEYS.TOTAL, 0) + 1, localLog.length));
+        setLS(LS_KEYS.LAST_DATE, lastDate);
         setLS(LS_KEYS.STREAK, streak);
       }
-      
+
+      initEntryDateInput();
       renderLog();
     });
 
@@ -213,8 +240,9 @@
       renderLog();
     });
 
+    initEntryDateInput();
     renderLog();
-    
+
     // Update navigation based on auth state
     authService.onAuthStateChanged((user) => {
       const authLink = document.getElementById('authNavLink');
