@@ -1729,24 +1729,26 @@ async function logRosary(showCelebration = false) {
     return false;  // Don't log again
   }
   
-  // Calculate new streak
-  let newStreak = 0;
+  // Calculate new streak.
+  // Any successful new log should show at least day 1 immediately.
+  let newStreak = 1;
   if (knownLogDates.length > 0) {
     newStreak = calculateStreakFromDates(knownLogDates.concat(today), today);
   }
 
-  // Fallback if prayer-log dates are unavailable
-  if (newStreak === 0 && currentStats.lastDate) {
-    newStreak = 1;  // Default to 1 if no previous log
+  // Fallback when prayer-log dates are unavailable.
+  if ((!newStreak || newStreak < 1) && currentStats.lastDate) {
     // Check if last log was yesterday (to continue streak)
     const y = new Date(); 
     y.setDate(y.getDate() - 1);  // Yesterday's date
     if (localDateStr(y) === currentStats.lastDate) {
       newStreak = (currentStats.streak || 0) + 1;  // Continue streak
+    } else {
+      newStreak = 1;
     }
-    // If last log was not yesterday, streak resets to 1
   }
-  if (newStreak === 0) {
+
+  if (!newStreak || newStreak < 1) {
     newStreak = 1;
   }
   
