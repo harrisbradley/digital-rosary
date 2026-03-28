@@ -1576,9 +1576,15 @@ function syncStats() {
   progressEl.style.width = Math.min(100, (total % 50) * 2) + '%'; 
 }
 
-// Ensure total prayer count strictly matches prayer log entry count.
+// Latest prayer day in YYYY-MM-DD order.
+function maxDateStr(dates) {
+  const sorted = [...new Set((dates || []).filter(Boolean))].sort();
+  return sorted.length ? sorted[sorted.length - 1] : null;
+}
+
+// Ensure stats strictly match prayer-log entries (source of truth).
 // This self-heals historical drift if stats updates previously failed.
-async function reconcileTotalWithPrayerLog(userId, knownStatsTotal = null) {
+async function reconcileStatsWithPrayerLog(userId, knownStats = null) {
   if (!userId || !window.firestoreService) return;
 
   try {
@@ -1586,21 +1592,45 @@ async function reconcileTotalWithPrayerLog(userId, knownStatsTotal = null) {
     if (!prayerLog.success || !Array.isArray(prayerLog.data)) return;
 
     const strictTotal = prayerLog.data.length;
+    const uniqueDates = [...new Set(prayerLog.data.map(getPrayerEntryDate).filter(Boolean))];
+    const strictStreak = calculateStreakFromDates(uniqueDates, todayStr());
+    const strictLastDate = maxDateStr(uniqueDates);
+
     const localTotal = getLS(LS_KEYS.TOTAL, 0);
+    const localStreak = getLS(LS_KEYS.STREAK, 0);
+    const localLastDate = getLS(LS_KEYS.LAST_DATE, null);
+    let localChanged = false;
+
     if (localTotal !== strictTotal) {
       setLS(LS_KEYS.TOTAL, strictTotal);
-      syncStats();
+      localChanged = true;
     }
+    if (localStreak !== strictStreak) {
+      setLS(LS_KEYS.STREAK, strictStreak);
+      localChanged = true;
+    }
+    if (localLastDate !== strictLastDate) {
+      setLS(LS_KEYS.LAST_DATE, strictLastDate);
+      localChanged = true;
+    }
+    if (localChanged) syncStats();
 
-    const statsTotal = Number.isFinite(knownStatsTotal) ? knownStatsTotal : getLS(LS_KEYS.TOTAL, 0);
-    if (statsTotal !== strictTotal) {
-      const result = await firestoreService.updateUserStats(userId, { total: strictTotal });
+    const statsTotal = Number.isFinite(knownStats?.total) ? knownStats.total : getLS(LS_KEYS.TOTAL, 0);
+    const statsStreak = Number.isFinite(knownStats?.streak) ? knownStats.streak : getLS(LS_KEYS.STREAK, 0);
+    const statsLastDate = typeof knownStats?.lastDate === 'string' ? knownStats.lastDate : getLS(LS_KEYS.LAST_DATE, null);
+    const statsPatch = {};
+    if (statsTotal !== strictTotal) statsPatch.total = strictTotal;
+    if (statsStreak !== strictStreak) statsPatch.streak = strictStreak;
+    if (statsLastDate !== strictLastDate) statsPatch.lastDate = strictLastDate;
+
+    if (Object.keys(statsPatch).length > 0) {
+      const result = await firestoreService.updateUserStats(userId, statsPatch);
       if (!result.success) {
-        console.warn('Failed to reconcile strict total with prayer log:', result.error);
+        console.warn('Failed to reconcile stats with prayer log:', result.error);
       }
     }
   } catch (error) {
-    console.warn('Failed to reconcile strict total from prayer log:', error);
+    console.warn('Failed to reconcile stats from prayer log:', error);
   }
 }
 
@@ -1977,8 +2007,8 @@ async function initializeApp() {
       try {
         // Load and sync stats from Firestore
         const stats = await firestoreService.getUserStats(user.uid);
-        const knownStatsTotal = (stats.success && stats.data && Number.isFinite(stats.data.total))
-          ? stats.data.total
+        const knownStats = (stats.success && stats.data)
+          ? stats.data
           : null;
         if (stats.success && stats.data) {
           // Update localStorage cache with Firestore data (this is the source of truth)
@@ -1997,8 +2027,8 @@ async function initializeApp() {
           syncStats();
         }
 
-        // Self-heal any historical total drift by counting real prayer-log entries.
-        await reconcileTotalWithPrayerLog(user.uid, knownStatsTotal);
+        // Self-heal historical stat drift by using prayer-log entries as source of truth.
+        await reconcileStatsWithPrayerLog(user.uid, knownStats);
         
         // Load and sync settings
         const settings = await firestoreService.getUserSettings(user.uid);
