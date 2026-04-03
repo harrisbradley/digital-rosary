@@ -329,6 +329,11 @@ async function addPrayerLogEntry(userId, entry) {
 }
 
 // Update prayer log entry notes
+// NOTE: Firestore rules must allow `update` on /users/{userId}/prayerLog/{entryId}.
+// The rule should also enforce that `date` cannot be changed:
+//   allow update: if request.auth != null
+//     && request.auth.uid == userId
+//     && request.resource.data.date == resource.data.date;
 async function updatePrayerLogEntry(userId, entryId, notes) {
   try {
     await getUserRef(userId).collection('prayerLog').doc(entryId).update({ notes });
