@@ -328,6 +328,19 @@ async function addPrayerLogEntry(userId, entry) {
   }
 }
 
+// Update prayer log entry notes
+async function updatePrayerLogEntry(userId, entryId, notes) {
+  try {
+    await getUserRef(userId).collection('prayerLog').doc(entryId).update({ notes });
+    // Invalidate cache
+    const cacheKey = `user_prayer_log_${userId}`;
+    localStorage.removeItem(cacheKey);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // Delete prayer log entry
 async function deletePrayerLogEntry(userId, entryId) {
   try {
@@ -475,6 +488,7 @@ window.firestoreService = {
   reconcileTotalFromPrayerLog,
   getPrayerLog,
   addPrayerLogEntry,
+  updatePrayerLogEntry,
   deletePrayerLogEntry,
   clearPrayerLog,
   saveNotificationToken,
