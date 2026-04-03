@@ -292,7 +292,7 @@ const GUIDE = [
 
 // 🔵 Generate bead visualization for Hail Mary steps
 // Creates visual beads showing progress through the 10 Hail Marys in a decade
-// Shows 10 beads: previous beads are blue (filled), current bead is red, future beads are empty
+// 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴Shows 10 beads: previous beads are blue (filled), current bead is red, future beads are empty
 function generateBeads(currentNumber) {
   const beads = [];  // Start with empty array
   // Loop through 1 to 10 (the 10 Hail Marys in a decade)
@@ -313,7 +313,7 @@ function generateBeads(currentNumber) {
   return `<span class="beads-container">${beads.join('')}</span>`;
 }
 
-// 🔴 Generate 3-bead visualization for Faith, Hope, Charity Hail Marys
+// 🔴🔴🔴 Generate 3-bead visualization for Faith, Hope, Charity Hail Marys
 // Creates 3 beads: previous beads are filled, current bead is red, future beads are empty
 function generateThreeBeads(currentNumber) {
   const beads = [];  // Start with empty array
