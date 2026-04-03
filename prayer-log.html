@@ -123,21 +123,18 @@
         // Load from Firestore
         const result = await firestoreService.getPrayerLog(currentUserId);
         if (result.success) {
-          log = result.data.map(entry => {
-            // Get date consistently - prefer entry.date, fallback to createdAt
-            const dateStr = getEntryDate(entry);
-            return {
-              date: dateStr,
-              notes: entry.notes || ''
-            };
-          });
+          log = result.data.map(entry => ({
+            id: entry.id,
+            date: getEntryDate(entry),
+            notes: entry.notes || ''
+          }));
         }
       } else {
         // Load from localStorage
         log = getLS(LS_KEYS.LOG, []);
       }
       log = log.filter(entry => entry && entry.date);
-      
+
       if (log.length === 0){
         emptyEl.style.display='block';
         return;
@@ -145,11 +142,75 @@
       emptyEl.style.display='none';
       log.sort((a,b)=> b.date.localeCompare(a.date));
       for(const entry of log){
-        const li = document.createElement('li');
-        li.style.margin = '8px 0';
-        li.innerHTML = `<strong>${entry.date}</strong> — ${entry.notes || 'Rosary prayed'}`;
-        listEl.appendChild(li);
+        listEl.appendChild(buildEntryRow(entry));
       }
+    }
+
+    function buildEntryRow(entry) {
+      const li = document.createElement('li');
+      li.style.cssText = 'margin:8px 0;display:flex;align-items:center;gap:8px;';
+
+      const dateEl = document.createElement('strong');
+      dateEl.textContent = entry.date;
+
+      const notesEl = document.createElement('span');
+      notesEl.textContent = entry.notes || 'Rosary prayed';
+      notesEl.style.flex = '1';
+
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Edit';
+      editBtn.className = 'button';
+      editBtn.style.padding = '2px 10px';
+      editBtn.setAttribute('aria-label', `Edit notes for ${entry.date}`);
+      editBtn.addEventListener('click', () => startEdit(li, entry, notesEl, editBtn));
+
+      li.appendChild(dateEl);
+      li.appendChild(document.createTextNode(' — '));
+      li.appendChild(notesEl);
+      li.appendChild(editBtn);
+      return li;
+    }
+
+    function startEdit(li, entry, notesEl, editBtn) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = entry.notes || '';
+      input.style.cssText = 'flex:1;padding:4px 8px;border:1px solid var(--muted);border-radius:6px;font-size:14px;font-family:inherit;background:var(--bg);color:inherit;';
+      input.setAttribute('aria-label', 'Edit prayer notes');
+
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save';
+      saveBtn.className = 'button primary';
+      saveBtn.style.padding = '2px 10px';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.className = 'button';
+      cancelBtn.style.padding = '2px 10px';
+
+      notesEl.replaceWith(input);
+      editBtn.replaceWith(saveBtn);
+      li.appendChild(cancelBtn);
+      input.focus();
+
+      cancelBtn.addEventListener('click', () => renderLog());
+
+      saveBtn.addEventListener('click', async () => {
+        const newNotes = input.value.trim();
+        if (currentUserId && window.firestoreService) {
+          const result = await firestoreService.updatePrayerLogEntry(currentUserId, entry.id, newNotes);
+          if (!result.success) {
+            alert(`Failed to save: ${result.error}`);
+            return;
+          }
+        } else {
+          const localLog = getLS(LS_KEYS.LOG, []);
+          const idx = localLog.findIndex(e => e.date === entry.date);
+          if (idx >= 0) localLog[idx].notes = newNotes;
+          setLS(LS_KEYS.LOG, localLog);
+        }
+        renderLog();
+      });
     }
 
     document.getElementById('addEntryBtn').addEventListener('click', async ()=>{
