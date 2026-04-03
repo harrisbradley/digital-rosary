@@ -1596,6 +1596,15 @@ async function reconcileStatsWithPrayerLog(userId, knownStats = null) {
     const strictStreak = calculateStreakFromDates(uniqueDates, todayStr());
     const strictLastDate = maxDateStr(uniqueDates);
 
+    // Guard against stale prayer-log snapshots: if local state shows the user
+    // logged today but the fetched prayer log doesn't include today, the snapshot
+    // was captured before logRosary() completed. Skip reconcile to avoid
+    // overwriting fresh local state with stale computed values.
+    const currentLocalLastDate = getLS(LS_KEYS.LAST_DATE, null);
+    if (currentLocalLastDate === todayStr() && !uniqueDates.includes(todayStr())) {
+      return;
+    }
+
     const localTotal = getLS(LS_KEYS.TOTAL, 0);
     const localStreak = getLS(LS_KEYS.STREAK, 0);
     const localLastDate = getLS(LS_KEYS.LAST_DATE, null);
