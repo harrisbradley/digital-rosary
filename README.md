@@ -2,6 +2,19 @@
 
 An interactive web application designed to help you learn and pray the Holy Rosary. This digital guide provides step-by-step instructions, visual illustrations, and prayer tracking to enhance your prayer experience.
 
+## Code Tour (repo walkthrough)
+
+This repository includes an in-repo CodeTour so you can explore the architecture directly from your editor:
+
+- Tour file: `.tours/digital-rosary-codebase-tour.tour`
+- Recommended extension: `vsls-contrib.codetour` (included in `.vscode/extensions.json`)
+
+How to run:
+
+1. Install the CodeTour extension in VS Code/Cursor.
+2. Open the command palette and run **CodeTour: Start Tour**.
+3. Select **Digital Rosary Codebase Tour**.
+
 ## ✝️ Live Site!
 
 **[Visit www.digital-rosary.com to see it in action →](https://www.digital-rosary.com)**
