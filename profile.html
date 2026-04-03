@@ -323,20 +323,39 @@
           firestoreService.getPrayerLog(user.uid)
         ]);
 
-        // Reconcile total with actual prayer log count to fix drift from failed writes
+        // Reconcile total and streak with actual prayer log (source of truth)
         let totalToShow = stats.success ? (stats.data.total || 0) : 0;
+        let streakToShow = stats.success ? (stats.data.streak || 0) : 0;
         if (prayerLogResult.success && Array.isArray(prayerLogResult.data)) {
           const strictTotal = prayerLogResult.data.length;
           totalToShow = strictTotal;
-          if (stats.success && stats.data && stats.data.total !== strictTotal) {
-            await firestoreService.updateUserStats(user.uid, { total: strictTotal });
+
+          // Calculate streak from prayer log dates
+          const today = new Date();
+          const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+          const dateSet = new Set(prayerLogResult.data.map(e => e.date).filter(Boolean));
+          let strictStreak = 0;
+          let cursor = todayStr;
+          while (cursor && dateSet.has(cursor)) {
+            strictStreak++;
+            const [y, m, d] = cursor.split('-').map(Number);
+            const prev = new Date(y, m - 1, d);
+            prev.setDate(prev.getDate() - 1);
+            cursor = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+          }
+          streakToShow = strictStreak;
+
+          // Patch Firestore stats if either value has drifted
+          const patches = {};
+          if (stats.success && stats.data && stats.data.total !== strictTotal) patches.total = strictTotal;
+          if (stats.success && stats.data && stats.data.streak !== strictStreak) patches.streak = strictStreak;
+          if (Object.keys(patches).length > 0) {
+            await firestoreService.updateUserStats(user.uid, patches);
           }
         }
 
         document.getElementById('totalRosaries').textContent = totalToShow;
-        if (stats.success) {
-          document.getElementById('streakDays').textContent = stats.data.streak || 0;
-        }
+        document.getElementById('streakDays').textContent = streakToShow;
 
         // Load recent prayers (use first 5 from full log we already fetched)
         const recentPrayers = prayerLogResult;
