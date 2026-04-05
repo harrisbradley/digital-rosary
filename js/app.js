@@ -176,7 +176,8 @@ const LS_KEYS = {
   IRG_STEP: 'irg_step_v1',       // Current IRG step index (0-based)
   IRG_STEP_DATE: 'irg_step_date_v1', // Date when IRG progress was last saved (YYYY-MM-DD, user timezone)
   IRG_STEP_SAVED_AT: 'irg_step_saved_at_v1', // Timestamp when IRG progress was saved
-  TIMEZONE: 'user_timezone_v1'   // User timezone preference (IANA name)
+  TIMEZONE: 'user_timezone_v1',  // User timezone preference (IANA name)
+  INTENTION: 'irg_intention_v1'  // Optional intention for current rosary session
 };
 
 // ========== DATA: THE FOUR MYSTERIES OF THE ROSARY ==========
@@ -503,6 +504,9 @@ const htmlRootEl = document.documentElement;                        // HTML root
 // We use "let" instead of "const" because this value changes as user navigates
 let stepIndex = 0;
 
+// 🙏 Optional intention for this rosary session (set on step 0)
+let currentIntention = '';
+
 // ========== UTILITY FUNCTIONS ==========
 
 // 📅 Convert day numbers to abbreviated day names
@@ -819,6 +823,18 @@ function renderStep() {
   // Update rosary visualization (if feature is enabled)
   if (FEATURES.SHOW_ROSARY_PROGRESS && window.RosaryVisualizer && rosaryVisualizerEl) {
     window.RosaryVisualizer.render(stepIndex, GUIDE.length, rosaryVisualizerEl);
+  }
+
+  // Show intention input only on the first step
+  const intentionSection = document.getElementById('intentionSection');
+  if (intentionSection) {
+    if (stepIndex === 0) {
+      intentionSection.style.display = '';
+      const intentionInput = document.getElementById('intentionInput');
+      if (intentionInput) intentionInput.value = currentIntention;
+    } else {
+      intentionSection.style.display = 'none';
+    }
   }
 }
 
@@ -1803,7 +1819,7 @@ async function logRosary(showCelebration = false) {
       // Add to prayer log first (this checks for duplicates)
       const logResult = await firestoreService.addPrayerLogEntry(user.uid, {
         date: today,
-        notes: 'Rosary prayed'
+        notes: currentIntention.trim() || 'Rosary prayed'
       });
       
       // If entry already exists, don't proceed with logging
@@ -1853,6 +1869,12 @@ async function logRosary(showCelebration = false) {
   // Update the display
   syncStats();
   
+  // Clear intention after logging
+  currentIntention = '';
+  setLS(LS_KEYS.INTENTION, '');
+  const intentionInputEl = document.getElementById('intentionInput');
+  if (intentionInputEl) intentionInputEl.value = '';
+
   // Show celebration if requested
   if (showCelebration) {
     celebrate();
@@ -1998,6 +2020,19 @@ function toggleOneClickHailMarys() {
 // 1-click Hail Marys toggle event listener
 if (oneClickHailMarysToggleEl) {
   oneClickHailMarysToggleEl.addEventListener('change', toggleOneClickHailMarys);
+}
+
+// Intention input: save value as user types
+const intentionInputEl = document.getElementById('intentionInput');
+if (intentionInputEl) {
+  // Restore any saved intention from a previous session
+  currentIntention = getLS(LS_KEYS.INTENTION, '');
+  intentionInputEl.value = currentIntention;
+
+  intentionInputEl.addEventListener('input', (e) => {
+    currentIntention = e.target.value;
+    setLS(LS_KEYS.INTENTION, currentIntention);
+  });
 }
 
 // ========== INITIALIZE APP ==========

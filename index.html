@@ -202,6 +202,11 @@
               <!-- 📖 Dynamically updated prayer text -->
               <!-- JavaScript fills this with the actual prayer words -->
               <div class="prayer-text" id="prayerText"></div>
+              <!-- 🙏 Optional intention - shown only on the first step -->
+              <div id="intentionSection" style="display:none; margin-top:14px;">
+                <label for="intentionInput" class="muted" style="font-size:13px; display:block; margin-bottom:5px;">Intention (optional) — who or what are you offering this rosary for?</label>
+                <textarea id="intentionInput" rows="2" placeholder="e.g. For my family, for healing, for peace…" style="width:100%; box-sizing:border-box; resize:vertical; font-size:14px; padding:8px 10px; border-radius:6px; border:1px solid var(--muted); background:var(--card); color:var(--ink); font-family:inherit; line-height:1.4;"></textarea>
+              </div>
               <!-- 💡 Helpful tip for users -->
               <div class="muted" style="font-size:13px;margin-top:6px">Tip: Use ←/→ keys to navigate.</div>
               <!-- ⚙️ Toggle for 1-click Hail Marys feature -->

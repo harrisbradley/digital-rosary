@@ -985,6 +985,23 @@ select:focus {
   border-color: var(--muted);
 }
 
+/* Intention textarea in the IRG */
+#intentionInput {
+  display: block;
+}
+
+#intentionInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.dark-mode #intentionInput {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--muted);
+}
+
 .prayer-text {
   margin-top: 8px;
   white-space: pre-wrap;
