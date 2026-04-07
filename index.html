@@ -333,16 +333,14 @@
         if (window.firestoreService) {
           try {
             const stats = await firestoreService.getUserStats(user.uid);
-            // Reconcile total with prayer log count (source of truth) to fix drift
-            const reconciledTotal = await firestoreService.reconcileTotalFromPrayerLog(user.uid);
-            const total = reconciledTotal !== null ? reconciledTotal : (stats.success && stats.data ? (stats.data.total || 0) : 0);
             if (stats.success && stats.data) {
-              // Update localStorage cache
+              const total = stats.data.total || 0;
+              // Update localStorage cache with initial values for display
               localStorage.setItem('digital-rosary-total', total);
               localStorage.setItem('digital-rosary-streak', stats.data.streak || 0);
               localStorage.setItem('digital-rosary-last-date', stats.data.lastDate || null);
 
-              // Update display elements immediately
+              // Update display elements immediately with Firestore values
               const totalEl = document.getElementById('totalRosaries');
               const streakEl = document.getElementById('streakDays');
               const progressEl = document.getElementById('progressBar');
@@ -352,6 +350,11 @@
               if (progressEl) {
                 progressEl.style.width = Math.min(100, (total % 50) * 2) + '%';
               }
+
+              // Reconcile total AND streak with prayer log (source of truth).
+              // Same self-healing logic as the Profile page — fixes any drift
+              // and updates the display if the recalculated values differ.
+              reconcileStatsWithPrayerLog(user.uid, stats.data);
             }
           } catch (error) {
             console.warn('Error loading initial stats:', error);
