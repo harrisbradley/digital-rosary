@@ -1376,7 +1376,7 @@ function normalizeIRGProgress(userData) {
 
 // 🔄 Sync IRG progress to Firebase/Firestore (if available and user is authenticated)
 // Gracefully falls back to localStorage-only if Firebase is unavailable
-async function syncIRGProgressToFirebase(stepIndex, dateStr, savedAt = null) {
+async function syncIRGProgressToFirebase(stepIndex, dateStr, savedAt = null, intention = '') {
   try {
     // Check if Firebase services are available
     // Look for common Firebase service patterns
@@ -1417,6 +1417,7 @@ async function syncIRGProgressToFirebase(stepIndex, dateStr, savedAt = null) {
       irgStep: stepIndex,
       irgStepDate: dateStr,
       irgStepSavedAt: savedAtValue,
+      irgIntention: intention,
       updatedAt: savedAtValue
     };
     
@@ -1447,7 +1448,7 @@ function saveIRGProgress() {
   setLS(LS_KEYS.IRG_STEP_SAVED_AT, savedAt);
   
   // Try to sync to Firebase (non-blocking, graceful fallback)
-  syncIRGProgressToFirebase(stepIndex, dateStr, savedAt).catch(() => {
+  syncIRGProgressToFirebase(stepIndex, dateStr, savedAt, currentIntention).catch(() => {
     // Silently handle errors - localStorage is already saved
   });
 }
@@ -1517,6 +1518,14 @@ async function loadIRGProgress() {
                     setLS(LS_KEYS.IRG_STEP_SAVED_AT, irgStepSavedAt);
                   } else {
                     setLS(LS_KEYS.IRG_STEP_SAVED_AT, null);
+                  }
+                  // Restore intention from Firestore if none is set locally
+                  const remoteIntention = irgProgress.irgIntention || '';
+                  if (remoteIntention && !getLS(LS_KEYS.INTENTION, '')) {
+                    currentIntention = remoteIntention;
+                    setLS(LS_KEYS.INTENTION, remoteIntention);
+                    const intentionEl = document.getElementById('intentionInput');
+                    if (intentionEl) intentionEl.value = remoteIntention;
                   }
                   remoteStatus = 'fresh';
                   return irgStep;
