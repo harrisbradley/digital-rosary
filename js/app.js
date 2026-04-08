@@ -1618,7 +1618,10 @@ async function reconcileStatsWithPrayerLog(userId, knownStats = null) {
 
     const strictTotal = prayerLog.data.length;
     const uniqueDates = [...new Set(prayerLog.data.map(getPrayerEntryDate).filter(Boolean))];
-    const strictStreak = calculateStreakFromDates(uniqueDates, todayStr());
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const strictStreak = calculateStreakFromDates(uniqueDates, todayStr()) ||
+                         calculateStreakFromDates(uniqueDates, localDateStr(yesterdayDate));
     const strictLastDate = maxDateStr(uniqueDates);
 
     // Guard against stale prayer-log snapshots: if local state shows the user
