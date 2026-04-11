@@ -64,6 +64,17 @@ jobs:
           ls -la "$HOME/.ssh" || true
           file "$HOME/.ssh" || true
 
+      - name: Debug Tailscale connection
+        shell: bash
+        run: |
+          echo "=== Tailscale Status ==="
+          sudo tailscale status
+          echo "=== Trying to ping Pi ==="
+          ping -c 3 ${{ secrets.RASPI_HOST }} || true
+          echo "=== Checking DNS resolution ==="
+          getent hosts ${{ secrets.RASPI_HOST }} || nslookup ${{ secrets.RASPI_HOST }} || true
+
+
       - name: Connectivity check to Pi over Tailscale (TCP)
         shell: bash
         run: |
