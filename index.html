@@ -207,6 +207,28 @@
                 <label for="intentionInput" class="muted" style="font-size:13px; display:block; margin-bottom:5px;">Intention (optional) — who or what are you offering this rosary for?</label>
                 <textarea id="intentionInput" rows="2" placeholder="e.g. For my family, for healing, for peace…" style="width:100%; box-sizing:border-box; resize:vertical; font-size:14px; padding:8px 10px; border-radius:6px; border:1px solid var(--muted); background:var(--card); color:var(--ink); font-family:inherit; line-height:1.4;"></textarea>
               </div>
+              <!-- 🔔 Welcome-back banner shown when a past-due break reminder is detected -->
+              <div id="breakWelcomeBanner" class="break-welcome-banner" style="display:none;"></div>
+              <!-- ⏸️ Decade break reminder prompt — shown on Fatima Prayer steps of decades 1–4 -->
+              <div id="decadeBreakPrompt" class="decade-break-prompt" style="display:none;">
+                <p class="break-prompt-heading">Taking a break?</p>
+                <div id="breakPresetArea">
+                  <div id="breakPresets" class="break-presets">
+                    <button class="button button-secondary break-preset-btn" data-minutes="15">15 min</button>
+                    <button class="button button-secondary break-preset-btn" data-minutes="30">30 min</button>
+                    <button class="button button-secondary break-preset-btn" data-minutes="60">1 hr</button>
+                  </div>
+                  <div class="break-timepicker">
+                    <span class="muted">or at</span>
+                    <input type="time" id="breakTimeInput" class="break-time-input">
+                    <button id="breakTimeSetBtn" class="button button-secondary">Set</button>
+                  </div>
+                </div>
+                <div id="breakReminderConfirm" class="break-confirm" style="display:none;">
+                  <span id="breakReminderLabel" class="muted"></span>
+                  <button id="cancelBreakReminderBtn" class="button button-secondary break-cancel-btn">Cancel</button>
+                </div>
+              </div>
               <!-- 💡 Helpful tip for users -->
               <div class="muted" style="font-size:13px;margin-top:6px">Tip: Use ←/→ keys to navigate.</div>
               <!-- ⚙️ Toggle for 1-click Hail Marys feature -->

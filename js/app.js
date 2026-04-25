@@ -259,7 +259,8 @@ function createDecadeSteps(decadeIndex) {
       decadeIndex: decadeIndex          // Which decade this belongs to
     })),
     { title: 'Glory Be', text: () => PRAYERS.gloryBe },
-    { title: 'Fatima Prayer', text: () => PRAYERS.fatima }
+    { title: 'Fatima Prayer', text: () => PRAYERS.fatima,
+      ...(decadeIndex < 4 ? { isDecadeBreak: true, decadeIndex } : {}) }
   ];
 }
 
@@ -834,6 +835,17 @@ function renderStep() {
       if (intentionInput) intentionInput.value = currentIntention;
     } else {
       intentionSection.style.display = 'none';
+    }
+  }
+
+  // Show/hide the decade break prompt for Fatima Prayer steps on decades 1-4
+  const breakPromptEl = document.getElementById('decadeBreakPrompt');
+  if (breakPromptEl) {
+    if (step.isDecadeBreak) {
+      breakPromptEl.style.display = 'block';
+      renderBreakPromptState(step.decadeIndex);
+    } else {
+      breakPromptEl.style.display = 'none';
     }
   }
 }
@@ -2047,6 +2059,133 @@ if (intentionInputEl) {
   });
 }
 
+// ========== DECADE BREAK REMINDER ==========
+
+const LS_BREAK_REMINDER = 'decade_break_reminder_v1';
+
+function setDecadeBreakReminder(targetDate, decadeIndex) {
+  const reminder = {
+    scheduledFor: targetDate.toISOString(),
+    decadeIndex,
+    stepIndex,
+    createdAt: new Date().toISOString()
+  };
+
+  localStorage.setItem(LS_BREAK_REMINDER, JSON.stringify(reminder));
+
+  const user = window.authService && authService.getCurrentUser();
+  if (user && window.firestoreService) {
+    firestoreService.updateUserSettings(user.uid, { decadeBreakReminder: reminder }).catch(() => {});
+  }
+
+  const step = GUIDE[stepIndex];
+  if (step && step.isDecadeBreak) {
+    renderBreakPromptState(step.decadeIndex);
+  }
+}
+
+function cancelDecadeBreakReminder() {
+  localStorage.removeItem(LS_BREAK_REMINDER);
+
+  const user = window.authService && authService.getCurrentUser();
+  if (user && window.firestoreService) {
+    firestoreService.updateUserSettings(user.uid, { decadeBreakReminder: null }).catch(() => {});
+  }
+
+  const step = GUIDE[stepIndex];
+  if (step && step.isDecadeBreak) {
+    renderBreakPromptState(step.decadeIndex);
+  }
+}
+
+function renderBreakPromptState(decadeIndex) {
+  const presetArea = document.getElementById('breakPresetArea');
+  const confirmArea = document.getElementById('breakReminderConfirm');
+  const labelEl = document.getElementById('breakReminderLabel');
+  if (!presetArea || !confirmArea) return;
+
+  const raw = localStorage.getItem(LS_BREAK_REMINDER);
+  const reminder = raw ? JSON.parse(raw) : null;
+
+  if (reminder && reminder.scheduledFor && new Date(reminder.scheduledFor) > new Date()) {
+    const timeStr = new Date(reminder.scheduledFor).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (labelEl) labelEl.textContent = `Reminder set for ${timeStr}.`;
+    presetArea.style.display = 'none';
+    confirmArea.style.display = 'flex';
+  } else {
+    if (reminder) {
+      localStorage.removeItem(LS_BREAK_REMINDER);
+    }
+    presetArea.style.display = '';
+    confirmArea.style.display = 'none';
+  }
+}
+
+function initDecadeBreakPrompt() {
+  // Check if a past-due reminder exists and show a welcome-back banner
+  const raw = localStorage.getItem(LS_BREAK_REMINDER);
+  if (raw) {
+    try {
+      const reminder = JSON.parse(raw);
+      if (reminder.scheduledFor && new Date(reminder.scheduledFor) <= new Date()) {
+        localStorage.removeItem(LS_BREAK_REMINDER);
+        const ordinals = ['first', 'second', 'third', 'fourth'];
+        const ord = ordinals[reminder.decadeIndex] ?? 'next';
+        const banner = document.getElementById('breakWelcomeBanner');
+        if (banner) {
+          banner.textContent = `Welcome back! Ready to continue with the ${ord} decade?`;
+          banner.style.display = 'block';
+          setTimeout(() => { banner.style.display = 'none'; }, 8000);
+        }
+      }
+    } catch {}
+  }
+
+  // Preset duration buttons
+  const presetsEl = document.getElementById('breakPresets');
+  if (presetsEl) {
+    presetsEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-minutes]');
+      if (!btn) return;
+      const minutes = Number(btn.dataset.minutes);
+      const target = new Date(Date.now() + minutes * 60 * 1000);
+      const step = GUIDE[stepIndex];
+      if (step && step.isDecadeBreak) {
+        setDecadeBreakReminder(target, step.decadeIndex);
+      }
+    });
+  }
+
+  // Specific time Set button
+  const timeSetBtn = document.getElementById('breakTimeSetBtn');
+  if (timeSetBtn) {
+    timeSetBtn.addEventListener('click', () => {
+      const input = document.getElementById('breakTimeInput');
+      if (!input || !input.value) return;
+      const [hh, mm] = input.value.split(':').map(Number);
+      const now = new Date();
+      // Build a local datetime at the selected clock time today
+      const tzDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+      // If that time has already passed today, schedule for tomorrow
+      if (tzDate <= now) {
+        tzDate.setDate(tzDate.getDate() + 1);
+      }
+      const step = GUIDE[stepIndex];
+      if (step && step.isDecadeBreak) {
+        setDecadeBreakReminder(tzDate, step.decadeIndex);
+      }
+    });
+  }
+
+  // Cancel reminder button
+  const cancelBtn = document.getElementById('cancelBreakReminderBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      cancelDecadeBreakReminder();
+    });
+  }
+}
+
 // ========== INITIALIZE APP ==========
 // 🚀 Start the application when page loads
 // This runs automatically when the page finishes loading
@@ -2055,6 +2194,7 @@ if (intentionInputEl) {
 async function initializeApp() {
   initDarkMode(); // Initialize dark mode first
   initOneClickHailMarysToggle();
+  initDecadeBreakPrompt();
   
   // If authenticated, load stats from Firestore
   if (window.authService && window.firestoreService) {

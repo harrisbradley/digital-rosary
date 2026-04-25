@@ -70,12 +70,18 @@ function getNormalizedNotificationSettings(rawSettings) {
   };
 }
 
-function buildPayload(type, dateStr) {
-  const isDaily = type === 'daily_prayer';
-  const title = isDaily ? 'Time to pray the Rosary' : 'Protect your prayer streak';
-  const body = isDaily
-    ? 'Take a few peaceful minutes to pray today.'
-    : 'You have not logged a rosary yet today. Keep your streak alive.';
+function buildPayload(type, dateStr, ordinal) {
+  let title, body;
+  if (type === 'daily_prayer') {
+    title = 'Time to pray the Rosary';
+    body = 'Take a few peaceful minutes to pray today.';
+  } else if (type === 'decade_break') {
+    title = 'Continue your Rosary';
+    body = `You left off after the ${ordinal} decade. Ready to continue?`;
+  } else {
+    title = 'Protect your prayer streak';
+    body = 'You have not logged a rosary yet today. Keep your streak alive.';
+  }
 
   return {
     notification: { title, body },
@@ -100,11 +106,11 @@ function buildPayload(type, dateStr) {
   };
 }
 
-async function sendReminder(db, userRef, tokenDocs, type, dateStr) {
+async function sendReminder(db, userRef, tokenDocs, type, dateStr, ordinal) {
   const tokens = tokenDocs.map((doc) => doc.token).filter(Boolean);
   if (!tokens.length) return { sentCount: 0, invalidCount: 0 };
 
-  const payload = buildPayload(type, dateStr);
+  const payload = buildPayload(type, dateStr, ordinal);
   const response = await admin.messaging().sendEachForMulticast({
     tokens,
     notification: payload.notification,
@@ -214,6 +220,20 @@ async function processUsers() {
         notifications,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
+    }
+
+    // Decade break reminders: fire when scheduledFor <= now, then clear
+    const breakReminder = settingsData.decadeBreakReminder;
+    if (breakReminder && breakReminder.scheduledFor && new Date(breakReminder.scheduledFor) <= now) {
+      const ORDINAL_WORDS = ['first', 'second', 'third', 'fourth'];
+      const ordinal = ORDINAL_WORDS[breakReminder.decadeIndex] ?? 'next';
+      const breakResult = await sendReminder(db, userRef, tokenDocs, 'decade_break', localNow.dateStr, ordinal);
+      remindersSent += breakResult.sentCount;
+      tokensRemoved += breakResult.invalidCount;
+      await settingsRef.set(
+        { decadeBreakReminder: admin.firestore.FieldValue.delete() },
+        { merge: true }
+      );
     }
   }
 
