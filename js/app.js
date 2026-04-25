@@ -441,7 +441,10 @@ function preloadNextImages(currentIndex, count = 3) {
 // Falls back to generating an SVG placeholder if no image found
 function imageForTitle(step) {
   const title = typeof step === 'string' ? step : step.title;
-  
+
+  // Exact title match always takes priority (e.g. "Fatima Prayer" → Fatima.png)
+  if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
+
   // Check if this is a decade step (Announce, Our Father, or Hail Mary within a decade)
   if (step && typeof step === 'object' && step.decadeIndex !== undefined) {
     // Get the mystery name for this decade
@@ -454,9 +457,6 @@ function imageForTitle(step) {
     }
     // If no mystery image exists, fall through to default behavior below
   }
-  
-  // First, check if we have an exact match in STEP_IMAGES
-  if (STEP_IMAGES[title]) return ASSET_BASE + STEP_IMAGES[title] + CACHE_BUST;
   
   // If title starts with "Announce the", use the generic "Announce the Mystery" image
   if (title && title.startsWith('Announce the')) {
