@@ -173,16 +173,15 @@ async function getUserSettings(userId) {
 // Update user settings
 async function updateUserSettings(userId, settings) {
   try {
-    const normalized = normalizeUserSettings(settings);
     await getUserRef(userId).collection('settings').doc('preferences').set({
-      ...normalized,
+      ...settings,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    
-    // Update localStorage cache
+
+    // Invalidate localStorage cache so next read fetches fresh data
     const cacheKey = `user_settings_${userId}`;
-    localStorage.setItem(cacheKey, JSON.stringify(normalized));
-    
+    localStorage.removeItem(cacheKey);
+
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
