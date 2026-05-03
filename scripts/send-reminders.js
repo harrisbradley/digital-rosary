@@ -170,14 +170,16 @@ async function processUsers() {
     const settingsRef = userRef.collection('settings').doc('preferences');
     const settingsDoc = await settingsRef.get();
 
-    if (!settingsDoc.exists) continue;
+    if (!settingsDoc.exists) { console.log(`  [${userDoc.id}] skip: no settings doc`); continue; }
     const settingsData = settingsDoc.data() || {};
     const notifications = getNormalizedNotificationSettings(settingsData.notifications);
-    if (!notifications.enabled) continue;
+    console.log(`  [${userDoc.id}] notifications.enabled=${notifications.enabled} decadeBreakReminder=${JSON.stringify(settingsData.decadeBreakReminder ?? null)}`);
+    if (!notifications.enabled) { console.log(`  [${userDoc.id}] skip: notifications not enabled`); continue; }
 
     const tokensSnapshot = await userRef.collection('notificationTokens').where('enabled', '==', true).get();
     const tokenDocs = tokensSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })).filter((doc) => !!doc.token);
-    if (!tokenDocs.length) continue;
+    console.log(`  [${userDoc.id}] enabled token count=${tokenDocs.length}`);
+    if (!tokenDocs.length) { console.log(`  [${userDoc.id}] skip: no enabled tokens`); continue; }
 
     const localNow = getLocalDateTimeParts(now, settingsData.timezone || 'UTC');
     const dailyMinutes = parseTimeToMinutes(notifications.dailyPrayerTime, parseTimeToMinutes(DEFAULT_DAILY_TIME, 1170));
