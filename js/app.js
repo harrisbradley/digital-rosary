@@ -1005,6 +1005,53 @@ restartBtnEl.addEventListener('click', () => {
   renderStep();
 });
 
+// ⛶ Expand button: Toggle expanded view (stays in browser, not true fullscreen)
+const expandBtnEl = document.getElementById('expandBtn');
+const expandExpandIconEl = document.getElementById('expandExpandIcon');
+const expandCollapseIconEl = document.getElementById('expandCollapseIcon');
+const expandLabelEl = document.getElementById('expandLabel');
+const trueFullscreenBtnEl = document.getElementById('trueFullscreenBtn');
+const trueFullscreenLabelEl = document.getElementById('trueFullscreenLabel');
+const irgBackdropEl = document.getElementById('irgBackdrop');
+const irgEl = document.getElementById('interactiveRosaryGuide');
+
+function setExpandedMode(expanded) {
+  irgEl.classList.toggle('irg-expanded', expanded);
+  irgBackdropEl.classList.toggle('active', expanded);
+  document.body.style.overflow = expanded ? 'hidden' : '';
+  expandExpandIconEl.style.display = expanded ? 'none' : '';
+  expandCollapseIconEl.style.display = expanded ? '' : 'none';
+  expandLabelEl.textContent = expanded ? 'Collapse' : 'Expand';
+  expandBtnEl.setAttribute('aria-label', expanded ? 'Collapse IRG' : 'Expand IRG');
+  expandBtnEl.setAttribute('title', expanded ? 'Collapse (E)' : 'Expand (E)');
+}
+
+expandBtnEl.addEventListener('click', () => {
+  setExpandedMode(!irgEl.classList.contains('irg-expanded'));
+});
+
+irgBackdropEl.addEventListener('click', () => setExpandedMode(false));
+
+// ⛶ True fullscreen button: Shown only in expanded mode; uses browser fullscreen API
+function updateTrueFullscreenBtn(isFullscreen) {
+  trueFullscreenLabelEl.textContent = isFullscreen ? 'Exit Full Screen' : 'Full Screen';
+  trueFullscreenBtnEl.setAttribute('aria-label', isFullscreen ? 'Exit Full Screen' : 'Full Screen');
+  trueFullscreenBtnEl.setAttribute('title', isFullscreen ? 'Exit Full Screen' : 'Full Screen');
+}
+
+trueFullscreenBtnEl.addEventListener('click', () => {
+  const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (isFullscreen) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    const req = irgEl.requestFullscreen || irgEl.webkitRequestFullscreen;
+    if (req) req.call(irgEl);
+  }
+});
+
+document.addEventListener('fullscreenchange', () => updateTrueFullscreenBtn(!!document.fullscreenElement));
+document.addEventListener('webkitfullscreenchange', () => updateTrueFullscreenBtn(!!document.webkitFullscreenElement));
+
 // 🚀 Begin button: Start from the beginning and scroll to the guide
 // Wait for DOM to be ready before attaching event listener
 function initBeginButton() {
@@ -1075,21 +1122,39 @@ if (document.readyState === 'loading') {
   initBeginButton();
 }
 
-// ⌨️ Keyboard navigation: Left/Right arrows to move through steps
+// ⌨️ Keyboard navigation: Left/Right arrows to move through steps, F to toggle expanded mode
 // This lets users navigate with keyboard instead of clicking buttons
-window.addEventListener('keydown', e => { 
-  if (e.key === 'ArrowRight') { 
+window.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') {
     // Right arrow = next step
-    stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1); 
+    stepIndex = Math.min(GUIDE.length - 1, stepIndex + 1);
     saveIRGProgress(); // Save progress
-    renderStep(); 
-  } 
-  if (e.key === 'ArrowLeft') { 
+    renderStep();
+  }
+  if (e.key === 'ArrowLeft') {
     // Left arrow = previous step
-    stepIndex = Math.max(0, stepIndex - 1); 
+    stepIndex = Math.max(0, stepIndex - 1);
     saveIRGProgress(); // Save progress
-    renderStep(); 
-  } 
+    renderStep();
+  }
+  if (e.key === 'e' || e.key === 'E') {
+    // E = toggle expanded mode (skip if user is typing in a text field)
+    if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+      expandBtnEl.click();
+    }
+  }
+  if (e.key === 'f' || e.key === 'F') {
+    // F = toggle full screen (skip if user is typing in a text field)
+    if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
+      trueFullscreenBtnEl.click();
+    }
+  }
+  if (e.key === 'Escape' && irgEl.classList.contains('irg-expanded')) {
+    // Escape = collapse expanded mode (if not in true fullscreen, which handles its own Escape)
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      setExpandedMode(false);
+    }
+  }
 });
 
 // ========== LOCALSTORAGE & STATS ==========
