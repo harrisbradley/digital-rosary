@@ -1491,3 +1491,86 @@ ul li::marker {
   padding: 4px 12px;
   font-size: 13px;
 }
+
+/* ==========================================
+   Expanded Mode (in-browser overlay)
+   ========================================== */
+.irg-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.irg-backdrop.active {
+  display: block;
+}
+
+#interactiveRosaryGuide.irg-expanded {
+  position: fixed;
+  inset: 16px;
+  z-index: 1000;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  padding: 24px;
+  margin: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+#interactiveRosaryGuide.irg-expanded .guide {
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+}
+
+@media (max-width: 1000px) {
+  #interactiveRosaryGuide.irg-expanded .guide {
+    grid-template-columns: 1fr;
+  }
+}
+
+#interactiveRosaryGuide.irg-expanded .prayer-text {
+  max-height: none !important;
+  overflow-y: visible;
+}
+
+#interactiveRosaryGuide.irg-expanded #trueFullscreenBtn {
+  display: inline-flex !important;
+}
+
+/* ==========================================
+   Full Screen Mode (OS-level, from expanded)
+   ========================================== */
+#interactiveRosaryGuide:fullscreen,
+#interactiveRosaryGuide:-webkit-full-screen {
+  background: var(--bg);
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0 !important;
+}
+
+#interactiveRosaryGuide:fullscreen .guide,
+#interactiveRosaryGuide:-webkit-full-screen .guide {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 1000px) {
+  #interactiveRosaryGuide:fullscreen .guide,
+  #interactiveRosaryGuide:-webkit-full-screen .guide {
+    grid-template-columns: 1fr;
+  }
+}
+
+#interactiveRosaryGuide:fullscreen .prayer-text,
+#interactiveRosaryGuide:-webkit-full-screen .prayer-text {
+  max-height: none !important;
+  overflow-y: visible;
+}
