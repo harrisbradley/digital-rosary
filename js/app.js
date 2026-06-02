@@ -1030,8 +1030,6 @@ expandBtnEl.addEventListener('click', () => {
   setExpandedMode(!irgEl.classList.contains('irg-expanded'));
 });
 
-irgBackdropEl.addEventListener('click', () => setExpandedMode(false));
-
 // ⛶ True fullscreen button: Shown only in expanded mode; uses browser fullscreen API
 function updateTrueFullscreenBtn(isFullscreen) {
   trueFullscreenLabelEl.textContent = isFullscreen ? 'Exit Full Screen' : 'Full Screen';
