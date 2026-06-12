@@ -295,6 +295,12 @@ a {
   overflow-wrap: break-word;
 }
 
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .profilebutton {
   padding: 2px 2px;
   border-radius: 999px;
